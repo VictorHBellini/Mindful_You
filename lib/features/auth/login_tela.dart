@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mindful_you/services/admin_service.dart';
 import 'package:mindful_you/services/database_service.dart';
+import 'package:mindful_you/widgets/recuperar_senha_tela.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginTela extends StatefulWidget {
@@ -268,11 +269,10 @@ class _LoginTelaState extends State<LoginTela> {
                         alignment: Alignment.centerRight,
                         child: TextButton(
                           onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'A recuperação de senha estará disponível quando a autenticação online for conectada.',
-                                ),
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const RecuperarSenhaTela(),
                               ),
                             );
                           },
@@ -352,52 +352,6 @@ class _LoginTelaState extends State<LoginTela> {
                                   ),
                                 ),
                         ),
-                      ),
-
-                      const SizedBox(height: 25),
-
-                      // Divisor
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Divider(
-                              color: Colors.grey.shade300,
-                            ),
-                          ),
-                          const Padding(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 12,
-                            ),
-                            child: Text(
-                              "ou continue com",
-                              style: TextStyle(
-                                color: Colors.grey,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            child: Divider(
-                              color: Colors.grey.shade300,
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 25),
-
-                      // Login Social
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          _socialButton(
-                            icon: Icons.g_mobiledata,
-                          ),
-                          const SizedBox(width: 20),
-                          _socialButton(
-                            icon: Icons.apple,
-                          ),
-                        ],
                       ),
 
                       const SizedBox(height: 16),
