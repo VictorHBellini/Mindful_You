@@ -1,78 +1,134 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-// Lista em memória — sincronizada com SharedPreferences
+import 'package:mindful_you/services/database_service.dart';
+
+// ============================================================
+// HISTÓRICO DE CHECK-INS DO USUÁRIO LOGADO
+// ============================================================
+//
+// BUG CORRIGIDO: antes, todo o histórico de check-ins (e os campos
+// "último sentimento/emoji/data") ficavam salvos em chaves globais do
+// SharedPreferences — as mesmas para qualquer conta usada no aparelho.
+// Como o app permite múltiplas contas (login/cadastro/gerenciar
+// usuários), trocar de usuário (logout + login com outra conta) fazia
+// a pessoa ver o histórico de check-ins de quem tivesse usado o app
+// antes dela no mesmo celular.
+//
+// Agora cada check-in é salvo na tabela `checkins` do SQLite
+// (`database_service.dart`), vinculado ao `usuario_id` de quem
+// respondeu. Esta lista em memória continua existindo (para não
+// precisar mudar todas as telas que já a usam), mas passa a ser
+// apenas um cache dos registros do usuário atualmente logado.
+
+/// Lista em memória — cache dos check-ins do usuário atualmente logado.
 List<Map<String, dynamic>> historicoGlobal = [];
 
-/// Carrega o histórico salvo no SharedPreferences para a lista em memória.
-/// Deve ser chamado uma vez ao iniciar o app (no main.dart) ou
-/// na tela de histórico antes de exibir.
+/// Retorna o id do usuário atualmente logado (salvo em SharedPreferences
+/// no login/cadastro), ou `null` se não houver ninguém logado.
+Future<int?> _usuarioIdAtual() async {
+  final prefs = await SharedPreferences.getInstance();
+  return prefs.getInt('usuarioId');
+}
+
+/// Converte uma linha da tabela `checkins` para o mesmo formato de Map
+/// que as telas (Histórico, Gráfico, Relatório etc) já esperavam
+/// quando o histórico vinha do SharedPreferences.
+Map<String, dynamic> _linhaParaEntrada(Map<String, dynamic> linha) {
+  final cansaco = (linha['cansaco'] as num?) ?? 0;
+  final ansiedade = (linha['ansiedade'] as num?) ?? 0;
+  final sono = (linha['sono'] as num?) ?? 0;
+  final produtividade = (linha['produtividade'] as num?) ?? 0;
+
+  return {
+    'data': linha['data_formatada'],
+    'dataIso': linha['data_iso'],
+    'sentimento': linha['sentimento'],
+    'emoji': linha['emoji'],
+    'cor': linha['cor_valor'] is int
+        ? Color(linha['cor_valor'] as int)
+        : const Color(0xFFE8DCD4),
+    'bemEstar': linha['bem_estar'],
+    'dadosGrafico': {
+      'cansaco': cansaco,
+      'ansiedade': ansiedade,
+      'sono': sono,
+      'produtividade': produtividade,
+    },
+    // Mantém compatibilidade com a tela de Relatório (RegistrosTela),
+    // que espera 'perguntas' e 'respostas'.
+    'perguntas': const [
+      'Cansaço',
+      'Ansiedade',
+      'Falta de sono',
+      'Produtividade',
+    ],
+    'respostas': [
+      '${cansaco.toInt()}%',
+      '${ansiedade.toInt()}%',
+      '${sono.toInt()}%',
+      '${produtividade.toInt()}%',
+    ],
+    'principalPonto': linha['principal_ponto'],
+  };
+}
+
+/// Carrega, da tabela `checkins` do SQLite para a lista em memória, os
+/// registros do usuário atualmente logado (do mais antigo para o mais
+/// recente). Deve ser chamado sempre que um usuário faz login ou
+/// cadastro — assim a lista em memória nunca mistura o histórico de
+/// outra conta que tenha usado o app no mesmo aparelho.
 Future<void> carregarHistorico() async {
-  final prefs = await SharedPreferences.getInstance();
-  final jsonString = prefs.getString('historicoGlobal');
+  final usuarioId = await _usuarioIdAtual();
 
-  if (jsonString != null) {
-    try {
-      final decoded = jsonDecode(jsonString);
-      if (decoded is! List) throw const FormatException('Histórico inválido');
-
-      historicoGlobal = decoded.whereType<Map>().map((item) {
-        // A Color não é serializável em JSON; reconstrói a partir do valor int salvo.
-        final entry = Map<String, dynamic>.from(item);
-        if (entry['corValor'] is int) {
-          entry['cor'] = Color(entry['corValor'] as int);
-        }
-        return entry;
-      }).toList();
-    } on FormatException {
-      historicoGlobal = [];
-    }
+  if (usuarioId == null) {
+    historicoGlobal = [];
+    return;
   }
+
+  final linhas = await DatabaseService.instance.listarCheckins(usuarioId);
+  historicoGlobal = linhas.map(_linhaParaEntrada).toList();
 }
 
-/// Adiciona um registro ao histórico e persiste no SharedPreferences.
+/// Adiciona um check-in ao histórico do usuário atualmente logado,
+/// persistindo na tabela `checkins` do SQLite, e atualiza a lista em
+/// memória. Se não houver usuário logado (não deveria acontecer, já
+/// que só se chega ao questionário depois do login), o check-in não é
+/// salvo.
 Future<void> adicionarHistorico(Map<String, dynamic> entrada) async {
-  // Converte Color para int antes de serializar
-  final Map<String, dynamic> entradaSerializavel =
-      Map<String, dynamic>.from(entrada);
-  if (entradaSerializavel['cor'] is Color) {
-    entradaSerializavel['corValor'] =
-        (entradaSerializavel['cor'] as Color).toARGB32();
-    entradaSerializavel.remove('cor');
-  }
-  // Remove chaves não serializáveis (perguntas/respostas são List<String> — OK)
-  if (entradaSerializavel['dadosGrafico'] != null) {
-    entradaSerializavel['dadosGrafico'] =
-        Map<String, dynamic>.from(entradaSerializavel['dadosGrafico']);
-  }
+  final usuarioId = await _usuarioIdAtual();
+  if (usuarioId == null) return;
 
-  // Persiste versão sem Color
-  final prefs = await SharedPreferences.getInstance();
-  List<dynamic> listaAtual = [];
-  try {
-    final decoded = jsonDecode(prefs.getString('historicoGlobal') ?? '[]');
-    if (decoded is List) listaAtual = decoded;
-  } on FormatException {
-    // Um histórico local inválido não impede novos check-ins.
-  }
-  listaAtual.add(entradaSerializavel);
-  await prefs.setString('historicoGlobal', jsonEncode(listaAtual));
+  final dadosGrafico = entrada['dadosGrafico'] as Map? ?? {};
+  final cor = entrada['cor'];
 
-  // Também adiciona na memória com Color reconstituída
-  final Map<String, dynamic> entradaMemoria =
-      Map<String, dynamic>.from(entradaSerializavel);
-  if (entradaMemoria['corValor'] != null) {
-    entradaMemoria['cor'] = Color(entradaMemoria['corValor'] as int);
-  }
-  historicoGlobal.add(entradaMemoria);
+  await DatabaseService.instance.inserirCheckin(
+    usuarioId: usuarioId,
+    dataIso: entrada['dataIso']?.toString() ?? DateTime.now().toIso8601String(),
+    dataFormatada: entrada['data']?.toString() ?? '',
+    sentimento: entrada['sentimento']?.toString() ?? '',
+    emoji: entrada['emoji']?.toString() ?? '🙂',
+    cansaco: (dadosGrafico['cansaco'] as num?)?.toDouble() ?? 0,
+    ansiedade: (dadosGrafico['ansiedade'] as num?)?.toDouble() ?? 0,
+    sono: (dadosGrafico['sono'] as num?)?.toDouble() ?? 0,
+    produtividade: (dadosGrafico['produtividade'] as num?)?.toDouble() ?? 0,
+    bemEstar: (entrada['bemEstar'] as num?)?.round() ?? 0,
+    principalPonto: entrada['principalPonto']?.toString() ?? '',
+    corValor: cor is Color ? cor.toARGB32() : 0xFFE8DCD4,
+  );
+
+  // Recarrega a lista em memória para refletir o novo registro.
+  await carregarHistorico();
 }
 
-/// Limpa todo o histórico salvo (memória + SharedPreferences).
+/// Limpa todo o histórico salvo (memória + SQLite) do usuário
+/// atualmente logado.
 Future<void> limparHistorico() async {
-  historicoGlobal.clear();
-  final prefs = await SharedPreferences.getInstance();
-  await prefs.remove('historicoGlobal');
+  final usuarioId = await _usuarioIdAtual();
+  if (usuarioId != null) {
+    await DatabaseService.instance.limparCheckins(usuarioId);
+  }
+  historicoGlobal = [];
 }
 
 // ============================================================

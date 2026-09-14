@@ -53,6 +53,8 @@ class _GraficoTelaState extends State<GraficoTela> {
     final double ansiedade = (dados['ansiedade'] ?? 15).toDouble();
     final double sono = (dados['sono'] ?? 25).toDouble();
     final double produtividade = (dados['produtividade'] ?? 5).toDouble();
+    final String sentimento = (dados['sentimento'] as String?) ?? '';
+    final String emoji = (dados['emoji'] as String?) ?? '🙂';
 
     final double bemEstar =
         ((100 - cansaco) + (100 - ansiedade) + (100 - sono) + produtividade) /
@@ -96,6 +98,8 @@ class _GraficoTelaState extends State<GraficoTela> {
       // Data em formato ISO (além do texto formatado acima), usada pelo
       // cálculo de sequência de dias consecutivos em `historico_global.dart`.
       'dataIso': now.toIso8601String(),
+      'sentimento': sentimento,
+      'emoji': emoji,
       'cor': corResultado,
       'bemEstar': bemEstar.round(),
       'dadosGrafico': {

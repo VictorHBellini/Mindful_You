@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class QuestionarioTela extends StatefulWidget {
   const QuestionarioTela({super.key});
@@ -108,61 +107,17 @@ class _QuestionarioTelaState extends State<QuestionarioTela>
     if (_enviando) return;
     setState(() => _enviando = true);
 
-    final prefs = await SharedPreferences.getInstance();
-
-    await prefs.setString('ultimoSentimento', _sentimento);
-    await prefs.setString('ultimoEmoji', _emoji.isEmpty ? '🙂' : _emoji);
-
-    final meses = [
-      'jan',
-      'fev',
-      'mar',
-      'abr',
-      'mai',
-      'jun',
-      'jul',
-      'ago',
-      'set',
-      'out',
-      'nov',
-      'dez'
-    ];
-    final now = DateTime.now();
-    final dataFormatada = '${now.day} ${meses[now.month - 1]}. ${now.year}';
-    await prefs.setString('ultimaData', dataFormatada);
-
-    switch (_sentimento.toLowerCase()) {
-      case 'feliz':
-        await prefs.setInt(
-            'diasFelizes', (prefs.getInt('diasFelizes') ?? 0) + 1);
-        break;
-      case 'calmo':
-        await prefs.setInt('diasCalmos', (prefs.getInt('diasCalmos') ?? 0) + 1);
-        break;
-      case 'neutro':
-        await prefs.setInt(
-            'diasNeutros', (prefs.getInt('diasNeutros') ?? 0) + 1);
-        break;
-      case 'cansado':
-        await prefs.setInt(
-            'diasCansados', (prefs.getInt('diasCansados') ?? 0) + 1);
-        break;
-      // BUG CORRIGIDO: o seletor de emoji tem 6 opções (Feliz, Calmo,
-      // Neutro, Triste, Cansado, Ansioso), mas este switch só cobria 4
-      // delas — check-ins marcados como "Triste" ou "Ansioso" não
-      // incrementavam contador nenhum.
-      case 'triste':
-        await prefs.setInt(
-            'diasTristes', (prefs.getInt('diasTristes') ?? 0) + 1);
-        break;
-      case 'ansioso':
-        await prefs.setInt(
-            'diasAnsiosos', (prefs.getInt('diasAnsiosos') ?? 0) + 1);
-        break;
-    }
-
     if (!mounted) return;
 
+    // BUG CORRIGIDO: sentimento/emoji/data e os contadores de humor
+    // (diasFelizes, diasCalmos etc.) eram salvos aqui em chaves globais
+    // do SharedPreferences, iguais para qualquer conta usada no
+    // aparelho — então trocar de usuário fazia a pessoa ver o "último
+    // check-in" de outra conta. Agora tudo isso é derivado, por
+    // usuário, dos registros da tabela `checkins` (ver
+    // `historico_global.dart`), então só precisamos repassar o
+    // sentimento e o emoji escolhidos para a tela de Gráfico, que é
+    // quem grava o check-in.
     Navigator.pushReplacementNamed(
       context,
       '/grafico',
@@ -171,6 +126,8 @@ class _QuestionarioTelaState extends State<QuestionarioTela>
         'ansiedade': _ansiedade,
         'sono': _sono,
         'produtividade': _produtividade,
+        'sentimento': _sentimento,
+        'emoji': _emoji.isEmpty ? '🙂' : _emoji,
       },
     );
   }

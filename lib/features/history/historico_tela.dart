@@ -41,6 +41,11 @@ class _HistoricoTelaState extends State<HistoricoTela>
   void initState() {
     super.initState();
 
+    // Garante que `historicoGlobal` reflita o usuário atualmente
+    // logado mesmo se esta tela for a primeira a precisar do
+    // histórico nesta sessão (por exemplo, após um hot restart).
+    _carregarHistorico();
+
     // ==========================================================
     // ANIMAÇÃO DO FUNDO
     // ==========================================================
@@ -85,6 +90,11 @@ class _HistoricoTelaState extends State<HistoricoTela>
   void dispose() {
     _animacaoFundo.dispose();
     super.dispose();
+  }
+
+  Future<void> _carregarHistorico() async {
+    await carregarHistorico();
+    if (mounted) setState(() {});
   }
 
   @override

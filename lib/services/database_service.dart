@@ -23,7 +23,7 @@ class DatabaseService {
 
     return openDatabase(
       path,
-      version: 3,
+      version: 4,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE usuarios (
@@ -36,6 +36,7 @@ class DatabaseService {
             criado_em TEXT    NOT NULL
           )
         ''');
+        await _criarTabelaCheckins(db);
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
@@ -53,7 +54,47 @@ class DatabaseService {
             'ALTER TABLE usuarios ADD COLUMN salt TEXT',
           );
         }
+        if (oldVersion < 4) {
+          // TABELA NOVA: antes, o histórico de check-ins do questionário
+          // (e os campos "último sentimento/emoji/data") ficavam apenas
+          // em SharedPreferences, sob chaves globais iguais para
+          // qualquer conta usada no aparelho — então, ao trocar de
+          // usuário (logout + login com outra conta), cada pessoa via o
+          // histórico de quem tivesse usado o app antes dela no mesmo
+          // celular. Agora cada check-in é salvo aqui, vinculado ao
+          // `usuario_id` de quem respondeu (ver `historico_global.dart`).
+          await _criarTabelaCheckins(db);
+        }
       },
+    );
+  }
+
+  /// Cria a tabela `checkins` (e seu índice) se ainda não existirem.
+  /// Usada tanto em `onCreate` (instalação nova) quanto em `onUpgrade`
+  /// (bancos já existentes na versão anterior).
+  Future<void> _criarTabelaCheckins(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS checkins (
+        id              INTEGER PRIMARY KEY AUTOINCREMENT,
+        usuario_id      INTEGER NOT NULL,
+        data_iso        TEXT    NOT NULL,
+        data_formatada  TEXT    NOT NULL,
+        sentimento      TEXT    NOT NULL DEFAULT '',
+        emoji           TEXT    NOT NULL DEFAULT '',
+        cansaco         REAL    NOT NULL,
+        ansiedade       REAL    NOT NULL,
+        sono            REAL    NOT NULL,
+        produtividade   REAL    NOT NULL,
+        bem_estar       INTEGER NOT NULL,
+        principal_ponto TEXT    NOT NULL DEFAULT '',
+        cor_valor       INTEGER NOT NULL,
+        criado_em       TEXT    NOT NULL,
+        FOREIGN KEY (usuario_id) REFERENCES usuarios (id)
+      )
+    ''');
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_checkins_usuario_id '
+      'ON checkins (usuario_id)',
     );
   }
 
@@ -401,9 +442,78 @@ class DatabaseService {
   // DELETE
   // ─────────────────────────────────────────────────────────────
 
-  /// Remove o usuário com o [id] fornecido.
+  /// Remove o usuário com o [id] fornecido, junto com todo o seu
+  /// histórico de check-ins (tabela `checkins`). Sem isso, apagar um
+  /// usuário deixaria registros órfãos apontando para um `usuario_id`
+  /// que não existe mais.
   Future<int> deletarUsuario(int id) async {
     final db = await database;
+    await db.delete('checkins', where: 'usuario_id = ?', whereArgs: [id]);
     return db.delete('usuarios', where: 'id = ?', whereArgs: [id]);
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // CHECK-INS (histórico do questionário)
+  // ─────────────────────────────────────────────────────────────
+  //
+  // Fonte única de armazenamento do histórico de check-ins, consumida
+  // por `historico_global.dart`. Cada linha pertence a um único
+  // usuário (`usuario_id`), o que resolve o problema de históricos
+  // "vazando" entre contas diferentes no mesmo aparelho.
+
+  /// Salva um novo check-in do questionário para o usuário [usuarioId].
+  /// Retorna o id inserido.
+  Future<int> inserirCheckin({
+    required int usuarioId,
+    required String dataIso,
+    required String dataFormatada,
+    required String sentimento,
+    required String emoji,
+    required double cansaco,
+    required double ansiedade,
+    required double sono,
+    required double produtividade,
+    required int bemEstar,
+    required String principalPonto,
+    required int corValor,
+  }) async {
+    final db = await database;
+    return db.insert('checkins', {
+      'usuario_id': usuarioId,
+      'data_iso': dataIso,
+      'data_formatada': dataFormatada,
+      'sentimento': sentimento,
+      'emoji': emoji,
+      'cansaco': cansaco,
+      'ansiedade': ansiedade,
+      'sono': sono,
+      'produtividade': produtividade,
+      'bem_estar': bemEstar,
+      'principal_ponto': principalPonto,
+      'cor_valor': corValor,
+      'criado_em': DateTime.now().toIso8601String(),
+    });
+  }
+
+  /// Retorna todos os check-ins do usuário [usuarioId], do mais antigo
+  /// para o mais recente.
+  Future<List<Map<String, dynamic>>> listarCheckins(int usuarioId) async {
+    final db = await database;
+    return db.query(
+      'checkins',
+      where: 'usuario_id = ?',
+      whereArgs: [usuarioId],
+      orderBy: 'id ASC',
+    );
+  }
+
+  /// Remove todos os check-ins salvos do usuário [usuarioId].
+  Future<int> limparCheckins(int usuarioId) async {
+    final db = await database;
+    return db.delete(
+      'checkins',
+      where: 'usuario_id = ?',
+      whereArgs: [usuarioId],
+    );
   }
 }

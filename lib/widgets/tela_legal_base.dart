@@ -5,9 +5,10 @@ import 'package:flutter/material.dart';
 // ======================================================================
 //
 // Layout compartilhado entre `termos_uso_tela.dart` e
-// `politica_privacidade_tela.dart`, mantendo a mesma linguagem visual
-// usada nas demais telas do Mindful You (paleta terracota/bege,
-// cabeçalho com gradiente e cantos arredondados).
+// `politica_privacidade_tela.dart`.
+//
+// Suporte completo aos temas claro e escuro do Mindful You,
+// mantendo a identidade visual terracota/bege.
 // ======================================================================
 
 class SecaoTextoLegal {
@@ -40,43 +41,90 @@ class TelaLegalBase extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
+    final isDark = theme.brightness == Brightness.dark;
+
+    // ==============================================================
+    // CORES ADAPTATIVAS
+    // ==============================================================
+
+    final backgroundColor =
+        isDark ? const Color(0xFF191716) : const Color(0xFFF8F5F2);
+
+    final headerStartColor =
+        isDark ? const Color(0xFF302827) : const Color(0xFFE8DCD4);
+
+    final headerEndColor =
+        isDark ? const Color(0xFF252120) : const Color(0xFFF1E8E1);
+
+    final headerTextColor =
+        isDark ? const Color(0xFFF3ECE8) : const Color(0xFF40352F);
+
+    final accentColor =
+        isDark ? const Color(0xFFD5A6A6) : const Color(0xFF8D6E63);
+
+    final secondaryTextColor =
+        isDark ? const Color(0xFFB0A19A) : const Color(0xFF9A8C84);
+
+    final introBackgroundColor =
+        isDark ? const Color(0xFF252120) : Colors.white;
+
+    final introBorderColor =
+        isDark ? const Color(0xFF3A3330) : const Color(0xFFE9E0DB);
+
+    final bodyTextColor =
+        isDark ? const Color(0xFFD6CCC7) : const Color(0xFF6B5D55);
+
+    final sectionTitleColor =
+        isDark ? const Color(0xFFF3ECE8) : const Color(0xFF40352F);
+
+    final footerTextColor =
+        isDark ? const Color(0xFFBFAFA8) : const Color(0xFF80675C);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F5F2),
+      backgroundColor: backgroundColor,
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
           // ======================================================
           // CABEÇALHO
           // ======================================================
+
           SliverAppBar(
             pinned: true,
             expandedHeight: 150,
-            backgroundColor: const Color(0xFFE8DCD4),
+            backgroundColor: headerStartColor,
             elevation: 0,
+            surfaceTintColor: Colors.transparent,
             leading: IconButton(
-              icon: const Icon(
+              icon: Icon(
                 Icons.arrow_back_ios_new_rounded,
-                color: Color(0xFF40352F),
+                color: headerTextColor,
                 size: 20,
               ),
               onPressed: () => Navigator.of(context).pop(),
             ),
             flexibleSpace: FlexibleSpaceBar(
-              titlePadding: const EdgeInsets.only(left: 56, bottom: 16),
+              titlePadding: const EdgeInsets.only(
+                left: 56,
+                bottom: 16,
+              ),
               title: Text(
                 titulo,
-                style: const TextStyle(
-                  color: Color(0xFF40352F),
+                style: TextStyle(
+                  color: headerTextColor,
                   fontWeight: FontWeight.bold,
                   fontSize: 18,
                 ),
               ),
               background: Container(
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      Color(0xFFE8DCD4),
-                      Color(0xFFF1E8E1),
+                      headerStartColor,
+                      headerEndColor,
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -85,17 +133,24 @@ class TelaLegalBase extends StatelessWidget {
                 child: Align(
                   alignment: Alignment.centerRight,
                   child: Padding(
-                    padding: const EdgeInsets.only(right: 22, top: 10),
+                    padding: const EdgeInsets.only(
+                      right: 22,
+                      top: 10,
+                    ),
                     child: Container(
                       width: 54,
                       height: 54,
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.5),
+                        color: isDark
+                            ? const Color(0xFFD5A6A6).withValues(alpha: 0.12)
+                            : Colors.white.withValues(alpha: 0.5),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
                         icone,
-                        color: const Color(0xFF8D6E63),
+                        color: isDark
+                            ? const Color(0xFFD5A6A6)
+                            : const Color(0xFF8D6E63),
                         size: 26,
                       ),
                     ),
@@ -108,80 +163,116 @@ class TelaLegalBase extends StatelessWidget {
           // ======================================================
           // CONTEÚDO
           // ======================================================
+
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 22, 20, 40),
+              padding: const EdgeInsets.fromLTRB(
+                20,
+                22,
+                20,
+                40,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // ==================================================
                   // NOME DO APP
+                  // ==================================================
+
                   Text(
                     subtitulo,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF8D6E63),
+                      color: isDark
+                          ? const Color(0xFFD5A6A6)
+                          : const Color(0xFF8D6E63),
                       letterSpacing: 0.3,
                     ),
                   ),
+
                   const SizedBox(height: 4),
 
+                  // ==================================================
                   // DATA DE ATUALIZAÇÃO
+                  // ==================================================
+
                   Text(
                     "Última atualização: $ultimaAtualizacao",
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
-                      color: Color(0xFF9A8C84),
+                      color: secondaryTextColor,
                     ),
                   ),
 
                   const SizedBox(height: 18),
 
+                  // ==================================================
                   // INTRODUÇÃO
+                  // ==================================================
+
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: introBackgroundColor,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: const Color(0xFFE9E0DB),
+                        color: introBorderColor,
                       ),
+                      boxShadow: isDark
+                          ? [
+                              BoxShadow(
+                                color: Colors.black.withValues(
+                                  alpha: 0.18,
+                                ),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ]
+                          : null,
                     ),
                     child: Text(
                       introducao,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13.5,
                         height: 1.5,
-                        color: Color(0xFF5A4D46),
+                        color: isDark
+                            ? const Color(0xFFD6CCC7)
+                            : const Color(0xFF5A4D46),
                       ),
                     ),
                   ),
 
                   const SizedBox(height: 22),
 
+                  // ==================================================
                   // SEÇÕES NUMERADAS
+                  // ==================================================
+
                   ...secoes.map(
                     (secao) => Padding(
-                      padding: const EdgeInsets.only(bottom: 20),
+                      padding: const EdgeInsets.only(
+                        bottom: 20,
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             secao.titulo,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF40352F),
+                              color: sectionTitleColor,
                             ),
                           ),
                           const SizedBox(height: 6),
                           Text(
                             secao.corpo,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 13.5,
                               height: 1.55,
-                              color: Color(0xFF6B5D55),
+                              color: bodyTextColor,
                             ),
                           ),
                         ],
@@ -191,22 +282,27 @@ class TelaLegalBase extends StatelessWidget {
 
                   const SizedBox(height: 6),
 
+                  // ==================================================
                   // RODAPÉ
+                  // ==================================================
+
                   Center(
                     child: Column(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.favorite_rounded,
                           size: 16,
-                          color: Color(0xFFC89494),
+                          color: isDark
+                              ? const Color(0xFFD5A6A6)
+                              : const Color(0xFFC89494),
                         ),
                         const SizedBox(height: 6),
-                        const Text(
+                        Text(
                           "Mindful You",
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF80675C),
+                            color: footerTextColor,
                           ),
                         ),
                       ],

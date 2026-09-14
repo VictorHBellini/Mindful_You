@@ -185,8 +185,8 @@ class _GerenciarUsuariosTelaState extends State<GerenciarUsuariosTela> {
           builder: (ctx, setModal) {
             final temFoto = !removerFoto &&
                 fotoPathAtual != null &&
-                fotoPathAtual!.isNotEmpty &&
-                File(fotoPathAtual!).existsSync();
+                fotoPathAtual.isNotEmpty &&
+                File(fotoPathAtual).existsSync();
 
             final iniciais = nomeCtrl.text
                 .trim()
@@ -302,7 +302,7 @@ class _GerenciarUsuariosTelaState extends State<GerenciarUsuariosTela> {
                               radius: 30,
                               backgroundColor: const Color(0xFFE8DCD4),
                               backgroundImage: temFoto
-                                  ? FileImage(File(fotoPathAtual!))
+                                  ? FileImage(File(fotoPathAtual))
                                   : null,
                               child: temFoto
                                   ? null

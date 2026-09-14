@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'package:mindful_you/widgets/responsive_center.dart';
 
 class DicasTela extends StatelessWidget {
@@ -54,26 +55,43 @@ class DicasTela extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF9F7F4),
+      backgroundColor: colors.surface,
+
+      // ============================================================
+      // APP BAR
+      // ============================================================
+
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: const Color(0xFFF9F7F4),
-        foregroundColor: const Color(0xFF40352F),
+        backgroundColor: colors.surface,
+        foregroundColor: colors.onSurface,
+        surfaceTintColor: Colors.transparent,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         centerTitle: true,
-        title: const Text(
+        title: Text(
           'Dicas & Bem-estar',
           style: TextStyle(
             fontSize: 17,
             fontWeight: FontWeight.w700,
-            color: Color(0xFF40352F),
+            color: colors.onSurface,
           ),
         ),
       ),
+
+      // ============================================================
+      // CONTEÚDO
+      // ============================================================
+
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
@@ -86,122 +104,196 @@ class DicasTela extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                // ==================================================
+                // TÍTULO
+                // ==================================================
+
+                Text(
                   'Práticas para o seu dia 🌱',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF40352F),
+                    color: colors.onSurface,
                   ),
                 ),
+
                 const SizedBox(height: 6),
-                const Text(
+
+                // ==================================================
+                // SUBTÍTULO
+                // ==================================================
+
+                Text(
                   'Pequenas pausas e exercícios para renovar sua energia e acalmar a mente.',
                   style: TextStyle(
                     fontSize: 14,
                     height: 1.45,
-                    color: Color(0xFF8A7B73),
+                    color: colors.onSurfaceVariant,
                   ),
                 ),
+
                 const SizedBox(height: 24),
-                ...List.generate(_dicas.length, (index) {
-                  final dica = _dicas[index];
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 16),
-                    padding: const EdgeInsets.all(18),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(22),
-                      border: Border.all(
-                        color: const Color(0xFFE8DFDA),
+
+                // ==================================================
+                // LISTA DE DICAS
+                // ==================================================
+
+                ...List.generate(
+                  _dicas.length,
+                  (index) {
+                    final dica = _dicas[index];
+                    final cor = dica['cor'] as Color;
+
+                    return Container(
+                      margin: const EdgeInsets.only(
+                        bottom: 16,
                       ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.04),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            color:
-                                (dica['cor'] as Color).withValues(alpha: 0.14),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Icon(
-                            dica['icone'] as IconData,
-                            color: dica['cor'] as Color,
-                            size: 26,
+                      padding: const EdgeInsets.all(18),
+                      decoration: BoxDecoration(
+                        color: colors.surfaceContainerLow,
+                        borderRadius: BorderRadius.circular(22),
+                        border: Border.all(
+                          color: colors.outlineVariant.withValues(
+                            alpha: 0.7,
                           ),
                         ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 3,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFF3ECE8),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Text(
-                                      dica['categoria'] as String,
-                                      style: const TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w600,
-                                        color: Color(0xFF80675C),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(
+                              alpha: isDark ? 0.18 : 0.04,
+                            ),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // ========================================
+                          // ÍCONE
+                          // ========================================
+
+                          Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: cor.withValues(
+                                alpha: isDark ? 0.20 : 0.14,
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Icon(
+                              dica['icone'] as IconData,
+                              color: cor,
+                              size: 26,
+                            ),
+                          ),
+
+                          const SizedBox(width: 14),
+
+                          // ========================================
+                          // CONTEÚDO
+                          // ========================================
+
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // ==================================
+                                // CATEGORIA + TEMPO
+                                // ==================================
+
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Flexible(
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 3,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: isDark
+                                              ? const Color(
+                                                  0xFF302827,
+                                                )
+                                              : const Color(
+                                                  0xFFF3ECE8,
+                                                ),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                        child: Text(
+                                          dica['categoria'] as String,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                            color: isDark
+                                                ? const Color(
+                                                    0xFFD5A6A6,
+                                                  )
+                                                : const Color(
+                                                    0xFF80675C,
+                                                  ),
+                                          ),
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  Text(
-                                    dica['tempo'] as String,
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      color: Color(0xFF95877F),
-                                      fontWeight: FontWeight.w500,
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      dica['tempo'] as String,
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: colors.onSurfaceVariant,
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                     ),
+                                  ],
+                                ),
+
+                                const SizedBox(height: 8),
+
+                                // ==================================
+                                // TÍTULO DA DICA
+                                // ==================================
+
+                                Text(
+                                  dica['titulo'] as String,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: colors.onSurface,
                                   ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                dica['titulo'] as String,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF4F4039),
                                 ),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                dica['descricao'] as String,
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  height: 1.45,
-                                  color: Color(0xFF665B55),
+
+                                const SizedBox(height: 6),
+
+                                // ==================================
+                                // DESCRIÇÃO
+                                // ==================================
+
+                                Text(
+                                  dica['descricao'] as String,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    height: 1.45,
+                                    color: colors.onSurfaceVariant,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  );
-                }),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+
                 const SizedBox(height: 20),
               ],
             ),

@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:mindful_you/features/history/historico_global.dart';
 import 'package:mindful_you/services/database_service.dart';
 import 'package:mindful_you/widgets/avatar_perfil.dart';
 import 'package:mindful_you/widgets/menu_lateral_tela.dart';
@@ -1163,6 +1164,15 @@ class _PerfilTelaState extends State<PerfilTela>
                 await prefs.remove('nomeUsuario');
                 await prefs.remove('emailUsuario');
                 await prefs.remove('isAdmin');
+                await prefs.remove('usuarioId');
+                await prefs.remove('fotoPerfil');
+
+                // BUG CORRIGIDO: o logout limpava só 3 chaves e
+                // deixava o histórico de check-ins do usuário em
+                // memória (`historicoGlobal`). Se outra pessoa
+                // logasse em seguida antes dessa lista ser recarregada,
+                // ela via, por um instante, o histórico de quem saiu.
+                historicoGlobal.clear();
 
                 if (!context.mounted) return;
                 Navigator.pushNamedAndRemoveUntil(

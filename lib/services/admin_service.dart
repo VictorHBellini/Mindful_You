@@ -11,7 +11,7 @@ class AdminService {
   AdminService._();
 
   static const List<String> _emailsAdmin = [
-    'tester@gmail.com', // TODO: troque pelo seu e-mail de cadastro
+    'suporte@mindfulyou.com',
   ];
 
   /// Segunda camada de proteção: além do e-mail estar na lista de admins,

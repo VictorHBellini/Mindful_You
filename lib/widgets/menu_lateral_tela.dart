@@ -38,16 +38,6 @@ class _MenuLateralState extends State<MenuLateral> {
   }
 
   // ================================================================
-  // FOTO DE PERFIL
-  // ================================================================
-  //
-  // A leitura da foto salva (chave 'fotoPerfil') e o fallback para o
-  // avatar padrão agora vivem em `AvatarPerfil` (widgets/avatar_perfil.dart),
-  // compartilhado com `inicial_tela.dart`, `historico_tela.dart` e
-  // `grafico_tela.dart`, para que todas as telas sempre mostrem a mesma
-  // foto de perfil.
-
-  // ================================================================
   // NAVEGAÇÃO
   // ================================================================
 
@@ -75,25 +65,29 @@ class _MenuLateralState extends State<MenuLateral> {
   // ================================================================
 
   void mostrarDialogLogout(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
     showDialog(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          backgroundColor: Colors.white,
+          backgroundColor: colors.surface,
+          surfaceTintColor: Colors.transparent,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(22),
           ),
-          title: const Text(
+          title: Text(
             "Sair da conta",
             style: TextStyle(
               fontWeight: FontWeight.bold,
-              color: Color(0xFF40352F),
+              color: colors.onSurface,
             ),
           ),
-          content: const Text(
+          content: Text(
             "Tem certeza que deseja encerrar sua sessão?",
             style: TextStyle(
-              color: Color(0xFF756A64),
+              color: colors.onSurfaceVariant,
               height: 1.4,
             ),
           ),
@@ -102,10 +96,10 @@ class _MenuLateralState extends State<MenuLateral> {
               onPressed: () {
                 Navigator.pop(dialogContext);
               },
-              child: const Text(
+              child: Text(
                 "Cancelar",
                 style: TextStyle(
-                  color: Color(0xFF8D6E63),
+                  color: colors.primary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -114,13 +108,14 @@ class _MenuLateralState extends State<MenuLateral> {
               onPressed: () async {
                 Navigator.pop(dialogContext);
 
-                // Limpa dados da sessão antes de sair
                 final prefs = await SharedPreferences.getInstance();
+
                 await prefs.remove('nomeUsuario');
                 await prefs.remove('emailUsuario');
                 await prefs.remove('isAdmin');
 
                 if (!context.mounted) return;
+
                 Navigator.pushNamedAndRemoveUntil(
                   context,
                   '/login',
@@ -128,7 +123,9 @@ class _MenuLateralState extends State<MenuLateral> {
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFB05C55),
+                backgroundColor: theme.brightness == Brightness.dark
+                    ? const Color(0xFFB96F68)
+                    : const Color(0xFFB05C55),
                 foregroundColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
@@ -154,10 +151,18 @@ class _MenuLateralState extends State<MenuLateral> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
     return Drawer(
-      width: [MediaQuery.of(context).size.width * 0.82, 340.0]
-          .reduce((a, b) => a < b ? a : b),
-      backgroundColor: const Color(0xFFF8F5F2),
+      width: [
+        MediaQuery.of(context).size.width * 0.82,
+        340.0,
+      ].reduce(
+        (a, b) => a < b ? a : b,
+      ),
+      backgroundColor: colors.surface,
       child: SafeArea(
         child: Column(
           children: [
@@ -182,23 +187,10 @@ class _MenuLateralState extends State<MenuLateral> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Padding(
-                      padding: EdgeInsets.only(
-                        left: 8,
-                        bottom: 8,
-                      ),
-                      child: Text(
-                        "MENU PRINCIPAL",
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.1,
-                          color: Color(0xFF9A8C84),
-                        ),
-                      ),
+                    _tituloSecao(
+                      "MENU PRINCIPAL",
                     ),
 
-                    // INÍCIO
                     itemMenu(
                       context: context,
                       icon: Icons.home_rounded,
@@ -207,7 +199,6 @@ class _MenuLateralState extends State<MenuLateral> {
                       rota: "/inicial",
                     ),
 
-                    // CHECK-IN
                     itemMenu(
                       context: context,
                       icon: Icons.psychology_alt_outlined,
@@ -216,7 +207,6 @@ class _MenuLateralState extends State<MenuLateral> {
                       rota: "/questionario",
                     ),
 
-                    // HISTÓRICO
                     itemMenu(
                       context: context,
                       icon: Icons.bar_chart_rounded,
@@ -235,23 +225,10 @@ class _MenuLateralState extends State<MenuLateral> {
                     // CONTA
                     // ==================================================
 
-                    const Padding(
-                      padding: EdgeInsets.only(
-                        left: 8,
-                        bottom: 8,
-                      ),
-                      child: Text(
-                        "MINHA CONTA",
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.1,
-                          color: Color(0xFF9A8C84),
-                        ),
-                      ),
+                    _tituloSecao(
+                      "MINHA CONTA",
                     ),
 
-                    // PERFIL
                     itemMenu(
                       context: context,
                       icon: Icons.person_outline_rounded,
@@ -260,7 +237,6 @@ class _MenuLateralState extends State<MenuLateral> {
                       rota: "/perfil",
                     ),
 
-                    // CONFIGURAÇÕES
                     itemMenu(
                       context: context,
                       icon: Icons.settings_outlined,
@@ -279,23 +255,10 @@ class _MenuLateralState extends State<MenuLateral> {
                     // INFORMAÇÕES
                     // ==================================================
 
-                    const Padding(
-                      padding: EdgeInsets.only(
-                        left: 8,
-                        bottom: 8,
-                      ),
-                      child: Text(
-                        "INFORMAÇÕES",
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.1,
-                          color: Color(0xFF9A8C84),
-                        ),
-                      ),
+                    _tituloSecao(
+                      "INFORMAÇÕES",
                     ),
 
-                    // TERMOS
                     itemMenu(
                       context: context,
                       icon: Icons.description_outlined,
@@ -304,7 +267,6 @@ class _MenuLateralState extends State<MenuLateral> {
                       rota: "/termos",
                     ),
 
-                    // PRIVACIDADE
                     itemMenu(
                       context: context,
                       icon: Icons.lock_outline_rounded,
@@ -316,26 +278,14 @@ class _MenuLateralState extends State<MenuLateral> {
                     const SizedBox(height: 18),
 
                     // ==================================================
-                    // ADMINISTRAÇÃO (visível só para o admin)
+                    // ADMINISTRAÇÃO
                     // ==================================================
 
                     if (isAdmin) ...[
                       _separador(),
                       const SizedBox(height: 18),
-                      const Padding(
-                        padding: EdgeInsets.only(
-                          left: 8,
-                          bottom: 8,
-                        ),
-                        child: Text(
-                          "ADMINISTRAÇÃO",
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.1,
-                            color: Color(0xFF9A8C84),
-                          ),
-                        ),
+                      _tituloSecao(
+                        "ADMINISTRAÇÃO",
                       ),
                       itemMenu(
                         context: context,
@@ -373,10 +323,40 @@ class _MenuLateralState extends State<MenuLateral> {
   }
 
   // ================================================================
+  // TÍTULO DE SEÇÃO
+  // ================================================================
+
+  Widget _tituloSecao(String texto) {
+    final colors = Theme.of(context).colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.only(
+        left: 8,
+        bottom: 8,
+      ),
+      child: Text(
+        texto,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 1.1,
+          color: colors.onSurfaceVariant.withValues(
+            alpha: 0.75,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ================================================================
   // CABEÇALHO
   // ================================================================
 
   Widget _cabecalho() {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(
@@ -385,16 +365,21 @@ class _MenuLateralState extends State<MenuLateral> {
         22,
         25,
       ),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            Color(0xFFE8DCD4),
-            Color(0xFFF1E8E1),
-          ],
+          colors: isDark
+              ? [
+                  const Color(0xFF302827),
+                  const Color(0xFF252120),
+                ]
+              : [
+                  const Color(0xFFE8DCD4),
+                  const Color(0xFFF1E8E1),
+                ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.only(
+        borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(30),
           bottomRight: Radius.circular(30),
         ),
@@ -402,7 +387,10 @@ class _MenuLateralState extends State<MenuLateral> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // ======================================================
           // FOTO
+          // ======================================================
+
           Center(
             child: Stack(
               children: [
@@ -413,19 +401,28 @@ class _MenuLateralState extends State<MenuLateral> {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: Colors.white,
+                      color: isDark ? const Color(0xFF4A3E3B) : Colors.white,
                       width: 4,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.08),
+                        color: Colors.black.withValues(
+                          alpha: isDark ? 0.25 : 0.08,
+                        ),
                         blurRadius: 12,
                         offset: const Offset(0, 5),
                       ),
                     ],
                   ),
-                  child: const AvatarPerfil(radius: 40),
+                  child: const AvatarPerfil(
+                    radius: 40,
+                  ),
                 ),
+
+                // ==================================================
+                // ÍCONE DE CORAÇÃO
+                // ==================================================
+
                 Positioned(
                   bottom: 2,
                   right: 2,
@@ -433,17 +430,19 @@ class _MenuLateralState extends State<MenuLateral> {
                     width: 25,
                     height: 25,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF8D6E63),
+                      color: isDark
+                          ? const Color(0xFFD5A6A6)
+                          : const Color(0xFF8D6E63),
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: Colors.white,
+                        color: isDark ? const Color(0xFF252120) : Colors.white,
                         width: 2,
                       ),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.favorite_rounded,
                       size: 13,
-                      color: Colors.white,
+                      color: isDark ? const Color(0xFF302827) : Colors.white,
                     ),
                   ),
                 ),
@@ -453,31 +452,39 @@ class _MenuLateralState extends State<MenuLateral> {
 
           const SizedBox(height: 15),
 
+          // ======================================================
           // NOME
+          // ======================================================
+
           Center(
             child: Text(
               nomeUsuario,
               textAlign: TextAlign.center,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 21,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF40352F),
+                color:
+                    isDark ? const Color(0xFFF3ECE8) : const Color(0xFF40352F),
               ),
             ),
           ),
 
           const SizedBox(height: 5),
 
+          // ======================================================
           // FRASE
-          const Center(
+          // ======================================================
+
+          Center(
             child: Text(
               "Cuide de você todos os dias 🌱",
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 12,
-                color: Color(0xFF806F66),
+                color:
+                    isDark ? const Color(0xFFBDAFAA) : const Color(0xFF806F66),
               ),
             ),
           ),
@@ -498,8 +505,14 @@ class _MenuLateralState extends State<MenuLateral> {
     String? rota,
     VoidCallback? onTap,
   }) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 7),
+      margin: const EdgeInsets.only(
+        bottom: 7,
+      ),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(17),
       ),
@@ -507,6 +520,12 @@ class _MenuLateralState extends State<MenuLateral> {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(17),
+          splashColor: colors.primary.withValues(
+            alpha: 0.08,
+          ),
+          highlightColor: colors.primary.withValues(
+            alpha: 0.04,
+          ),
           onTap: onTap ??
               () {
                 if (rota != null) {
@@ -523,12 +542,17 @@ class _MenuLateralState extends State<MenuLateral> {
             ),
             child: Row(
               children: [
+                // ==================================================
                 // ÍCONE
+                // ==================================================
+
                 Container(
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF0E7E1),
+                    color: isDark
+                        ? const Color(0xFF302827)
+                        : const Color(0xFFF0E7E1),
                     borderRadius: BorderRadius.circular(
                       13,
                     ),
@@ -536,13 +560,18 @@ class _MenuLateralState extends State<MenuLateral> {
                   child: Icon(
                     icon,
                     size: 22,
-                    color: const Color(0xFF80675C),
+                    color: isDark
+                        ? const Color(0xFFD5A6A6)
+                        : const Color(0xFF80675C),
                   ),
                 ),
 
                 const SizedBox(width: 13),
 
+                // ==================================================
                 // TEXTOS
+                // ==================================================
+
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -551,10 +580,10 @@ class _MenuLateralState extends State<MenuLateral> {
                         titulo,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF4F4039),
+                          color: colors.onSurface,
                         ),
                       ),
                       const SizedBox(height: 3),
@@ -562,9 +591,9 @@ class _MenuLateralState extends State<MenuLateral> {
                         descricao,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
-                          color: Color(0xFF95877F),
+                          color: colors.onSurfaceVariant,
                         ),
                       ),
                     ],
@@ -573,10 +602,12 @@ class _MenuLateralState extends State<MenuLateral> {
 
                 const SizedBox(width: 5),
 
-                const Icon(
+                Icon(
                   Icons.arrow_forward_ios_rounded,
                   size: 13,
-                  color: Color(0xFFB7AAA2),
+                  color: colors.onSurfaceVariant.withValues(
+                    alpha: 0.55,
+                  ),
                 ),
               ],
             ),
@@ -593,18 +624,24 @@ class _MenuLateralState extends State<MenuLateral> {
   Widget itemSair(
     BuildContext context,
   ) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF4F2),
+        color: isDark ? const Color(0xFF352625) : const Color(0xFFFFF4F2),
         borderRadius: BorderRadius.circular(17),
         border: Border.all(
-          color: const Color(0xFFF1D8D3),
+          color: isDark ? const Color(0xFF60403D) : const Color(0xFFF1D8D3),
         ),
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(17),
+          splashColor: const Color(0xFFB05C55).withValues(
+            alpha: 0.08,
+          ),
           onTap: () {
             mostrarDialogLogout(
               context,
@@ -614,11 +651,17 @@ class _MenuLateralState extends State<MenuLateral> {
             padding: const EdgeInsets.all(13),
             child: Row(
               children: [
+                // ==================================================
+                // ÍCONE
+                // ==================================================
+
                 Container(
                   width: 43,
                   height: 43,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF5DFDC),
+                    color: isDark
+                        ? const Color(0xFF4A302E)
+                        : const Color(0xFFF5DFDC),
                     borderRadius: BorderRadius.circular(
                       13,
                     ),
@@ -629,8 +672,14 @@ class _MenuLateralState extends State<MenuLateral> {
                     color: Color(0xFFB05C55),
                   ),
                 ),
+
                 const SizedBox(width: 12),
-                const Expanded(
+
+                // ==================================================
+                // TEXTOS
+                // ==================================================
+
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -639,24 +688,31 @@ class _MenuLateralState extends State<MenuLateral> {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF9E4F49),
+                          color: isDark
+                              ? const Color(0xFFE08F87)
+                              : const Color(0xFF9E4F49),
                         ),
                       ),
-                      SizedBox(height: 3),
+                      const SizedBox(height: 3),
                       Text(
                         "Encerrar sua sessão",
                         style: TextStyle(
                           fontSize: 11,
-                          color: Color(0xFFB7837D),
+                          color: isDark
+                              ? const Color(0xFFC18D87)
+                              : const Color(0xFFB7837D),
                         ),
                       ),
                     ],
                   ),
                 ),
-                const Icon(
+
+                Icon(
                   Icons.arrow_forward_ios_rounded,
                   size: 13,
-                  color: Color(0xFFBF8982),
+                  color: isDark
+                      ? const Color(0xFFC18D87)
+                      : const Color(0xFFBF8982),
                 ),
               ],
             ),
@@ -671,12 +727,16 @@ class _MenuLateralState extends State<MenuLateral> {
   // ================================================================
 
   Widget _separador() {
+    final colors = Theme.of(context).colorScheme;
+
     return Container(
       height: 1,
       margin: const EdgeInsets.symmetric(
         horizontal: 8,
       ),
-      color: const Color(0xFFE7DED8),
+      color: colors.outlineVariant.withValues(
+        alpha: 0.65,
+      ),
     );
   }
 
@@ -685,16 +745,20 @@ class _MenuLateralState extends State<MenuLateral> {
   // ================================================================
 
   Widget _rodape() {
+    final colors = Theme.of(context).colorScheme;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(
         vertical: 14,
       ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerLow,
         border: Border(
           top: BorderSide(
-            color: Color(0xFFE9E0DB),
+            color: colors.outlineVariant.withValues(
+              alpha: 0.65,
+            ),
           ),
         ),
       ),
@@ -711,20 +775,22 @@ class _MenuLateralState extends State<MenuLateral> {
               const SizedBox(width: 5),
               Text(
                 "Mindful You",
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF80675C),
+                  color: colors.onSurfaceVariant,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 3),
-          const Text(
+          Text(
             "Versão 1.5.2",
             style: TextStyle(
               fontSize: 10,
-              color: Color(0xFFAAA09A),
+              color: colors.onSurfaceVariant.withValues(
+                alpha: 0.65,
+              ),
             ),
           ),
         ],

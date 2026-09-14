@@ -1,17 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:mindful_you/widgets/tela_legal_base.dart';
 
-// ======================================================================
-// TELA - POLÍTICA DE PRIVACIDADE
-// ======================================================================
-//
-// Exibe o texto da Política de Privacidade do Mindful You, reaproveitando
-// o layout compartilhado em `widgets/tela_legal_base.dart` (mesma paleta
-// e estrutura visual usadas em toda a aplicação).
-//
-// Ajuste o import acima caso o pacote do projeto não seja
-// `mindful_you` ou caso este arquivo seja salvo fora de `features/`.
-// ======================================================================
+import '../../widgets/tela_legal_base.dart';
 
 class PoliticaPrivacidadeTela extends StatelessWidget {
   const PoliticaPrivacidadeTela({super.key});
@@ -38,50 +27,43 @@ class PoliticaPrivacidadeTela extends StatelessWidget {
     ),
     SecaoTextoLegal(
       titulo: "3. Armazenamento das informações",
-      corpo:
-          "As informações são armazenadas de forma segura e utilizadas "
+      corpo: "As informações são armazenadas de forma segura e utilizadas "
           "apenas para as finalidades descritas nesta política.",
     ),
     SecaoTextoLegal(
       titulo: "4. Compartilhamento de dados",
-      corpo:
-          "O Mindful You não vende nem comercializa informações pessoais "
+      corpo: "O Mindful You não vende nem comercializa informações pessoais "
           "dos usuários.\n\n"
           "Os dados não serão compartilhados com terceiros, exceto "
           "quando exigido por obrigação legal.",
     ),
     SecaoTextoLegal(
       titulo: "5. Exclusão de dados",
-      corpo:
-          "O usuário pode solicitar a exclusão de seus dados ou remover "
+      corpo: "O usuário pode solicitar a exclusão de seus dados ou remover "
           "suas informações utilizando as opções disponíveis no "
           "aplicativo, quando aplicável.",
     ),
     SecaoTextoLegal(
       titulo: "6. Segurança",
-      corpo:
-          "São adotadas medidas razoáveis para proteger as informações "
+      corpo: "São adotadas medidas razoáveis para proteger as informações "
           "armazenadas contra acessos não autorizados, perda ou "
           "alteração indevida.",
     ),
     SecaoTextoLegal(
       titulo: "7. Direitos do usuário",
-      corpo:
-          "O usuário poderá solicitar informações sobre seus dados "
+      corpo: "O usuário poderá solicitar informações sobre seus dados "
           "armazenados, bem como solicitar correção ou exclusão quando "
           "permitido pela legislação aplicável.",
     ),
     SecaoTextoLegal(
       titulo: "8. Alterações desta política",
-      corpo:
-          "Esta Política de Privacidade poderá ser atualizada "
+      corpo: "Esta Política de Privacidade poderá ser atualizada "
           "periodicamente para refletir melhorias e mudanças no "
           "aplicativo.",
     ),
     SecaoTextoLegal(
       titulo: "9. Contato",
-      corpo:
-          "Dúvidas relacionadas à privacidade e proteção de dados podem "
+      corpo: "Dúvidas relacionadas à privacidade e proteção de dados podem "
           "ser encaminhadas pelos canais oficiais do desenvolvedor.",
     ),
   ];

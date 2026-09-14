@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:mindful_you/features/history/historico_global.dart';
 import 'package:mindful_you/widgets/menu_lateral_tela.dart';
 import 'package:mindful_you/widgets/avatar_perfil.dart';
 
@@ -29,16 +30,27 @@ class _InicialTelaState extends State<InicialTela> {
   Future<void> carregarDados() async {
     final prefs = await SharedPreferences.getInstance();
 
+    // BUG CORRIGIDO: "último sentimento/emoji/data" vinham de chaves
+    // globais do SharedPreferences (as mesmas para qualquer conta do
+    // aparelho), então quem logasse via o último check-in de outra
+    // pessoa. Agora eles são derivados do histórico do usuário
+    // atualmente logado (tabela `checkins`, via `historico_global.dart`).
+    await carregarHistorico();
+
     if (!mounted) return;
+
+    final ultimo = historicoGlobal.isNotEmpty ? historicoGlobal.last : null;
 
     setState(() {
       nomeUsuario = prefs.getString('nomeUsuario') ?? "Usuário";
 
-      ultimoSentimento = prefs.getString('ultimoSentimento') ?? "Nenhum";
+      ultimoSentimento = (ultimo?['sentimento'] as String?)?.isNotEmpty == true
+          ? ultimo!['sentimento'] as String
+          : "Nenhum";
 
-      ultimoEmoji = prefs.getString('ultimoEmoji') ?? "🙂";
+      ultimoEmoji = (ultimo?['emoji'] as String?) ?? "🙂";
 
-      ultimaData = prefs.getString('ultimaData') ?? "Ainda não realizado";
+      ultimaData = (ultimo?['data'] as String?) ?? "Ainda não realizado";
     });
   }
 

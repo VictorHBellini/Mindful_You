@@ -35,7 +35,9 @@ class _ConfiguracaoTelaState extends State<ConfiguracaoTela> {
       nomeUsuario = prefs.getString('nomeUsuario') ?? "Usuário";
       emailUsuario = prefs.getString('emailUsuario') ?? "";
       notificacao = prefs.getBool('notificacao') ?? false;
-      temaEscuro = prefs.getBool('temaEscuro') ?? false;
+
+      // Mantém o estado visual sincronizado com o ThemeService.
+      temaEscuro = ThemeService.mode.value == ThemeMode.dark;
     });
   }
 
@@ -53,52 +55,83 @@ class _ConfiguracaoTelaState extends State<ConfiguracaoTela> {
     );
   }
 
+  Future<void> _alterarTema(bool value) async {
+    setState(() {
+      temaEscuro = value;
+    });
+
+    await ThemeService.setDark(value);
+  }
+
+  Future<void> _alterarNotificacoes(bool value) async {
+    setState(() {
+      notificacao = value;
+    });
+
+    await salvarPreferencias();
+  }
+
   Future<void> _excluirDadosLocais() async {
     final confirmar = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Excluir dados locais?'),
-        content: const Text(
-          'Seu perfil e histórico salvos neste dispositivo serão removidos. Esta ação não pode ser desfeita.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.red,
+      builder: (context) {
+        final theme = Theme.of(context);
+        final colors = theme.colorScheme;
+
+        return AlertDialog(
+          backgroundColor: colors.surface,
+          title: Text(
+            'Excluir dados locais?',
+            style: TextStyle(
+              color: colors.onSurface,
+              fontWeight: FontWeight.bold,
             ),
-            child: const Text('Excluir'),
           ),
-        ],
-      ),
+          content: Text(
+            'Seu perfil e histórico salvos neste dispositivo serão '
+            'removidos. Esta ação não pode ser desfeita.',
+            style: TextStyle(
+              color: colors.onSurfaceVariant,
+              height: 1.5,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.red,
+              ),
+              child: const Text('Excluir'),
+            ),
+          ],
+        );
+      },
     );
 
     if (confirmar != true) return;
 
     final prefs = await SharedPreferences.getInstance();
 
-    // Exclui o usuário do banco SQLite pelo e-mail salvo
+    // Exclui o usuário do banco SQLite pelo e-mail salvo.
     final email = prefs.getString('emailUsuario');
+
     if (email != null && email.isNotEmpty) {
       final usuario = await DatabaseService.instance.buscarPorEmail(email);
+
       if (usuario != null) {
-        await DatabaseService.instance.deletarUsuario(usuario['id'] as int);
+        await DatabaseService.instance.deletarUsuario(
+          usuario['id'] as int,
+        );
       }
     }
 
     await limparHistorico();
 
-    // BUG CORRIGIDO: antes só removíamos 3 chaves (nomeUsuario,
-    // emailUsuario, ultimoQuestionario), deixando pra trás outros
-    // dados reais do usuário salvos no aparelho — foto de perfil,
-    // último check-in, contadores de humor, preferências de tema e
-    // notificação. Se outra pessoa criasse uma conta nova no mesmo
-    // aparelho depois, esses dados antigos apareciam na conta nova.
-    // Agora limpamos tudo de uma vez.
+    // Limpa todos os dados locais do usuário.
     await prefs.clear();
 
     if (!mounted) return;
@@ -113,22 +146,27 @@ class _ConfiguracaoTelaState extends State<ConfiguracaoTela> {
   Widget _sectionCard({
     required Widget child,
   }) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
-          color: const Color(0xFFE8DFDA),
+          color: colors.outline.withValues(alpha: 0.35),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        boxShadow: theme.brightness == Brightness.light
+            ? [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ]
+            : null,
       ),
       child: child,
     );
@@ -136,77 +174,110 @@ class _ConfiguracaoTelaState extends State<ConfiguracaoTela> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F1ED),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(18),
           child: Column(
             children: [
+              // ==========================================================
+              // BOTÃO VOLTAR
+              // ==========================================================
               Align(
                 alignment: Alignment.centerLeft,
                 child: IconButton(
                   onPressed: () => Navigator.pop(context),
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.arrow_back_ios_new_rounded,
-                    color: Color(0xFF8A7B73),
+                    color: colors.onSurfaceVariant,
                   ),
                 ),
               ),
+
               const SizedBox(height: 10),
+
+              // ==========================================================
+              // AVATAR
+              // ==========================================================
               Container(
                 width: 106,
                 height: 106,
                 padding: const EdgeInsets.all(3),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: theme.cardColor,
                   shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 15,
-                    ),
-                  ],
+                  border: Border.all(
+                    color: colors.outline.withValues(alpha: 0.35),
+                  ),
+                  boxShadow: isDark
+                      ? null
+                      : [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.05),
+                            blurRadius: 15,
+                          ),
+                        ],
                 ),
                 child: const AvatarPerfil(radius: 50),
               ),
+
               const SizedBox(height: 18),
+
+              // ==========================================================
+              // NOME
+              // ==========================================================
               Text(
                 nomeUsuario,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF40352F),
+                  color: colors.onSurface,
                 ),
               ),
+
               const SizedBox(height: 4),
+
+              // ==========================================================
+              // E-MAIL
+              // ==========================================================
               Text(
                 emailUsuario.isEmpty
                     ? "Nenhum e-mail cadastrado"
                     : emailUsuario,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Color(0xFF8A7B73),
+                style: TextStyle(
+                  color: colors.onSurfaceVariant,
                   fontSize: 15,
                 ),
               ),
+
               const SizedBox(height: 30),
+
+              // ==========================================================
+              // MINHA CONTA
+              // ==========================================================
               _sectionCard(
                 child: Column(
                   children: [
-                    const Row(
+                    Row(
                       children: [
                         Icon(
                           Icons.person_outline_rounded,
-                          color: Color(0xFF8D6E63),
+                          color: colors.primary,
                         ),
-                        SizedBox(width: 10),
+                        const SizedBox(width: 10),
                         Text(
                           "Minha Conta",
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
+                            color: colors.onSurface,
                           ),
                         ),
                       ],
@@ -228,9 +299,13 @@ class _ConfiguracaoTelaState extends State<ConfiguracaoTela> {
                           "Editar Perfil",
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF8D6E63),
-                          foregroundColor: Colors.white,
-                          minimumSize: const Size(double.infinity, 52),
+                          backgroundColor: colors.primary,
+                          foregroundColor: colors.onPrimary,
+                          minimumSize: const Size(
+                            double.infinity,
+                            52,
+                          ),
+                          elevation: 0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
@@ -240,89 +315,120 @@ class _ConfiguracaoTelaState extends State<ConfiguracaoTela> {
                   ],
                 ),
               ),
+
               const SizedBox(height: 18),
+
+              // ==========================================================
+              // PREFERÊNCIAS
+              // ==========================================================
               _sectionCard(
                 child: Column(
                   children: [
-                    const Row(
+                    Row(
                       children: [
                         Icon(
                           Icons.tune_rounded,
-                          color: Color(0xFF8D6E63),
+                          color: colors.primary,
                         ),
-                        SizedBox(width: 10),
+                        const SizedBox(width: 10),
                         Text(
                           "Preferências",
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
+                            color: colors.onSurface,
                           ),
                         ),
                       ],
                     ),
+
                     const SizedBox(height: 10),
+
+                    // ----------------------------------------------------
+                    // NOTIFICAÇÕES
+                    // ----------------------------------------------------
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: const Text(
+                      title: Text(
                         "Notificações",
+                        style: TextStyle(
+                          color: colors.onSurface,
+                        ),
                       ),
-                      secondary: const Icon(
+                      secondary: Icon(
                         Icons.notifications_none_rounded,
+                        color: colors.onSurfaceVariant,
                       ),
                       value: notificacao,
-                      onChanged: (value) {
-                        setState(() {
-                          notificacao = value;
-                        });
-
-                        salvarPreferencias();
-                      },
+                      onChanged: _alterarNotificacoes,
                     ),
+
+                    // ----------------------------------------------------
+                    // TEMA ESCURO
+                    // ----------------------------------------------------
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: const Text(
+                      title: Text(
                         "Tema escuro",
+                        style: TextStyle(
+                          color: colors.onSurface,
+                        ),
                       ),
-                      secondary: const Icon(
-                        Icons.dark_mode_outlined,
+                      subtitle: Text(
+                        temaEscuro
+                            ? "Tema escuro ativado"
+                            : "Tema claro ativado",
+                        style: TextStyle(
+                          color: colors.onSurfaceVariant,
+                          fontSize: 12,
+                        ),
+                      ),
+                      secondary: Icon(
+                        temaEscuro
+                            ? Icons.dark_mode_rounded
+                            : Icons.light_mode_outlined,
+                        color: colors.onSurfaceVariant,
                       ),
                       value: temaEscuro,
-                      onChanged: (value) {
-                        setState(() {
-                          temaEscuro = value;
-                        });
-
-                        ThemeService.setDark(value);
-                      },
+                      onChanged: _alterarTema,
                     ),
                   ],
                 ),
               ),
+
               const SizedBox(height: 18),
+
+              // ==========================================================
+              // ZONA SENSÍVEL
+              // ==========================================================
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: 0.05),
+                  color: Colors.red.withValues(
+                    alpha: isDark ? 0.08 : 0.05,
+                  ),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: Colors.red.withValues(alpha: 0.20),
+                    color: Colors.red.withValues(
+                      alpha: isDark ? 0.25 : 0.20,
+                    ),
                   ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Row(
+                    Row(
                       children: [
-                        Icon(
+                        const Icon(
                           Icons.warning_amber_rounded,
                           color: Colors.red,
                         ),
-                        SizedBox(width: 8),
+                        const SizedBox(width: 8),
                         Text(
                           "Zona Sensível",
                           style: TextStyle(
-                            color: Colors.red,
+                            color: Colors.red.shade400,
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
@@ -330,6 +436,16 @@ class _ConfiguracaoTelaState extends State<ConfiguracaoTela> {
                       ],
                     ),
                     const SizedBox(height: 14),
+                    Text(
+                      "A exclusão remove o perfil e o histórico "
+                      "armazenados neste dispositivo.",
+                      style: TextStyle(
+                        color: colors.onSurfaceVariant,
+                        fontSize: 14,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
                     TextButton.icon(
                       onPressed: _excluirDadosLocais,
                       icon: const Icon(
@@ -346,6 +462,7 @@ class _ConfiguracaoTelaState extends State<ConfiguracaoTela> {
                   ],
                 ),
               ),
+
               const SizedBox(height: 30),
             ],
           ),
