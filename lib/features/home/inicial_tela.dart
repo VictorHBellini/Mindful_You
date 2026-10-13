@@ -585,6 +585,16 @@ class _InicialTelaState extends State<InicialTela> {
                       ],
                     ),
 
+                    const SizedBox(height: 18),
+                    Card(
+                      child: ListTile(
+                        leading: const Icon(Icons.assignment_outlined),
+                        title: const Text('Avaliações de rastreio'),
+                        subtitle: const Text('Módulo em preparação para o TCC'),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => Navigator.pushNamed(context, '/avaliacoes'),
+                      ),
+                    ),
                     const SizedBox(height: 30),
                   ],
                 ),

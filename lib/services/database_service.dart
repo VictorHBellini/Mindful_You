@@ -24,7 +24,7 @@ class DatabaseService {
 
     return openDatabase(
       path,
-      version: 7,
+      version: 8,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE usuarios (
@@ -40,6 +40,7 @@ class DatabaseService {
         ''');
         await _criarTabelaCheckins(db);
         await _criarTabelaVinculos(db);
+        await _criarTabelaAvaliacoes(db);
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
@@ -97,7 +98,31 @@ class DatabaseService {
         if (oldVersion < 7) {
           await _criarTabelaVinculos(db);
         }
+        if (oldVersion < 8) {
+          await _criarTabelaAvaliacoes(db);
+        }
       },
+    );
+  }
+
+  /// Avaliações estruturadas de demonstração, separadas dos check-ins.
+  /// Itens e interpretações devem ser validados antes do uso de instrumentos.
+  Future<void> _criarTabelaAvaliacoes(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS avaliacoes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
+        instrumento TEXT NOT NULL CHECK(instrumento IN ('GAD7', 'PHQ9')),
+        versao TEXT NOT NULL,
+        respostas_json TEXT NOT NULL,
+        pontuacao INTEGER NOT NULL,
+        item_sensivel_positivo INTEGER NOT NULL DEFAULT 0,
+        criado_em TEXT NOT NULL
+      )
+    ''');
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_avaliacoes_usuario_data '
+      'ON avaliacoes(usuario_id, criado_em DESC)',
     );
   }
 
@@ -355,6 +380,8 @@ class DatabaseService {
   Future<int> deletarUsuario(int id) async {
     final db = await database;
     await db.delete('checkins', where: 'usuario_id = ?', whereArgs: [id]);
+    await db.delete('avaliacoes', where: 'usuario_id = ?', whereArgs: [id]);
+    await db.delete('vinculos_terapeuticos', where: 'terapeuta_id = ? OR paciente_id = ?', whereArgs: [id, id]);
     return db.delete('usuarios', where: 'id = ?', whereArgs: [id]);
   }
 
