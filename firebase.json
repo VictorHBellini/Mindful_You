@@ -1,1 +1,31 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"mindful-tcc","appId":"1:483603504230:android:ffbc4ed1e02b45d57a21a7","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"mindful-tcc","configurations":{"android":"1:483603504230:android:ffbc4ed1e02b45d57a21a7","ios":"1:483603504230:ios:8ec27d762daba24d7a21a7","macos":"1:483603504230:ios:8ec27d762daba24d7a21a7","web":"1:483603504230:web:04b3e5d2069075697a21a7","windows":"1:483603504230:web:f63859b13d250bfb7a21a7"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "mindful-tcc",
+          "appId": "1:483603504230:android:ffbc4ed1e02b45d57a21a7",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "mindful-tcc",
+          "configurations": {
+            "android": "1:483603504230:android:ffbc4ed1e02b45d57a21a7",
+            "ios": "1:483603504230:ios:8ec27d762daba24d7a21a7",
+            "macos": "1:483603504230:ios:8ec27d762daba24d7a21a7",
+            "web": "1:483603504230:web:04b3e5d2069075697a21a7",
+            "windows": "1:483603504230:web:f63859b13d250bfb7a21a7"
+          }
+        }
+      }
+    }
+  },
+  "firestore": {
+    "database": "(default)",
+    "location": "southamerica-east1",
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  }
+}

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mindful_you/features/auth/firebase_teste_tela.dart';
 import 'package:mindful_you/features/assessment/avaliacoes_tela.dart';
 import 'package:mindful_you/features/patient/consentimentos_tela.dart';
 import 'package:mindful_you/features/therapist/painel_terapeuta_tela.dart';
@@ -18,6 +19,7 @@ import 'package:mindful_you/features/legal/politica_privacidade_tela.dart';
 import 'package:mindful_you/widgets/dicas_page.dart';
 
 class AppRoutes {
+  static const firebaseTeste = '/firebase-teste';
   static const splash = '/splashscreen';
   static const home = '/inicial';
   static const painelTerapeuta = '/painel-terapeuta';
@@ -37,6 +39,7 @@ class AppRoutes {
   static const privacidade = '/privacidade';
 
   static Map<String, WidgetBuilder> routes = {
+    firebaseTeste: (context) => const FirebaseTesteTela(),
     splash: (context) => const SplashScreenTela(),
     login: (context) => const LoginTela(),
     cadastro: (context) => const CadastroTela(),

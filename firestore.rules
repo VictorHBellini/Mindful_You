@@ -1,0 +1,31 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /usuarios/{uid} {
+      function dono() {
+        return request.auth != null && request.auth.uid == uid;
+      }
+      function camposValidos() {
+        return request.resource.data.keys().hasOnly([
+          'nome', 'email', 'tipo_usuario', 'criado_em'
+        ]) && request.resource.data.keys().hasAll([
+          'nome', 'email', 'tipo_usuario', 'criado_em'
+        ]) && request.resource.data.nome is string
+          && request.resource.data.nome.size() >= 3
+          && request.resource.data.nome.size() <= 120
+          && request.resource.data.email == request.auth.token.email
+          && request.resource.data.tipo_usuario in ['paciente', 'terapeuta']
+          && request.resource.data.criado_em == request.time;
+      }
+      allow get: if dono();
+      allow list: if false;
+      allow create: if dono() && camposValidos();
+      // Perfis são imutáveis nesta demonstração; futuras alterações
+      // exigirão fluxos específicos e validação no servidor.
+      allow update, delete: if false;
+    }
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
