@@ -42,8 +42,6 @@ class TelaLegalBase extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-
     final isDark = theme.brightness == Brightness.dark;
 
     // ==============================================================
@@ -148,9 +146,7 @@ class TelaLegalBase extends StatelessWidget {
                       ),
                       child: Icon(
                         icone,
-                        color: isDark
-                            ? const Color(0xFFD5A6A6)
-                            : const Color(0xFF8D6E63),
+                        color: accentColor,
                         size: 26,
                       ),
                     ),
@@ -184,9 +180,7 @@ class TelaLegalBase extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
-                      color: isDark
-                          ? const Color(0xFFD5A6A6)
-                          : const Color(0xFF8D6E63),
+                      color: accentColor,
                       letterSpacing: 0.3,
                     ),
                   ),

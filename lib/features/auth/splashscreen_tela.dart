@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
@@ -12,6 +13,7 @@ class _SplashScreenTelaState extends State<SplashScreenTela>
     with TickerProviderStateMixin {
   late AnimationController _controller;
   late AnimationController _breathingController;
+  Timer? _timer;
 
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
@@ -47,7 +49,7 @@ class _SplashScreenTelaState extends State<SplashScreenTela>
 
     _controller.forward();
 
-    Future.delayed(const Duration(seconds: 4), () {
+    _timer = Timer(const Duration(seconds: 4), () {
       if (!mounted) return;
       Navigator.pushReplacementNamed(context, '/login');
     });
@@ -55,6 +57,7 @@ class _SplashScreenTelaState extends State<SplashScreenTela>
 
   @override
   void dispose() {
+    _timer?.cancel();
     _controller.dispose();
     _breathingController.dispose();
     super.dispose();

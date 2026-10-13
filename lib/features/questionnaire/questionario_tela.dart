@@ -466,7 +466,6 @@ class _QuestionarioTelaState extends State<QuestionarioTela> {
         'atividadeImportante': _atividadeImportante,
 
         'energia': _energia,
-        'sono': _sono,
 
         'autocuidado': _autocuidado,
 
@@ -1790,9 +1789,9 @@ class _QuestionarioTelaState extends State<QuestionarioTela> {
           SliderTheme(
             data: SliderThemeData(
               activeTrackColor: cor,
-              inactiveTrackColor: cor.withOpacity(0.18),
+              inactiveTrackColor: cor.withValues(alpha: 0.18),
               thumbColor: cor,
-              overlayColor: cor.withOpacity(0.10),
+              overlayColor: cor.withValues(alpha: 0.10),
               trackHeight: 7,
               thumbShape: const RoundSliderThumbShape(
                 enabledThumbRadius: 10,
@@ -1916,7 +1915,7 @@ class _QuestionarioTelaState extends State<QuestionarioTela> {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: cor.withOpacity(0.11),
+                color: cor.withValues(alpha: 0.11),
                 shape: BoxShape.circle,
               ),
               child: Icon(

@@ -8,5 +8,9 @@ void main() {
 
     expect(find.text('MINDFUL'), findsOneWidget);
     expect(find.text('YOU'), findsOneWidget);
+
+    // Avança o tempo para disparar o timer da splash screen e evitar timers pendentes
+    await tester.pump(const Duration(seconds: 4));
+    await tester.pump();
   });
 }

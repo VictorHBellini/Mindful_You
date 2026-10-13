@@ -24,7 +24,7 @@ class _GerenciarUsuariosTelaState extends State<GerenciarUsuariosTela> {
   @override
   void initState() {
     super.initState();
-    _futureUsuarios = DatabaseService.instance.listarTodos();
+    _futureUsuarios = Future.value([]);
     WidgetsBinding.instance.addPostFrameCallback((_) => _verificarAcesso());
   }
 
@@ -56,6 +56,7 @@ class _GerenciarUsuariosTelaState extends State<GerenciarUsuariosTela> {
     setState(() {
       _autorizado = true;
       _verificando = false;
+      _futureUsuarios = DatabaseService.instance.listarTodos();
     });
   }
 
@@ -279,8 +280,10 @@ class _GerenciarUsuariosTelaState extends State<GerenciarUsuariosTela> {
                 return;
               }
 
-              if (!context.mounted) return;
-              Navigator.pop(ctx);
+              if (!mounted) return;
+              if (ctx.mounted) {
+                Navigator.pop(ctx);
+              }
               _recarregar();
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
