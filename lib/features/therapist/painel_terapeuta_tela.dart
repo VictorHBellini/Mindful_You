@@ -219,7 +219,7 @@ class _PainelTerapeutaTelaState extends State<PainelTerapeutaTela> {
                   leading: Icon(Icons.assignment_outlined),
                   title: Text('Questionários'),
                   subtitle: Text(
-                      'PHQ-9, GAD-7 e burnout: integração planejada, não disponível nesta versão.'),
+                      'Avaliações demonstrativas de ansiedade e humor disponíveis no histórico de pacientes autorizados. Burnout ainda não integrado.'),
                 ),
               ),
               const SizedBox(height: 16),

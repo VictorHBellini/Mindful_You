@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "483603504230",
+    "project_id": "mindful-tcc",
+    "storage_bucket": "mindful-tcc.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:483603504230:android:ffbc4ed1e02b45d57a21a7",
+        "android_client_info": {
+          "package_name": "com.example.mindful_you"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDBctPgNEGBUuSjmBoXRWjFM4z_ivkLEvg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
