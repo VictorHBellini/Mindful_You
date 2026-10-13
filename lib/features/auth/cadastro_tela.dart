@@ -21,6 +21,7 @@ class _CadastroTelaState extends State<CadastroTela> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool aceitarTermos = false;
+  String _tipoUsuario = 'paciente';
   bool _enviando = false;
 
   @override
@@ -54,6 +55,7 @@ class _CadastroTelaState extends State<CadastroTela> {
         nome: nome,
         email: email,
         senha: _senhaController.text,
+        tipoUsuario: _tipoUsuario,
       );
 
       // Mantém SharedPreferences para exibição em outras telas
@@ -61,6 +63,7 @@ class _CadastroTelaState extends State<CadastroTela> {
       await prefs.setString('nomeUsuario', nome);
       await prefs.setString('emailUsuario', email);
       await prefs.setInt('usuarioId', usuarioId);
+      await prefs.setString('tipoUsuario', _tipoUsuario);
 
       // Conta nova ainda não tem foto — remove qualquer valor deixado
       // por uma conta anterior usada neste aparelho.
@@ -77,7 +80,10 @@ class _CadastroTelaState extends State<CadastroTela> {
       await carregarHistorico();
 
       if (!mounted) return;
-      Navigator.pushReplacementNamed(context, '/inicial');
+      Navigator.pushNamedAndRemoveUntil(
+          context,
+          _tipoUsuario == 'terapeuta' ? '/painel-terapeuta' : '/inicial',
+          (route) => false);
     } on DatabaseException catch (e) {
       setState(() => _enviando = false);
       if (!mounted) return;
@@ -367,6 +373,38 @@ class _CadastroTelaState extends State<CadastroTela> {
                       ),
 
                       const SizedBox(height: 24),
+
+                      // Perfil da conta (apenas demonstração acadêmica).
+                      DropdownButtonFormField<String>(
+                        initialValue: _tipoUsuario,
+                        decoration: InputDecoration(
+                          labelText: 'Tipo de conta',
+                          filled: true,
+                          fillColor: const Color(0xFFF7F5F3),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(18),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                        items: const [
+                          DropdownMenuItem(
+                              value: 'paciente', child: Text('Paciente')),
+                          DropdownMenuItem(
+                              value: 'terapeuta',
+                              child: Text('Terapeuta (demonstração)')),
+                        ],
+                        onChanged: _enviando
+                            ? null
+                            : (v) {
+                                if (v != null) setState(() => _tipoUsuario = v);
+                              },
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'O perfil de terapeuta é apenas demonstrativo e não verifica registro profissional.',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                      const SizedBox(height: 20),
 
                       // Termos de uso
                       CheckboxListTile(

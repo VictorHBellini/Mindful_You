@@ -24,7 +24,7 @@ class DatabaseService {
 
     return openDatabase(
       path,
-      version: 5,
+      version: 6,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE usuarios (
@@ -34,7 +34,8 @@ class DatabaseService {
             senha     TEXT    NOT NULL,
             salt      TEXT    NOT NULL DEFAULT '',
             foto_path TEXT,
-            criado_em TEXT    NOT NULL
+            criado_em TEXT    NOT NULL,
+            tipo_usuario TEXT NOT NULL DEFAULT 'paciente' CHECK(tipo_usuario IN ('paciente','terapeuta'))
           )
         ''');
         await _criarTabelaCheckins(db);
@@ -85,6 +86,11 @@ class DatabaseService {
           );
           await db.execute(
             "ALTER TABLE checkins ADD COLUMN distanciamento_burnout TEXT NOT NULL DEFAULT ''",
+          );
+        }
+        if (oldVersion < 6) {
+          await db.execute(
+            "ALTER TABLE usuarios ADD COLUMN tipo_usuario TEXT NOT NULL DEFAULT 'paciente'",
           );
         }
       },
@@ -212,7 +218,11 @@ class DatabaseService {
     required String nome,
     required String email,
     required String senha,
+    String tipoUsuario = 'paciente',
   }) async {
+    if (tipoUsuario != 'paciente' && tipoUsuario != 'terapeuta') {
+      throw ArgumentError.value(tipoUsuario, 'tipoUsuario', 'Perfil inválido');
+    }
     final db = await database;
     final salt = gerarSalt();
     return db.insert(
@@ -223,6 +233,7 @@ class DatabaseService {
         'senha': hashSenha(senha, salt),
         'salt': salt,
         'foto_path': null,
+        'tipo_usuario': tipoUsuario,
         'criado_em': DateTime.now().toIso8601String(),
       },
       conflictAlgorithm: ConflictAlgorithm.fail,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mindful_you/features/therapist/painel_terapeuta_tela.dart';
 import 'package:mindful_you/features/assessment/grafico_tela.dart';
 import 'package:mindful_you/features/assessment/registros_tela.dart';
 import 'package:mindful_you/features/auth/cadastro_tela.dart';
@@ -17,6 +18,7 @@ import 'package:mindful_you/widgets/dicas_page.dart';
 class AppRoutes {
   static const splash = '/splashscreen';
   static const home = '/inicial';
+  static const painelTerapeuta = '/painel-terapeuta';
   static const login = '/login';
   static const cadastro = '/cadastro';
   static const questionario = '/questionario';
@@ -35,6 +37,7 @@ class AppRoutes {
     login: (context) => const LoginTela(),
     cadastro: (context) => const CadastroTela(),
     home: (context) => const InicialTela(),
+    painelTerapeuta: (context) => const PainelTerapeutaTela(),
     questionario: (context) => const QuestionarioTela(),
     grafico: (context) => const GraficoTela(),
     historico: (context) => HistoricoTela(),
