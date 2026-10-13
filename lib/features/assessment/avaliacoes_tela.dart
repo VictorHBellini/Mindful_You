@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mindful_you/services/avaliacao_service.dart';
+import 'package:mindful_you/features/assessment/questionario_rastreio_tela.dart';
 
 /// Entrada do módulo. Aplicação de escalas será liberada após revisão
 /// da redação validada e do protocolo para respostas sensíveis.
@@ -19,6 +20,14 @@ class _AvaliacoesTelaState extends State<AvaliacoesTela> {
     _atualizar();
   }
 
+  Future<void> _abrir(String instrumento) async {
+    final salvo = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => QuestionarioRastreioTela(instrumento: instrumento)),
+    );
+    if (!mounted) return;
+    if (salvo == true) setState(_atualizar);
+  }
+
   void _atualizar() {
     _avaliacoes = AvaliacaoService.instance.listarMinhasAvaliacoes();
   }
@@ -31,14 +40,26 @@ class _AvaliacoesTelaState extends State<AvaliacoesTela> {
         const Card(child: Padding(
           padding: EdgeInsets.all(16),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Módulo em preparação', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            Text('Formulários demonstrativos', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             SizedBox(height: 12),
-            Text('GAD-7 e PHQ-9: estrutura de armazenamento e pontuação preparada. '
-                'A aplicação dos questionários ainda não está disponível, '
-                'aguardando revisão da versão brasileira e do protocolo de segurança.'),
+            Text('Perguntas ilustrativas baseadas nos domínios de ansiedade e humor. '
+                'A redação não corresponde a versões validadas do GAD-7 e PHQ-9. '
+                'As pontuações são apenas para demonstrar o fluxo do aplicativo.'),
             SizedBox(height: 12),
-            Text('Esses instrumentos são de rastreio; não fornecem diagnóstico.'),
+            Text('Use apenas respostas fictícias. Não há diagnóstico nem monitoramento emergencial.'),
           ]))),
+        const SizedBox(height: 12),
+        FilledButton.icon(
+          onPressed: () => _abrir('GAD7'),
+          icon: const Icon(Icons.psychology_outlined),
+          label: const Text('Simular avaliação de ansiedade (7 itens)'),
+        ),
+        const SizedBox(height: 8),
+        OutlinedButton.icon(
+          onPressed: () => _abrir('PHQ9'),
+          icon: const Icon(Icons.assignment_outlined),
+          label: const Text('Simular avaliação de humor (9 itens)'),
+        ),
         const SizedBox(height: 20),
         Row(children: [
           const Expanded(child: Text('Minhas avaliações',
@@ -58,13 +79,13 @@ class _AvaliacoesTelaState extends State<AvaliacoesTela> {
             final itens = snapshot.data ?? [];
             if (itens.isEmpty) {
               return const ListTile(title: Text('Nenhuma avaliação registrada'),
-                subtitle: Text('A aplicação das escalas será habilitada em uma próxima atualização.'));
+                subtitle: Text('Use os botões acima para registrar respostas fictícias.'));
             }
             return Column(children: [
               for (final item in itens)
                 ListTile(
                   leading: const Icon(Icons.assignment_turned_in_outlined),
-                  title: Text('${item['instrumento']} • ${item['pontuacao']} pontos'),
+                  title: Text('${item['instrumento']} • ${item['pontuacao']} pontos demonstrativos'),
                   subtitle: Text('Versão ${item['versao']} • ${item['criado_em']}'),
                 ),
             ]);
