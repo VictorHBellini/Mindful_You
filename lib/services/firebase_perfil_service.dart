@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-/// Laboratório F2.2: somente perfis fictícios; não acessa dados clínicos.
+/// Laboratório F2.3: somente perfis fictícios, sem dados clínicos.
 class FirebasePerfilService {
   FirebasePerfilService._();
   static final instance = FirebasePerfilService._();
@@ -29,7 +29,11 @@ class FirebasePerfilService {
   Future<Map<String, dynamic>?> meuPerfil() async {
     final usuario = FirebaseAuth.instance.currentUser;
     if (usuario == null) return null;
-    final doc = await _usuarios.doc(usuario.uid).get();
+    final uid = usuario.uid;
+    final doc = await _usuarios.doc(uid).get();
+    if (FirebaseAuth.instance.currentUser?.uid != uid) {
+      throw StateError('Sessão alterada durante a consulta.');
+    }
     return doc.data();
   }
 }

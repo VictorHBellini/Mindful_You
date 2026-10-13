@@ -1,10 +1,21 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function autenticado() {
+      return request.auth != null;
+    }
+    function dono(uid) {
+      return autenticado() && request.auth.uid == uid;
+    }
+    function paciente(uid) {
+      return dono(uid)
+        && exists(/databases/$(database)/documents/usuarios/$(uid))
+        && get(/databases/$(database)/documents/usuarios/$(uid)).data.tipo_usuario == 'paciente';
+    }
+    function numeroValido(v) {
+      return v is number && v >= 0 && v <= 100;
+    }
     match /usuarios/{uid} {
-      function dono() {
-        return request.auth != null && request.auth.uid == uid;
-      }
       function camposValidos() {
         return request.resource.data.keys().hasOnly([
           'nome', 'email', 'tipo_usuario', 'criado_em'
@@ -17,12 +28,58 @@ service cloud.firestore {
           && request.resource.data.tipo_usuario in ['paciente', 'terapeuta']
           && request.resource.data.criado_em == request.time;
       }
-      allow get: if dono();
+      allow get: if dono(uid);
       allow list: if false;
-      allow create: if dono() && camposValidos();
-      // Perfis são imutáveis nesta demonstração; futuras alterações
-      // exigirão fluxos específicos e validação no servidor.
+      allow create: if dono(uid) && camposValidos();
       allow update, delete: if false;
+
+      match /checkins/{registroId} {
+        allow get, list: if paciente(uid);
+        allow create: if paciente(uid)
+          && request.resource.data.keys().hasOnly([
+            'bem_estar', 'ansiedade', 'cansaco', 'sono',
+            'produtividade', 'sentimento', 'criado_em'
+          ])
+          && request.resource.data.keys().hasAll([
+            'bem_estar', 'ansiedade', 'cansaco', 'sono',
+            'produtividade', 'sentimento', 'criado_em'
+          ])
+          && request.resource.data.bem_estar is int
+          && numeroValido(request.resource.data.bem_estar)
+          && numeroValido(request.resource.data.ansiedade)
+          && numeroValido(request.resource.data.cansaco)
+          && numeroValido(request.resource.data.sono)
+          && numeroValido(request.resource.data.produtividade)
+          && request.resource.data.sentimento is string
+          && request.resource.data.sentimento.size() <= 120
+          && request.resource.data.criado_em == request.time;
+        allow update, delete: if false;
+      }
+
+      match /avaliacoes/{registroId} {
+        allow get, list: if paciente(uid);
+        allow create: if paciente(uid)
+          && request.resource.data.keys().hasOnly([
+            'instrumento', 'versao', 'pontuacao', 'criado_em'
+          ])
+          && request.resource.data.keys().hasAll([
+            'instrumento', 'versao', 'pontuacao', 'criado_em'
+          ])
+          && request.resource.data.instrumento in ['GAD7', 'PHQ9']
+          && request.resource.data.versao is string
+          && request.resource.data.versao.size() >= 1
+          && request.resource.data.versao.size() <= 80
+          && request.resource.data.pontuacao is int
+          && request.resource.data.pontuacao >= 0
+          && (
+            (request.resource.data.instrumento == 'GAD7'
+              && request.resource.data.pontuacao <= 21)
+            || (request.resource.data.instrumento == 'PHQ9'
+              && request.resource.data.pontuacao <= 27)
+          )
+          && request.resource.data.criado_em == request.time;
+        allow update, delete: if false;
+      }
     }
     match /{document=**} {
       allow read, write: if false;
