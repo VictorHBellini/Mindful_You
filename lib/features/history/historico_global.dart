@@ -40,11 +40,30 @@ Map<String, dynamic> _linhaParaEntrada(Map<String, dynamic> linha) {
   final sono = (linha['sono'] as num?) ?? 0;
   final produtividade = (linha['produtividade'] as num?) ?? 0;
 
+  final sentimento = linha['sentimento']?.toString() ?? '';
+  final emoji = linha['emoji']?.toString() ?? '';
+
+  // Sinais de humor e energia (podem vir vazios em check-ins salvos
+  // antes desta funcionalidade existir).
+  final humorFrequencia = linha['humor_frequencia']?.toString() ?? '';
+  final interesseFrequencia = linha['interesse_frequencia']?.toString() ?? '';
+  final exaustaoBurnout = linha['exaustao_burnout']?.toString() ?? '';
+  final distanciamentoBurnout =
+      linha['distanciamento_burnout']?.toString() ?? '';
+
   return {
     'data': linha['data_formatada'],
     'dataIso': linha['data_iso'],
-    'sentimento': linha['sentimento'],
-    'emoji': linha['emoji'],
+    'sentimento': sentimento,
+    'emoji': emoji,
+    // BUG CORRIGIDO: os cards de `historico_tela.dart` (último check-in
+    // e cada item da lista) leem `item['status']` para mostrar um
+    // resumo do registro, mas essa chave nunca era preenchida — todo
+    // check-in aparecia com o texto genérico "Check-in realizado".
+    // Agora usamos o sentimento e o emoji escolhidos no questionário.
+    'status': sentimento.isNotEmpty
+        ? '$sentimento ${emoji.isNotEmpty ? emoji : ''}'.trim()
+        : null,
     'cor': linha['cor_valor'] is int
         ? Color(linha['cor_valor'] as int)
         : const Color(0xFFE8DCD4),
@@ -55,19 +74,37 @@ Map<String, dynamic> _linhaParaEntrada(Map<String, dynamic> linha) {
       'sono': sono,
       'produtividade': produtividade,
     },
+    // Sinais de humor e energia — ver observação no topo da seção
+    // "SINAIS DE HUMOR E ENERGIA" mais abaixo neste arquivo.
+    'humorFrequencia': humorFrequencia,
+    'interesseFrequencia': interesseFrequencia,
+    'exaustaoBurnout': exaustaoBurnout,
+    'distanciamentoBurnout': distanciamentoBurnout,
     // Mantém compatibilidade com a tela de Relatório (RegistrosTela),
-    // que espera 'perguntas' e 'respostas'.
-    'perguntas': const [
+    // que espera 'perguntas' e 'respostas'. Os 4 itens de humor e
+    // energia só entram na lista quando o check-in tem alguma
+    // resposta salva para eles (check-ins antigos, de antes desta
+    // funcionalidade, não têm — e não devem aparecer como "vazio"
+    // no relatório).
+    'perguntas': [
       'Cansaço',
       'Ansiedade',
       'Falta de sono',
       'Produtividade',
+      if (humorFrequencia.isNotEmpty) 'Humor (desânimo ou tristeza)',
+      if (interesseFrequencia.isNotEmpty) 'Interesse ou prazer',
+      if (exaustaoBurnout.isNotEmpty) 'Exaustão emocional',
+      if (distanciamentoBurnout.isNotEmpty) 'Distanciamento ou desmotivação',
     ],
     'respostas': [
       '${cansaco.toInt()}%',
       '${ansiedade.toInt()}%',
       '${sono.toInt()}%',
       '${produtividade.toInt()}%',
+      if (humorFrequencia.isNotEmpty) humorFrequencia,
+      if (interesseFrequencia.isNotEmpty) interesseFrequencia,
+      if (exaustaoBurnout.isNotEmpty) exaustaoBurnout,
+      if (distanciamentoBurnout.isNotEmpty) distanciamentoBurnout,
     ],
     'principalPonto': linha['principal_ponto'],
   };
@@ -115,6 +152,10 @@ Future<void> adicionarHistorico(Map<String, dynamic> entrada) async {
     bemEstar: (entrada['bemEstar'] as num?)?.round() ?? 0,
     principalPonto: entrada['principalPonto']?.toString() ?? '',
     corValor: cor is Color ? cor.toARGB32() : 0xFFE8DCD4,
+    humorFrequencia: entrada['humorFrequencia']?.toString() ?? '',
+    interesseFrequencia: entrada['interesseFrequencia']?.toString() ?? '',
+    exaustaoBurnout: entrada['exaustaoBurnout']?.toString() ?? '',
+    distanciamentoBurnout: entrada['distanciamentoBurnout']?.toString() ?? '',
   );
 
   // Recarrega a lista em memória para refletir o novo registro.
@@ -256,4 +297,79 @@ int calcularMediaBemEstar(List<Map<String, dynamic>> historico) {
   final soma = valores.reduce((a, b) => a + b);
 
   return (soma / valores.length).round();
+}
+
+// ============================================================
+// SINAIS DE HUMOR E ENERGIA (rastreio clínico)
+// ============================================================
+//
+// Fonte única da lógica de "sinal de atenção" usada pelas telas de
+// Gráfico e Histórico. Os 4 campos abaixo vêm do questionário
+// (páginas de humor/interesse/exaustão/distanciamento, ver
+// `questionario_tela.dart`) e guardam uma frequência ('Nunca',
+// 'Raramente', 'Às vezes', 'Frequentemente', 'Quase sempre') ou ''
+// quando o check-in é antigo e não tem essa informação.
+//
+// Importante: isso é um apoio visual para notar padrões ao longo do
+// tempo — não é uma pontuação clínica validada nem substitui a
+// avaliação de um profissional. As telas que usam essas funções devem
+// sempre deixar isso claro para quem estiver lendo.
+
+const List<String> camposSinaisClinicos = [
+  'humorFrequencia',
+  'interesseFrequencia',
+  'exaustaoBurnout',
+  'distanciamentoBurnout',
+];
+
+/// Rótulo amigável de cada campo em [camposSinaisClinicos], na mesma
+/// ordem, para exibição nas telas.
+const Map<String, String> rotulosSinaisClinicos = {
+  'humorFrequencia': 'Humor (desânimo ou tristeza)',
+  'interesseFrequencia': 'Interesse ou prazer',
+  'exaustaoBurnout': 'Exaustão emocional',
+  'distanciamentoBurnout': 'Distanciamento ou desmotivação',
+};
+
+/// Retorna `true` se a frequência informada representa um sinal que
+/// merece atenção ('Frequentemente' ou 'Quase sempre').
+bool frequenciaElevada(String? frequencia) {
+  return frequencia == 'Frequentemente' || frequencia == 'Quase sempre';
+}
+
+/// Quantos dos 4 campos de humor/energia de um único registro estão em
+/// nível elevado ('Frequentemente' ou 'Quase sempre').
+int contarSinaisElevados(Map<String, dynamic> item) {
+  int total = 0;
+
+  for (final campo in camposSinaisClinicos) {
+    if (frequenciaElevada(item[campo]?.toString())) {
+      total++;
+    }
+  }
+
+  return total;
+}
+
+/// Verifica se há um padrão recente que pode valer a pena conversar
+/// com o terapeuta: entre os [janela] check-ins mais recentes,
+/// pelo menos [minimoComSinal] deles têm algum sinal elevado de humor
+/// ou burnout.
+///
+/// [historicoRecentePrimeiro] deve estar ordenado do check-in mais
+/// recente para o mais antigo (é assim que `historico_tela.dart` já
+/// usa a lista, com `historicoGlobal.reversed`).
+bool possuiPadraoRecenteDeAtencao(
+  List<Map<String, dynamic>> historicoRecentePrimeiro, {
+  int janela = 3,
+  int minimoComSinal = 2,
+}) {
+  final recentes = historicoRecentePrimeiro.take(janela);
+  final comSinal = recentes
+      .where(
+        (item) => contarSinaisElevados(item) > 0,
+      )
+      .length;
+
+  return comSinal >= minimoComSinal;
 }

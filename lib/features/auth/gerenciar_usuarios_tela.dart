@@ -1,7 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'package:mindful_you/features/history/historico_global.dart';
 import 'package:mindful_you/services/admin_service.dart';
 import 'package:mindful_you/services/database_service.dart';
+import 'package:mindful_you/services/foto_perfil_service.dart';
 import 'package:sqflite/sqflite.dart';
 
 class GerenciarUsuariosTela extends StatefulWidget {
@@ -247,6 +251,25 @@ class _GerenciarUsuariosTelaState extends State<GerenciarUsuariosTela> {
                     id: id,
                     fotoPath: null,
                   );
+                  // Mesmo ajuste feito em `perfil_tela.dart`: apaga a
+                  // foto do disco, e não só a referência no banco.
+                  await FotoPerfilService.removerFotoAntiga(fotoPathAtual);
+                }
+
+                // BUG CORRIGIDO: um admin podia editar a própria conta
+                // por aqui (nome, e-mail ou remover a própria foto), mas
+                // essa tela nunca atualizava o SharedPreferences — então
+                // o menu lateral, a tela Inicial etc. continuavam
+                // mostrando o nome/e-mail/foto antigos até um novo
+                // login. Agora, se o usuário editado é o que está
+                // logado neste aparelho, sincronizamos a sessão também.
+                final prefs = await SharedPreferences.getInstance();
+                if (prefs.getInt('usuarioId') == id) {
+                  await prefs.setString('nomeUsuario', nomeCtrl.text.trim());
+                  await prefs.setString('emailUsuario', emailCtrl.text.trim());
+                  if (removerFoto) {
+                    await prefs.remove('fotoPerfil');
+                  }
                 }
               } on DatabaseException {
                 setModal(() {
@@ -563,7 +586,33 @@ class _GerenciarUsuariosTelaState extends State<GerenciarUsuariosTela> {
 
     if (confirmou != true) return;
 
-    await DatabaseService.instance.deletarUsuario(usuario['id'] as int);
+    final id = usuario['id'] as int;
+    await DatabaseService.instance.deletarUsuario(id);
+    await FotoPerfilService.removerFotoAntiga(usuario['foto_path'] as String?);
+
+    // BUG CORRIGIDO: nada impedia um admin de excluir a própria conta
+    // por esta tela (diferente da exclusão em Configurações, que já
+    // encerra a sessão direito). Sem este ajuste, a linha do usuário
+    // sumia do SQLite mas a sessão salva no SharedPreferences
+    // continuava "logada" numa conta que não existe mais — a lista de
+    // check-ins ficava vazia e telas como o Perfil paravam de
+    // encontrar o usuário, sem explicar o motivo.
+    final prefs = await SharedPreferences.getInstance();
+    final excluiuAPropriaConta = prefs.getInt('usuarioId') == id;
+
+    if (excluiuAPropriaConta) {
+      await prefs.remove('nomeUsuario');
+      await prefs.remove('emailUsuario');
+      await prefs.remove('isAdmin');
+      await prefs.remove('usuarioId');
+      await prefs.remove('fotoPerfil');
+      historicoGlobal.clear();
+
+      if (!mounted) return;
+      Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+      return;
+    }
+
     _recarregar();
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(

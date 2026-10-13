@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:pdf/widgets.dart' as pw;
 import 'package:mindful_you/services/pdf_service.dart';
 import 'package:mindful_you/widgets/menu_lateral_tela.dart';
 import 'package:mindful_you/widgets/avatar_perfil.dart';
@@ -55,6 +54,15 @@ class _GraficoTelaState extends State<GraficoTela> {
     final double produtividade = (dados['produtividade'] ?? 5).toDouble();
     final String sentimento = (dados['sentimento'] as String?) ?? '';
     final String emoji = (dados['emoji'] as String?) ?? '🙂';
+
+    // Sinais de humor e energia (ver observação em
+    // `historico_global.dart`, seção "SINAIS DE HUMOR E ENERGIA").
+    final String humorFrequencia = (dados['humorFrequencia'] as String?) ?? '';
+    final String interesseFrequencia =
+        (dados['interesseFrequencia'] as String?) ?? '';
+    final String exaustaoBurnout = (dados['exaustaoBurnout'] as String?) ?? '';
+    final String distanciamentoBurnout =
+        (dados['distanciamentoBurnout'] as String?) ?? '';
 
     final double bemEstar =
         ((100 - cansaco) + (100 - ansiedade) + (100 - sono) + produtividade) /
@@ -123,6 +131,10 @@ class _GraficoTelaState extends State<GraficoTela> {
         '${produtividade.toInt()}%',
       ],
       'principalPonto': principal,
+      'humorFrequencia': humorFrequencia,
+      'interesseFrequencia': interesseFrequencia,
+      'exaustaoBurnout': exaustaoBurnout,
+      'distanciamentoBurnout': distanciamentoBurnout,
     });
   }
 
@@ -149,9 +161,11 @@ class _GraficoTelaState extends State<GraficoTela> {
     required double ansiedade,
     required double sono,
     required double produtividade,
+    String humorFrequencia = '',
+    String interesseFrequencia = '',
+    String exaustaoBurnout = '',
+    String distanciamentoBurnout = '',
   }) async {
-    final pdf = pw.Document();
-
     final principal = obterPrincipalPontoAtencao(
       cansaco,
       ansiedade,
@@ -159,68 +173,38 @@ class _GraficoTelaState extends State<GraficoTela> {
       produtividade,
     );
 
-    pdf.addPage(
-      pw.MultiPage(
-        build: (context) => [
-          PdfService.cabecalho("Relatório Mindful You"),
-          pw.SizedBox(height: 25),
-          pw.Text(
-            "Usuário: $nomeUsuario",
-            style: const pw.TextStyle(
-              fontSize: 18,
-            ),
-          ),
-          pw.SizedBox(height: 10),
-          pw.Text(
-            "Resultado do questionário",
-            style: pw.TextStyle(
-              fontSize: 20,
-              fontWeight: pw.FontWeight.bold,
-            ),
-          ),
-          pw.SizedBox(height: 20),
-          pw.Text(
-            "Principal ponto de atenção: $principal",
-            style: const pw.TextStyle(
-              fontSize: 16,
-            ),
-          ),
-          pw.SizedBox(height: 25),
-          criarLinhaPDF(
-            "Cansaço",
-            cansaco,
-          ),
-          criarLinhaPDF(
-            "Falta de sono",
-            sono,
-          ),
-          criarLinhaPDF(
-            "Ansiedade",
-            ansiedade,
-          ),
-          criarLinhaPDF(
-            "Produtividade",
-            produtividade,
-          ),
-          pw.SizedBox(height: 30),
-          pw.Text(
-            "Observação",
-            style: pw.TextStyle(
-              fontSize: 17,
-              fontWeight: pw.FontWeight.bold,
-            ),
-          ),
-          pw.SizedBox(height: 8),
-          pw.Text(
-            "Este resultado possui caráter informativo e "
-            "não substitui uma avaliação realizada por "
-            "um profissional especializado.",
-            style: const pw.TextStyle(
-              fontSize: 13,
-            ),
-          ),
-        ],
-      ),
+    final double bemEstar =
+        ((100 - cansaco) + (100 - ansiedade) + (100 - sono) + produtividade) /
+            4;
+
+    // Usa o mesmo layout de PDF que a tela de Relatório (aberta a
+    // partir do Histórico), em vez de montar o documento aqui. Os
+    // itens de humor/energia só entram no relatório quando há
+    // resposta salva para eles.
+    final pdf = PdfService.construirRelatorioCheckin(
+      usuario: nomeUsuario,
+      principalPonto: principal,
+      bemEstar: bemEstar.round(),
+      perguntas: [
+        'Cansaço',
+        'Ansiedade',
+        'Falta de sono',
+        'Produtividade',
+        if (humorFrequencia.isNotEmpty) 'Humor (desânimo ou tristeza)',
+        if (interesseFrequencia.isNotEmpty) 'Interesse ou prazer',
+        if (exaustaoBurnout.isNotEmpty) 'Exaustão emocional',
+        if (distanciamentoBurnout.isNotEmpty) 'Distanciamento ou desmotivação',
+      ],
+      respostas: [
+        '${cansaco.toInt()}%',
+        '${ansiedade.toInt()}%',
+        '${sono.toInt()}%',
+        '${produtividade.toInt()}%',
+        if (humorFrequencia.isNotEmpty) humorFrequencia,
+        if (interesseFrequencia.isNotEmpty) interesseFrequencia,
+        if (exaustaoBurnout.isNotEmpty) exaustaoBurnout,
+        if (distanciamentoBurnout.isNotEmpty) distanciamentoBurnout,
+      ],
     );
 
     final sucesso = await PdfService.share(
@@ -243,23 +227,6 @@ class _GraficoTelaState extends State<GraficoTela> {
     );
   }
 
-  pw.Widget criarLinhaPDF(
-    String titulo,
-    double valor,
-  ) {
-    return pw.Padding(
-      padding: const pw.EdgeInsets.only(
-        bottom: 12,
-      ),
-      child: pw.Text(
-        "$titulo: ${valor.toInt()}%",
-        style: const pw.TextStyle(
-          fontSize: 15,
-        ),
-      ),
-    );
-  }
-
   // ============================================================
   // BUILD
   // ============================================================
@@ -277,6 +244,39 @@ class _GraficoTelaState extends State<GraficoTela> {
     final double sono = (dados['sono'] ?? 25).toDouble();
 
     final double produtividade = (dados['produtividade'] ?? 5).toDouble();
+
+    // Sinais de humor e energia (ver observação em
+    // `historico_global.dart`, seção "SINAIS DE HUMOR E ENERGIA").
+    // Ficam vazios quando o resultado exibido vem de um check-in
+    // salvo antes desta funcionalidade existir.
+    final String humorFrequencia = (dados['humorFrequencia'] as String?) ?? '';
+    final String interesseFrequencia =
+        (dados['interesseFrequencia'] as String?) ?? '';
+    final String exaustaoBurnout = (dados['exaustaoBurnout'] as String?) ?? '';
+    final String distanciamentoBurnout =
+        (dados['distanciamentoBurnout'] as String?) ?? '';
+
+    final List<Map<String, String>> sinaisHumorEnergia = [
+      if (humorFrequencia.isNotEmpty)
+        {'titulo': 'Humor', 'frequencia': humorFrequencia},
+      if (interesseFrequencia.isNotEmpty)
+        {'titulo': 'Interesse ou prazer', 'frequencia': interesseFrequencia},
+      if (exaustaoBurnout.isNotEmpty)
+        {'titulo': 'Exaustão emocional', 'frequencia': exaustaoBurnout},
+      if (distanciamentoBurnout.isNotEmpty)
+        {
+          'titulo': 'Distanciamento',
+          'frequencia': distanciamentoBurnout,
+        },
+    ];
+
+    final int sinaisElevados = sinaisHumorEnergia
+        .where(
+          (item) =>
+              item['frequencia'] == 'Frequentemente' ||
+              item['frequencia'] == 'Quase sempre',
+        )
+        .length;
 
     // ============================================================
     // VALORES DE ATENÇÃO
@@ -744,6 +744,18 @@ class _GraficoTelaState extends State<GraficoTela> {
                     const SizedBox(height: 22),
 
                     // ==================================================
+                    // SINAIS DE HUMOR E ENERGIA
+                    // ==================================================
+
+                    if (sinaisHumorEnergia.isNotEmpty) ...[
+                      cardSinaisHumorEnergia(
+                        sinais: sinaisHumorEnergia,
+                        sinaisElevados: sinaisElevados,
+                      ),
+                      const SizedBox(height: 22),
+                    ],
+
+                    // ==================================================
                     // RESUMO
                     // ==================================================
 
@@ -845,6 +857,10 @@ class _GraficoTelaState extends State<GraficoTela> {
                                 ansiedade: ansiedade,
                                 sono: sono,
                                 produtividade: produtividade,
+                                humorFrequencia: humorFrequencia,
+                                interesseFrequencia: interesseFrequencia,
+                                exaustaoBurnout: exaustaoBurnout,
+                                distanciamentoBurnout: distanciamentoBurnout,
                               );
                             },
                           ),
@@ -1211,6 +1227,153 @@ class _GraficoTelaState extends State<GraficoTela> {
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  // ============================================================
+  // CARD DE SINAIS DE HUMOR E ENERGIA
+  // ============================================================
+  //
+  // Mostra os itens de humor/interesse/exaustão/distanciamento
+  // respondidos no questionário (ver `questionario_tela.dart`), com
+  // a frequência escolhida e uma cor de acordo com o quanto aquele
+  // sinal apareceu. Não aparece nada aqui se o check-in for antigo e
+  // não tiver essas respostas salvas.
+
+  Color _corFrequencia(String frequencia) {
+    switch (frequencia) {
+      case 'Frequentemente':
+      case 'Quase sempre':
+        return const Color(0xFFE8C7C9);
+
+      case 'Às vezes':
+        return const Color(0xFFF3E5D8);
+
+      default:
+        return const Color(0xFFD9E8D5);
+    }
+  }
+
+  Widget cardSinaisHumorEnergia({
+    required List<Map<String, String>> sinais,
+    required int sinaisElevados,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(19),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.045),
+            blurRadius: 12,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF7C6BA6).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: const Icon(
+                  Icons.filter_drama_outlined,
+                  color: Color(0xFF7C6BA6),
+                  size: 21,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  "Sinais de humor e energia",
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF302D2A),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          ...sinais.map(
+            (item) => Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      item['titulo'] ?? '',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF393532),
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 9,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: _corFrequencia(item['frequencia'] ?? ''),
+                      borderRadius: BorderRadius.circular(9),
+                    ),
+                    child: Text(
+                      item['frequencia'] ?? '',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF6D5B45),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (sinaisElevados >= 2) ...[
+            const SizedBox(height: 4),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE8C7C9).withValues(alpha: 0.35),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Text(
+                "Alguns desses sinais têm aparecido com frequência. "
+                "Pode ser um bom assunto para trazer para sua próxima "
+                "conversa com seu terapeuta.",
+                style: TextStyle(
+                  fontSize: 12.5,
+                  height: 1.45,
+                  color: Color(0xFF6D5B45),
+                ),
+              ),
+            ),
+          ] else ...[
+            const SizedBox(height: 4),
+            const Text(
+              "Isso não representa um diagnóstico, apenas um "
+              "acompanhamento ao longo do tempo.",
+              style: TextStyle(
+                fontSize: 12,
+                height: 1.4,
+                color: Color(0xFF918A84),
+              ),
+            ),
+          ],
         ],
       ),
     );

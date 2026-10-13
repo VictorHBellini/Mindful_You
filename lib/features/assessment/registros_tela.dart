@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:pdf/widgets.dart' as pw;
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:mindful_you/services/pdf_service.dart';
 
@@ -110,42 +110,19 @@ class RegistrosTela extends StatelessWidget {
           : FloatingActionButton.extended(
               backgroundColor: const Color(0xFFC89494),
               onPressed: () async {
-                final pdf = pw.Document();
+                // Usa o mesmo layout de PDF da tela de Gráfico (botão
+                // "Relatório" do resultado recém-respondido), em vez de
+                // montar o documento aqui com um visual diferente.
+                final prefs = await SharedPreferences.getInstance();
+                final nomeUsuario = prefs.getString('nomeUsuario') ?? '';
 
-                pdf.addPage(
-                  pw.MultiPage(
-                    build: (context) => [
-                      PdfService.cabecalho("Relatório Mindful You"),
-                      pw.SizedBox(height: 20),
-                      ...List.generate(
-                        perguntasSeguras.length,
-                        (index) {
-                          return pw.Container(
-                            margin: const pw.EdgeInsets.only(bottom: 15),
-                            padding: const pw.EdgeInsets.all(12),
-                            decoration: pw.BoxDecoration(
-                              border: pw.Border.all(),
-                            ),
-                            child: pw.Column(
-                              crossAxisAlignment: pw.CrossAxisAlignment.start,
-                              children: [
-                                pw.Text(
-                                  perguntasSeguras[index],
-                                  style: pw.TextStyle(
-                                    fontWeight: pw.FontWeight.bold,
-                                  ),
-                                ),
-                                pw.SizedBox(height: 8),
-                                pw.Text(
-                                  respostasSeguras[index],
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
+                final pdf = PdfService.construirRelatorioCheckin(
+                  usuario: nomeUsuario,
+                  data: dados['data']?.toString(),
+                  principalPonto: dados['principalPonto']?.toString(),
+                  bemEstar: (dados['bemEstar'] as num?)?.round(),
+                  perguntas: perguntasSeguras,
+                  respostas: respostasSeguras,
                 );
 
                 final sucesso = await PdfService.share(

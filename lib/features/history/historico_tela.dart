@@ -113,6 +113,8 @@ class _HistoricoTelaState extends State<HistoricoTela>
 
     final evolucao = _calcularEvolucao(historicos);
 
+    final possuiSinalRecente = possuiPadraoRecenteDeAtencao(historicos);
+
     return Scaffold(
       key: scaffoldKey,
       drawer: const MenuLateral(),
@@ -211,6 +213,15 @@ class _HistoricoTelaState extends State<HistoricoTela>
                             _graficoEvolucao(
                               historicos,
                             ),
+                            const SizedBox(height: 28),
+                          ],
+
+                          // ======================================
+                          // SINAIS DE ATENÇÃO RECENTES
+                          // ======================================
+
+                          if (possuiSinalRecente) ...[
+                            _cardSinalAtencao(),
                             const SizedBox(height: 28),
                           ],
 
@@ -676,6 +687,81 @@ class _HistoricoTelaState extends State<HistoricoTela>
   }
 
   // ============================================================
+  // SINAL DE ATENÇÃO (humor e energia)
+  // ============================================================
+  //
+  // Aparece quando `possuiPadraoRecenteDeAtencao` (em
+  // `historico_global.dart`) identifica que, nos últimos check-ins,
+  // sinais de humor ou burnout apareceram com frequência. É um apoio
+  // visual para notar padrões — não é uma pontuação clínica validada
+  // nem substitui a avaliação do terapeuta, e o texto deixa isso
+  // claro.
+
+  Widget _cardSinalAtencao() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(19),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF3E1D8),
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.045),
+            blurRadius: 12,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.65),
+              borderRadius: BorderRadius.circular(15),
+            ),
+            child: const Icon(
+              Icons.health_and_safety_outlined,
+              color: Color(0xFF9A6B4C),
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Um sinal para observar',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: kMarrom,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Nos seus check-ins mais recentes, sinais de humor '
+                  'ou cansaço emocional apareceram com frequência. '
+                  'Pode ser um bom assunto para trazer para a sua '
+                  'próxima conversa com seu terapeuta.',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    color: kMarromClaro,
+                    height: 1.45,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ============================================================
   // GRÁFICO
   // ============================================================
 
@@ -809,23 +895,35 @@ class _HistoricoTelaState extends State<HistoricoTela>
                     color: Colors.white,
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.20),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    '$valor%',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
+                Row(
+                  children: [
+                    if (contarSinaisElevados(item) > 0) ...[
+                      const Icon(
+                        Icons.notifications_active_outlined,
+                        size: 16,
+                        color: Colors.white,
+                      ),
+                      const SizedBox(width: 6),
+                    ],
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.20),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '$valor%',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ],
             ),
@@ -961,6 +1059,14 @@ class _HistoricoTelaState extends State<HistoricoTela>
                             ),
                           ),
                         ),
+                        if (contarSinaisElevados(item) > 0) ...[
+                          const Icon(
+                            Icons.notifications_active_outlined,
+                            size: 14,
+                            color: Color(0xFF9A6B4C),
+                          ),
+                          const SizedBox(width: 5),
+                        ],
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 8,
