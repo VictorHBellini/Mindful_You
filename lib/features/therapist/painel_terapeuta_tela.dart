@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mindful_you/services/database_service.dart';
+import 'package:mindful_you/services/vinculo_service.dart';
+import 'package:mindful_you/features/therapist/historico_paciente_tela.dart';
 
 /// Painel demonstrativo: não mostra dados de pacientes até que
 /// vínculos e consentimentos sejam implementados e verificados.
@@ -15,6 +17,11 @@ class _PainelTerapeutaTelaState extends State<PainelTerapeutaTela> {
   bool _carregando = true;
   bool _autorizado = false;
   String _nome = 'Profissional';
+  final _emailController = TextEditingController();
+  late Future<List<Map<String,dynamic>>> _vinculos;
+  void _recarregar() { _vinculos = VinculoService.instance.listarParaTerapeuta(); }
+  @override
+  void dispose() { _emailController.dispose(); super.dispose(); }
 
   @override
   void initState() {
@@ -41,6 +48,7 @@ class _PainelTerapeutaTelaState extends State<PainelTerapeutaTela> {
         nome = rows.first['nome']?.toString() ?? nome;
       }
     }
+    if (permitido) _recarregar();
     if (!mounted) return;
     setState(() {
       _autorizado = permitido;
@@ -105,19 +113,51 @@ class _PainelTerapeutaTelaState extends State<PainelTerapeutaTela> {
               const SizedBox(height: 8),
               const Text('Painel demonstrativo para o TCC.'),
               const SizedBox(height: 24),
-              const Card(
-                child: ListTile(
-                  leading: Icon(Icons.people_outline),
-                  title: Text('Pacientes vinculados'),
-                  subtitle: Text('Nenhum paciente vinculado. A vinculação com consentimento será implementada na próxima etapa.'),
-                  trailing: Text('0'),
-                ),
-              ),
+              TextField(controller:_emailController,keyboardType:TextInputType.emailAddress,
+                decoration:const InputDecoration(labelText:'E-mail do paciente (conta fictícia)',border:OutlineInputBorder())),
+              const SizedBox(height:8),
+              FilledButton.icon(icon:const Icon(Icons.person_add_alt_1),label:const Text('Solicitar vínculo'),onPressed:() async {
+                try {
+                  await VinculoService.instance.solicitar(_emailController.text);
+                  if (!mounted) return;
+                  setState(_recarregar);
+                  _emailController.clear();
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('Solicitação enviada neste dispositivo.')));
+                } catch(e) {
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('$e')));
+                }
+              }),
+              const SizedBox(height:12),
+              Text('Vínculos',style:Theme.of(context).textTheme.titleLarge),
+              FutureBuilder<List<Map<String,dynamic>>>(future:_vinculos,builder:(context,snapshot) {
+                if(snapshot.connectionState!=ConnectionState.done) return const LinearProgressIndicator();
+                if(snapshot.hasError) return Text('Erro: ${snapshot.error}');
+                final lista=snapshot.data??[];
+                if(lista.isEmpty) return const Text('Nenhum vínculo cadastrado.');
+                return Column(children:[for(final item in lista) Card(child:ListTile(
+                  leading:const Icon(Icons.person_outline),title:Text(item['nome'].toString()),
+                  subtitle:Text('${item['email']} • ${item['status']}'),
+                  trailing: item['status']=='aceito'
+                    ? const Icon(Icons.chevron_right) : const Icon(Icons.lock_outline),
+                  onTap: item['status']=='aceito' ? () async {
+                    final pacienteId = item['paciente_id'] as int;
+                    await Navigator.of(context).push(MaterialPageRoute<void>(
+                      builder: (_) => HistoricoPacienteTela(
+                        pacienteId: pacienteId,
+                        nomePaciente: item['nome']?.toString() ?? 'Paciente',
+                      ),
+                    ));
+                    if (!mounted) return;
+                    setState(_recarregar);
+                  } : null,
+                ))]);
+              }),
               const Card(
                 child: ListTile(
                   leading: Icon(Icons.show_chart),
                   title: Text('Evolução emocional'),
-                  subtitle: Text('Os gráficos aparecerão somente após vínculo e autorização do paciente.'),
+                  subtitle: Text('Toque em um paciente com vínculo aceito para visualizar seus registros.'),
                 ),
               ),
               const Card(

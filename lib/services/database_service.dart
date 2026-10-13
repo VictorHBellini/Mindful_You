@@ -24,7 +24,7 @@ class DatabaseService {
 
     return openDatabase(
       path,
-      version: 6,
+      version: 7,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE usuarios (
@@ -39,6 +39,7 @@ class DatabaseService {
           )
         ''');
         await _criarTabelaCheckins(db);
+        await _criarTabelaVinculos(db);
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
@@ -93,8 +94,30 @@ class DatabaseService {
             "ALTER TABLE usuarios ADD COLUMN tipo_usuario TEXT NOT NULL DEFAULT 'paciente'",
           );
         }
+        if (oldVersion < 7) {
+          await _criarTabelaVinculos(db);
+        }
       },
     );
+  }
+
+  /// Vínculos locais de demonstração. Não usar para dados clínicos reais.
+  Future<void> _criarTabelaVinculos(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS vinculos_terapeuticos (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        terapeuta_id INTEGER NOT NULL REFERENCES usuarios(id),
+        paciente_id INTEGER NOT NULL REFERENCES usuarios(id),
+        status TEXT NOT NULL DEFAULT 'pendente'
+          CHECK(status IN ('pendente','aceito','recusado','revogado')),
+        criado_em TEXT NOT NULL,
+        decidido_em TEXT,
+        UNIQUE(terapeuta_id, paciente_id),
+        CHECK(terapeuta_id != paciente_id)
+      )
+    ''');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_vinculos_paciente ON vinculos_terapeuticos(paciente_id, status)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_vinculos_terapeuta ON vinculos_terapeuticos(terapeuta_id, status)');
   }
 
   /// Cria a tabela `checkins` (e seu índice) se ainda não existirem.

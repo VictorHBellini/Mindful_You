@@ -118,6 +118,11 @@ class _InicialTelaState extends State<InicialTela> {
     final sugestao = obterSugestao();
 
     return Scaffold(
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => Navigator.pushNamed(context, '/consentimentos'),
+        icon: const Icon(Icons.shield_outlined),
+        label: const Text('Consentimentos'),
+      ),
       drawer: const MenuLateral(),
       backgroundColor: const Color(0xFFF8F5F2),
       body: SafeArea(
