@@ -18,10 +18,16 @@ class _PainelTerapeutaTelaState extends State<PainelTerapeutaTela> {
   bool _autorizado = false;
   String _nome = 'Profissional';
   final _emailController = TextEditingController();
-  late Future<List<Map<String,dynamic>>> _vinculos;
-  void _recarregar() { _vinculos = VinculoService.instance.listarParaTerapeuta(); }
+  late Future<List<Map<String, dynamic>>> _vinculos;
+  void _recarregar() {
+    _vinculos = VinculoService.instance.listarParaTerapeuta();
+  }
+
   @override
-  void dispose() { _emailController.dispose(); super.dispose(); }
+  void dispose() {
+    _emailController.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -60,8 +66,12 @@ class _PainelTerapeutaTelaState extends State<PainelTerapeutaTela> {
   Future<void> _sair() async {
     final prefs = await SharedPreferences.getInstance();
     for (final key in [
-      'usuarioId', 'nomeUsuario', 'emailUsuario',
-      'tipoUsuario', 'isAdmin', 'fotoPerfil',
+      'usuarioId',
+      'nomeUsuario',
+      'emailUsuario',
+      'tipoUsuario',
+      'isAdmin',
+      'fotoPerfil',
     ]) {
       await prefs.remove(key);
     }
@@ -81,10 +91,11 @@ class _PainelTerapeutaTelaState extends State<PainelTerapeutaTela> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('Esta área é exclusiva de contas demonstrativas de terapeuta.'),
+              const Text(
+                  'Esta área é exclusiva de contas demonstrativas de terapeuta.'),
               TextButton(
                 onPressed: () => Navigator.pushNamedAndRemoveUntil(
-                  context, '/login', (_) => false),
+                    context, '/login', (_) => false),
                 child: const Text('Ir para o login'),
               ),
             ],
@@ -109,62 +120,106 @@ class _PainelTerapeutaTelaState extends State<PainelTerapeutaTela> {
           child: ListView(
             padding: const EdgeInsets.all(24),
             children: [
-              Text('Olá, $_nome', style: Theme.of(context).textTheme.headlineMedium),
+              Text('Olá, $_nome',
+                  style: Theme.of(context).textTheme.headlineMedium),
               const SizedBox(height: 8),
               const Text('Painel demonstrativo para o TCC.'),
               const SizedBox(height: 24),
-              TextField(controller:_emailController,keyboardType:TextInputType.emailAddress,
-                decoration:const InputDecoration(labelText:'E-mail do paciente (conta fictícia)',border:OutlineInputBorder())),
-              const SizedBox(height:8),
-              FilledButton.icon(icon:const Icon(Icons.person_add_alt_1),label:const Text('Solicitar vínculo'),onPressed:() async {
-                try {
-                  await VinculoService.instance.solicitar(_emailController.text);
-                  if (!mounted) return;
-                  setState(_recarregar);
-                  _emailController.clear();
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('Solicitação enviada neste dispositivo.')));
-                } catch(e) {
-                  if (!mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('$e')));
-                }
-              }),
-              const SizedBox(height:12),
-              Text('Vínculos',style:Theme.of(context).textTheme.titleLarge),
-              FutureBuilder<List<Map<String,dynamic>>>(future:_vinculos,builder:(context,snapshot) {
-                if(snapshot.connectionState!=ConnectionState.done) return const LinearProgressIndicator();
-                if(snapshot.hasError) return Text('Erro: ${snapshot.error}');
-                final lista=snapshot.data??[];
-                if(lista.isEmpty) return const Text('Nenhum vínculo cadastrado.');
-                return Column(children:[for(final item in lista) Card(child:ListTile(
-                  leading:const Icon(Icons.person_outline),title:Text(item['nome'].toString()),
-                  subtitle:Text('${item['email']} • ${item['status']}'),
-                  trailing: item['status']=='aceito'
-                    ? const Icon(Icons.chevron_right) : const Icon(Icons.lock_outline),
-                  onTap: item['status']=='aceito' ? () async {
-                    final pacienteId = item['paciente_id'] as int;
-                    await Navigator.of(context).push(MaterialPageRoute<void>(
-                      builder: (_) => HistoricoPacienteTela(
-                        pacienteId: pacienteId,
-                        nomePaciente: item['nome']?.toString() ?? 'Paciente',
-                      ),
-                    ));
-                    if (!mounted) return;
-                    setState(_recarregar);
-                  } : null,
-                ))]);
-              }),
+              TextField(
+                  controller: _emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: const InputDecoration(
+                      labelText: 'E-mail do paciente (conta fictícia)',
+                      border: OutlineInputBorder())),
+              const SizedBox(height: 8),
+              FilledButton.icon(
+                  icon: const Icon(Icons.person_add_alt_1),
+                  label: const Text('Solicitar vínculo'),
+                  onPressed: () async {
+                    try {
+                      await VinculoService.instance
+                          .solicitar(_emailController.text);
+                      if (!mounted) return;
+
+                      setState(_recarregar);
+                      _emailController.clear();
+
+                      if (!context.mounted) return;
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content:
+                              Text('Solicitação enviada neste dispositivo.'),
+                        ),
+                      );
+                    } catch (e) {
+                      if (!context.mounted) return;
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('$e'),
+                        ),
+                      );
+                    }
+                  }),
+              const SizedBox(height: 12),
+              Text('Vínculos', style: Theme.of(context).textTheme.titleLarge),
+              FutureBuilder<List<Map<String, dynamic>>>(
+                  future: _vinculos,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState != ConnectionState.done) {
+                      return const LinearProgressIndicator();
+                    }
+                    if (snapshot.hasError) {
+                      return Text('Erro: ${snapshot.error}');
+                    }
+                    final lista = snapshot.data ?? [];
+                    if (lista.isEmpty) {
+                      return const Text('Nenhum vínculo cadastrado.');
+                    }
+                    return Column(children: [
+                      for (final item in lista)
+                        Card(
+                            child: ListTile(
+                          leading: const Icon(Icons.person_outline),
+                          title: Text(item['nome'].toString()),
+                          subtitle:
+                              Text('${item['email']} • ${item['status']}'),
+                          trailing: item['status'] == 'aceito'
+                              ? const Icon(Icons.chevron_right)
+                              : const Icon(Icons.lock_outline),
+                          onTap: item['status'] == 'aceito'
+                              ? () async {
+                                  final pacienteId = item['paciente_id'] as int;
+                                  await Navigator.of(context)
+                                      .push(MaterialPageRoute<void>(
+                                    builder: (_) => HistoricoPacienteTela(
+                                      pacienteId: pacienteId,
+                                      nomePaciente: item['nome']?.toString() ??
+                                          'Paciente',
+                                    ),
+                                  ));
+                                  if (!mounted) return;
+                                  setState(_recarregar);
+                                }
+                              : null,
+                        ))
+                    ]);
+                  }),
               const Card(
                 child: ListTile(
                   leading: Icon(Icons.show_chart),
                   title: Text('Evolução emocional'),
-                  subtitle: Text('Toque em um paciente com vínculo aceito para visualizar seus registros.'),
+                  subtitle: Text(
+                      'Toque em um paciente com vínculo aceito para visualizar seus registros.'),
                 ),
               ),
               const Card(
                 child: ListTile(
                   leading: Icon(Icons.assignment_outlined),
                   title: Text('Questionários'),
-                  subtitle: Text('PHQ-9, GAD-7 e burnout: integração planejada, não disponível nesta versão.'),
+                  subtitle: Text(
+                      'PHQ-9, GAD-7 e burnout: integração planejada, não disponível nesta versão.'),
                 ),
               ),
               const SizedBox(height: 16),
