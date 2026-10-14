@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mindful_you/features/settings/vincular_firebase_demo_tela.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:mindful_you/features/history/historico_global.dart';
@@ -302,6 +303,16 @@ class _ConfiguracaoTelaState extends State<ConfiguracaoTela> {
                   ],
                 ),
               ),
+              const SizedBox(height: 18),
+              if (const bool.fromEnvironment('MINDFUL_FIREBASE_EMULATORS', defaultValue: false))
+                _sectionCard(child: ListTile(
+                  leading: const Icon(Icons.link),
+                  title: const Text('Vincular Firebase (demonstração)'),
+                  subtitle: const Text('Solicitação pendente; sem sincronização'),
+                  onTap: () => Navigator.push(context, MaterialPageRoute<void>(
+                    builder: (_) => const VincularFirebaseDemoTela(),
+                  )),
+                )),
               const SizedBox(height: 18),
               Container(
                 width: double.infinity,

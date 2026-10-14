@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'firebase_options.dart';
@@ -19,6 +21,13 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  const usarEmuladores = bool.fromEnvironment('MINDFUL_FIREBASE_EMULATORS', defaultValue: false);
+  if (!kIsWeb && Platform.isAndroid && usarEmuladores) {
+    await FirebaseAuth.instance.useAuthEmulator('10.0.2.2', 9099);
+    FirebaseFunctions.instanceFor(region: 'southamerica-east1')
+        .useFunctionsEmulator('10.0.2.2', 5001);
+  }
 
   if (kIsWeb) {
     runApp(
