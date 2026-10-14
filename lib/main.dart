@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'firebase_options.dart';
@@ -22,11 +23,30 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  const usarEmuladores = bool.fromEnvironment('MINDFUL_FIREBASE_EMULATORS', defaultValue: false);
-  if (!kIsWeb && Platform.isAndroid && usarEmuladores) {
-    await FirebaseAuth.instance.useAuthEmulator('10.0.2.2', 9099);
-    FirebaseFunctions.instanceFor(region: 'southamerica-east1')
-        .useFunctionsEmulator('10.0.2.2', 5001);
+  // F3.2.2-D — Configuração isolada dos emuladores Firebase.
+  const usarEmuladores = bool.fromEnvironment(
+    'MINDFUL_FIREBASE_EMULATORS',
+    defaultValue: false,
+  );
+
+  if (usarEmuladores) {
+    if (!kIsWeb && Platform.isAndroid) {
+      const host = '10.0.2.2';
+
+      await FirebaseAuth.instance.useAuthEmulator(host, 9099);
+
+      FirebaseFunctions.instanceFor(
+        region: 'southamerica-east1',
+      ).useFunctionsEmulator(host, 5001);
+
+      FirebaseFirestore.instance.useFirestoreEmulator(host, 8080);
+
+      debugPrint('Mindful You: Firebase Emulator habilitado no Android.');
+    } else {
+      throw UnsupportedError(
+        'O modo Demo Firebase está configurado somente para o emulador Android.',
+      );
+    }
   }
 
   if (kIsWeb) {
