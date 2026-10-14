@@ -25,7 +25,7 @@ class DatabaseService {
 
     return openDatabase(
       path,
-      version: 10,
+      version: 11,
       // A configuração precisa ocorrer antes das migrações/transações.
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
@@ -47,6 +47,7 @@ class DatabaseService {
         await _criarTabelaVinculos(db);
         await _criarTabelaAvaliacoes(db);
         await _criarIndicesOperacao(db);
+        await _criarTabelaVinculosFirebase(db);
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
@@ -144,8 +145,37 @@ class DatabaseService {
               'ON avaliacoes(usuario_id, operacao_id) '
               'WHERE operacao_id IS NOT NULL');
         }
+        if (oldVersion < 11) {
+          // Somente estrutura local: não autoriza sincronização Firebase.
+          await _criarTabelaVinculosFirebase(db);
+        }
       },
     );
+  }
+
+  Future<void> _criarTabelaVinculosFirebase(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS vinculos_contas_firebase (
+        usuario_id INTEGER PRIMARY KEY REFERENCES usuarios(id) ON DELETE CASCADE,
+        firebase_uid TEXT NOT NULL CHECK(length(firebase_uid) > 0),
+        estado TEXT NOT NULL DEFAULT 'pendente'
+          CHECK(estado IN ('pendente', 'confirmado', 'revogado')),
+        criado_em TEXT NOT NULL,
+        confirmado_em TEXT,
+        revogado_em TEXT,
+        CHECK (
+          (estado = 'pendente' AND confirmado_em IS NULL AND revogado_em IS NULL)
+          OR (estado = 'confirmado' AND confirmado_em IS NOT NULL AND revogado_em IS NULL)
+          OR (estado = 'revogado' AND revogado_em IS NOT NULL)
+        )
+      )
+    ''');
+    // Não permite UID repetido em contas locais diferentes neste dispositivo.
+    await db.execute('''
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_vinculos_firebase_uid_ativo
+      ON vinculos_contas_firebase(firebase_uid)
+      WHERE estado IN ('pendente', 'confirmado')
+    ''');
   }
 
   Future<void> _criarIndicesOperacao(Database db) async {
@@ -440,6 +470,8 @@ class DatabaseService {
   Future<int> deletarUsuario(int id) async {
     final db = await database;
     return db.transaction((txn) async {
+      await txn.delete('vinculos_contas_firebase',
+          where: 'usuario_id = ?', whereArgs: [id]);
       await txn.delete('checkins', where: 'usuario_id = ?', whereArgs: [id]);
       await txn.delete('avaliacoes', where: 'usuario_id = ?', whereArgs: [id]);
       await txn.delete(
