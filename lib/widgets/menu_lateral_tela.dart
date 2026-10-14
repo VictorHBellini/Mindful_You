@@ -1,7 +1,7 @@
+import 'package:mindful_you/services/session_service.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:mindful_you/features/history/historico_global.dart';
 import 'package:mindful_you/services/admin_service.dart';
 import 'package:mindful_you/widgets/avatar_perfil.dart';
 
@@ -115,20 +115,7 @@ class _MenuLateralState extends State<MenuLateral> {
               onPressed: () async {
                 Navigator.pop(dialogContext);
 
-                // Limpa dados da sessão antes de sair
-                final prefs = await SharedPreferences.getInstance();
-                await prefs.remove('nomeUsuario');
-                await prefs.remove('emailUsuario');
-                await prefs.remove('isAdmin');
-                await prefs.remove('usuarioId');
-                await prefs.remove('fotoPerfil');
-
-                // BUG CORRIGIDO: faltava limpar 'usuarioId', 'fotoPerfil'
-                // e o histórico em memória (igual ao logout duplicado em
-                // `perfil_tela.dart`). Sem isso, a próxima conta a logar
-                // neste aparelho podia ver, por um instante, a foto e o
-                // histórico de check-ins de quem acabou de sair.
-                historicoGlobal.clear();
+                await SessionService.encerrar();
 
                 if (!context.mounted) return;
                 Navigator.pushNamedAndRemoveUntil(

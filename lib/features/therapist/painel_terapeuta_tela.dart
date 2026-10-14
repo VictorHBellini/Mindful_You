@@ -1,3 +1,4 @@
+import 'package:mindful_you/services/session_service.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mindful_you/services/database_service.dart';
@@ -64,17 +65,7 @@ class _PainelTerapeutaTelaState extends State<PainelTerapeutaTela> {
   }
 
   Future<void> _sair() async {
-    final prefs = await SharedPreferences.getInstance();
-    for (final key in [
-      'usuarioId',
-      'nomeUsuario',
-      'emailUsuario',
-      'tipoUsuario',
-      'isAdmin',
-      'fotoPerfil',
-    ]) {
-      await prefs.remove(key);
-    }
+    await SessionService.encerrar();
     if (!mounted) return;
     Navigator.pushNamedAndRemoveUntil(context, '/login', (_) => false);
   }

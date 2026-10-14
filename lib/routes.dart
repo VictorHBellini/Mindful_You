@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:mindful_you/services/session_service.dart';
 import 'package:mindful_you/features/auth/firebase_teste_tela.dart';
 import 'package:mindful_you/features/assessment/avaliacoes_tela.dart';
 import 'package:mindful_you/features/patient/consentimentos_tela.dart';
@@ -38,7 +40,7 @@ class AppRoutes {
   static const termos = '/termos';
   static const privacidade = '/privacidade';
 
-  static Map<String, WidgetBuilder> routes = {
+  static final Map<String, WidgetBuilder> _destinos = {
     firebaseTeste: (context) => const FirebaseTesteTela(),
     splash: (context) => const SplashScreenTela(),
     login: (context) => const LoginTela(),
@@ -58,4 +60,73 @@ class AppRoutes {
     termos: (context) => const TermosUsoTela(),
     privacidade: (context) => const PoliticaPrivacidadeTela(),
   };
+
+  static final Map<String, WidgetBuilder> routes = {
+    for (final entrada in _destinos.entries)
+      entrada.key: (context) {
+        // Web mantém autenticação Firebase própria; não misturar com SQLite.
+        if (kIsWeb || _publicas.contains(entrada.key)) {
+          return entrada.value(context);
+        }
+        return _RotaLocalProtegida(
+          destino: entrada.value,
+          somenteTerapeuta: entrada.key == painelTerapeuta,
+        );
+      },
+  };
+
+  static const _publicas = {
+    firebaseTeste,
+    splash,
+    login,
+    cadastro,
+    termos,
+    privacidade,
+  };
+}
+
+class _RotaLocalProtegida extends StatefulWidget {
+  const _RotaLocalProtegida({
+    required this.destino,
+    required this.somenteTerapeuta,
+  });
+
+  final WidgetBuilder destino;
+  final bool somenteTerapeuta;
+
+  @override
+  State<_RotaLocalProtegida> createState() => _RotaLocalProtegidaState();
+}
+
+class _RotaLocalProtegidaState extends State<_RotaLocalProtegida> {
+  late final Future<LocalSession?> _sessao = SessionService.validar();
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<LocalSession?>(
+      future: _sessao,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const Scaffold(
+              body: Center(child: CircularProgressIndicator()));
+        }
+        final sessao = snapshot.data;
+        if (snapshot.hasError ||
+            sessao == null ||
+            (widget.somenteTerapeuta && sessao.tipoUsuario != 'terapeuta')) {
+          return Scaffold(
+            body: Center(
+              child: TextButton(
+                onPressed: () => Navigator.pushNamedAndRemoveUntil(
+                    context, '/login', (route) => false),
+                child: const Text(
+                    'Sessão inválida ou acesso não permitido. Voltar ao login'),
+              ),
+            ),
+          );
+        }
+        return widget.destino(context);
+      },
+    );
+  }
 }
