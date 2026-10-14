@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -248,63 +249,74 @@ class DatabaseService {
     return bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
   }
 
-  /// Retorna o hash SHA-256 (hexadecimal) da senha combinada com o [salt].
-  /// Cada usuário tem um salt diferente, então duas contas com a mesma
-  /// senha nunca geram o mesmo hash — isso protege contra ataques de
-  /// rainbow table.
-  String hashSenha(String senha, String salt) {
-    return CryptoUtils.sha256Hex('$salt:$senha');
+  /// O marcador no campo salt permite distinguir PBKDF2 de SHA-256 legado.
+  /// A derivação roda em isolate para não bloquear a interface Android.
+  static const int _iteracoesPbkdf2 = 120000;
+
+  Future<Map<String, String>> _credenciaisNovas(String senha) async {
+    final saltHex = gerarSalt();
+    final hash = await compute(CryptoUtils.pbkdf2Derivar, {
+      'senha': senha,
+      'saltHex': saltHex,
+      'iteracoes': _iteracoesPbkdf2,
+    });
+    return {
+      'senha': hash,
+      'salt': 'pbkdf2_sha256:$_iteracoesPbkdf2:$saltHex',
+    };
   }
 
-  /// Confere se [senhaDigitada] corresponde à senha salva em [usuario]
-  /// (registro vindo de `buscarPorEmail`/`listarTodos`).
-  ///
-  /// Contas criadas antes da migração de segurança (sem salt) ainda são
-  /// validadas contra o hash antigo (sem salt); se a senha estiver
-  /// correta, a conta é automaticamente migrada para o novo formato com
-  /// salt nesse mesmo login, sem exigir nenhuma ação do usuário.
+  /// Verifica os três formatos existentes e migra somente após sucesso.
   Future<bool> senhaCorreta({
     required Map<String, dynamic> usuario,
     required String senhaDigitada,
   }) async {
-    final String senhaArmazenada = usuario['senha'] as String;
-    final String? salt = usuario['salt'] as String?;
+    final senhaArmazenada = usuario['senha'] as String;
+    final salt = usuario['salt'] as String? ?? '';
+    final id = usuario['id'] as int;
 
-    if (salt != null && salt.isNotEmpty) {
-      return CryptoUtils.hashesIguais(
-        senhaArmazenada,
-        hashSenha(senhaDigitada, salt),
-      );
+    if (salt.startsWith('pbkdf2_sha256:')) {
+      final partes = salt.split(':');
+      if (partes.length != 3) return false;
+      final iteracoes = int.tryParse(partes[1]);
+      if (iteracoes == null || iteracoes < 10000 || iteracoes > 1000000) {
+        return false;
+      }
+      final hash = await compute(CryptoUtils.pbkdf2Derivar, {
+        'senha': senhaDigitada,
+        'saltHex': partes[2],
+        'iteracoes': iteracoes,
+      });
+      if (!CryptoUtils.hashesIguais(senhaArmazenada, hash)) return false;
+      if (iteracoes < _iteracoesPbkdf2) {
+        await _migrarSenhaSeInalterada(
+            id, senhaArmazenada, salt, senhaDigitada);
+      }
+      return true;
     }
 
-    // Conta antiga: ainda usa o hash sem salt (SHA-256 puro da senha).
-    final String hashAntigo = CryptoUtils.sha256Hex(senhaDigitada);
-    if (!CryptoUtils.hashesIguais(senhaArmazenada, hashAntigo)) {
+    final hashLegado = salt.isEmpty
+        ? CryptoUtils.sha256Hex(senhaDigitada)
+        : CryptoUtils.sha256Hex('$salt:$senhaDigitada');
+    if (!CryptoUtils.hashesIguais(senhaArmazenada, hashLegado)) {
       return false;
     }
-
-    // Senha correta: migra a conta para o novo formato com salt.
-    final int id = usuario['id'] as int;
-    final String novoSalt = gerarSalt();
-    final String novoHash = hashSenha(senhaDigitada, novoSalt);
-    await _atualizarSenhaComSalt(id: id, senhaHash: novoHash, salt: novoSalt);
-
+    await _migrarSenhaSeInalterada(id, senhaArmazenada, salt, senhaDigitada);
     return true;
   }
 
-  /// Atualiza senha (já com hash) e salt de um usuário. Usado apenas
-  /// internamente pela migração automática em [senhaCorreta].
-  Future<int> _atualizarSenhaComSalt({
-    required int id,
-    required String senhaHash,
-    required String salt,
-  }) async {
+  /// UPDATE condicional impede sobrescrever troca de senha concorrente.
+  Future<void> _migrarSenhaSeInalterada(
+      int id, String hashAntigo, String saltAntigo, String senha) async {
+    final novos = await _credenciaisNovas(senha);
     final db = await database;
-    return db.update(
+    await db.update(
       'usuarios',
-      {'senha': senhaHash, 'salt': salt},
-      where: 'id = ?',
-      whereArgs: [id],
+      novos,
+      where: saltAntigo.isEmpty
+          ? "id = ? AND senha = ? AND (salt = ? OR salt IS NULL)"
+          : 'id = ? AND senha = ? AND salt = ?',
+      whereArgs: [id, hashAntigo, saltAntigo],
     );
   }
 
@@ -324,14 +336,13 @@ class DatabaseService {
       throw ArgumentError.value(tipoUsuario, 'tipoUsuario', 'Perfil inválido');
     }
     final db = await database;
-    final salt = gerarSalt();
+    final credenciais = await _credenciaisNovas(senha);
     return db.insert(
       'usuarios',
       {
         'nome': nome.trim(),
         'email': email.trim().toLowerCase(),
-        'senha': hashSenha(senha, salt),
-        'salt': salt,
+        ...credenciais,
         'foto_path': null,
         'tipo_usuario': tipoUsuario,
         'criado_em': DateTime.now().toIso8601String(),
@@ -409,13 +420,10 @@ class DatabaseService {
     required String novaSenha,
   }) async {
     final db = await database;
-    final salt = gerarSalt();
+    final credenciais = await _credenciaisNovas(novaSenha);
     return db.update(
       'usuarios',
-      {
-        'senha': hashSenha(novaSenha, salt),
-        'salt': salt,
-      },
+      credenciais,
       where: 'id = ?',
       whereArgs: [id],
     );
