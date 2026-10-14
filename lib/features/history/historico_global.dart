@@ -24,6 +24,9 @@ import 'package:mindful_you/services/database_service.dart';
 /// Lista em memória — cache dos check-ins do usuário atualmente logado.
 List<Map<String, dynamic>> historicoGlobal = [];
 
+// Invalida resultados de carregamentos anteriores que terminem fora de ordem.
+int _versaoCarregamentoHistorico = 0;
+
 /// Retorna o id do usuário atualmente logado (salvo em SharedPreferences
 /// no login/cadastro), ou `null` se não houver ninguém logado.
 Future<int?> _usuarioIdAtual() async {
@@ -116,7 +119,9 @@ Map<String, dynamic> _linhaParaEntrada(Map<String, dynamic> linha) {
 /// cadastro — assim a lista em memória nunca mistura o histórico de
 /// outra conta que tenha usado o app no mesmo aparelho.
 Future<void> carregarHistorico() async {
+  final versao = ++_versaoCarregamentoHistorico;
   final usuarioId = await _usuarioIdAtual();
+  if (versao != _versaoCarregamentoHistorico) return;
 
   if (usuarioId == null) {
     historicoGlobal = [];
@@ -124,6 +129,13 @@ Future<void> carregarHistorico() async {
   }
 
   final linhas = await DatabaseService.instance.listarCheckins(usuarioId);
+  if (versao != _versaoCarregamentoHistorico) return;
+  // A conta pode ter mudado enquanto o SQLite respondia.
+  if (await _usuarioIdAtual() != usuarioId) {
+    historicoGlobal = [];
+    return;
+  }
+  if (versao != _versaoCarregamentoHistorico) return;
   historicoGlobal = linhas.map(_linhaParaEntrada).toList();
 }
 
@@ -170,7 +182,11 @@ Future<void> limparHistorico() async {
   if (usuarioId != null) {
     await DatabaseService.instance.limparCheckins(usuarioId);
   }
-  historicoGlobal = [];
+  // Não apagar o cache de uma conta que entrou durante a operação.
+  if (await _usuarioIdAtual() == usuarioId) {
+    ++_versaoCarregamentoHistorico;
+    historicoGlobal = [];
+  }
 }
 
 // ============================================================

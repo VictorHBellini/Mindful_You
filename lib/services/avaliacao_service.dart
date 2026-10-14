@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mindful_you/services/database_service.dart';
 
@@ -53,10 +52,7 @@ class AvaliacaoService {
       'usuario_id': usuarioId,
       'instrumento': instrumento,
       'versao': versao,
-      'respostas_json': jsonEncode(respostas),
       'pontuacao': total,
-      'item_sensivel_positivo':
-          itemSensivelPositivo(instrumento, respostas) ? 1 : 0,
       'criado_em': DateTime.now().toUtc().toIso8601String(),
       'operacao_id': operacaoId,
     };

@@ -24,7 +24,11 @@ class DatabaseService {
 
     return openDatabase(
       path,
-      version: 9,
+      version: 10,
+      // A configuração precisa ocorrer antes das migrações/transações.
+      onConfigure: (db) async {
+        await db.execute('PRAGMA foreign_keys = ON');
+      },
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE usuarios (
@@ -108,6 +112,37 @@ class DatabaseService {
               .execute('ALTER TABLE avaliacoes ADD COLUMN operacao_id TEXT');
           await _criarIndicesOperacao(db);
         }
+        if (oldVersion < 10) {
+          // Migração de privacidade: remove respostas individuais e o
+          // indicador do item sensível, mantendo somente os agregados.
+          // O onUpgrade do sqflite é executado em transação.
+          await db.execute('''
+            CREATE TABLE avaliacoes_minimizadas (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
+              instrumento TEXT NOT NULL CHECK(instrumento IN ('GAD7', 'PHQ9')),
+              versao TEXT NOT NULL,
+              pontuacao INTEGER NOT NULL,
+              criado_em TEXT NOT NULL,
+              operacao_id TEXT
+            )
+          ''');
+          await db.execute('''
+            INSERT INTO avaliacoes_minimizadas
+              (id, usuario_id, instrumento, versao, pontuacao,
+               criado_em, operacao_id)
+            SELECT id, usuario_id, instrumento, versao, pontuacao,
+                   criado_em, operacao_id FROM avaliacoes
+          ''');
+          await db.execute('DROP TABLE avaliacoes');
+          await db.execute(
+              'ALTER TABLE avaliacoes_minimizadas RENAME TO avaliacoes');
+          await db.execute('CREATE INDEX idx_avaliacoes_usuario_data '
+              'ON avaliacoes(usuario_id, criado_em DESC)');
+          await db.execute('CREATE UNIQUE INDEX idx_avaliacoes_operacao '
+              'ON avaliacoes(usuario_id, operacao_id) '
+              'WHERE operacao_id IS NOT NULL');
+        }
       },
     );
   }
@@ -129,9 +164,7 @@ class DatabaseService {
         usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
         instrumento TEXT NOT NULL CHECK(instrumento IN ('GAD7', 'PHQ9')),
         versao TEXT NOT NULL,
-        respostas_json TEXT NOT NULL,
         pontuacao INTEGER NOT NULL,
-        item_sensivel_positivo INTEGER NOT NULL DEFAULT 0,
         criado_em TEXT NOT NULL,
         operacao_id TEXT
       )
@@ -398,11 +431,16 @@ class DatabaseService {
   /// que não existe mais.
   Future<int> deletarUsuario(int id) async {
     final db = await database;
-    await db.delete('checkins', where: 'usuario_id = ?', whereArgs: [id]);
-    await db.delete('avaliacoes', where: 'usuario_id = ?', whereArgs: [id]);
-    await db.delete('vinculos_terapeuticos',
-        where: 'terapeuta_id = ? OR paciente_id = ?', whereArgs: [id, id]);
-    return db.delete('usuarios', where: 'id = ?', whereArgs: [id]);
+    return db.transaction((txn) async {
+      await txn.delete('checkins', where: 'usuario_id = ?', whereArgs: [id]);
+      await txn.delete('avaliacoes', where: 'usuario_id = ?', whereArgs: [id]);
+      await txn.delete(
+        'vinculos_terapeuticos',
+        where: 'terapeuta_id = ? OR paciente_id = ?',
+        whereArgs: [id, id],
+      );
+      return txn.delete('usuarios', where: 'id = ?', whereArgs: [id]);
+    });
   }
 
   // ─────────────────────────────────────────────────────────────
