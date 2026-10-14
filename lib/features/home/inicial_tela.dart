@@ -592,7 +592,8 @@ class _InicialTelaState extends State<InicialTela> {
                         title: const Text('Avaliações de rastreio'),
                         subtitle: const Text('Módulo em preparação para o TCC'),
                         trailing: const Icon(Icons.chevron_right),
-                        onTap: () => Navigator.pushNamed(context, '/avaliacoes'),
+                        onTap: () =>
+                            Navigator.pushNamed(context, '/avaliacoes'),
                       ),
                     ),
                     const SizedBox(height: 30),

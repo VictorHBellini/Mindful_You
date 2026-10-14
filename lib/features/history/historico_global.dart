@@ -156,6 +156,7 @@ Future<void> adicionarHistorico(Map<String, dynamic> entrada) async {
     interesseFrequencia: entrada['interesseFrequencia']?.toString() ?? '',
     exaustaoBurnout: entrada['exaustaoBurnout']?.toString() ?? '',
     distanciamentoBurnout: entrada['distanciamentoBurnout']?.toString() ?? '',
+    operacaoId: entrada['operacaoId'] as String?,
   );
 
   // Recarrega a lista em memória para refletir o novo registro.

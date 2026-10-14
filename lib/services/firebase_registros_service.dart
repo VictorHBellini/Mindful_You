@@ -29,6 +29,7 @@ class FirebaseRegistrosService {
     required double sono,
     required double produtividade,
     required String sentimento,
+    String? operacaoId,
   }) async {
     if (bemEstar < 0 ||
         bemEstar > 100 ||
@@ -38,12 +39,15 @@ class FirebaseRegistrosService {
       throw ArgumentError('Dados do check-in fora dos limites permitidos.');
     }
     final uid = await _pacienteUid();
-    final ref =
-        _db.collection('usuarios').doc(uid).collection('checkins').doc();
+    final ref = _db
+        .collection('usuarios')
+        .doc(uid)
+        .collection('checkins')
+        .doc(operacaoId);
     if (FirebaseAuth.instance.currentUser?.uid != uid) {
       throw StateError('Sessão alterada.');
     }
-    await ref.set({
+    await _criarUmaVez(ref, uid, {
       'bem_estar': bemEstar,
       'ansiedade': ansiedade,
       'cansaco': cansaco,
@@ -59,6 +63,7 @@ class FirebaseRegistrosService {
     required String instrumento,
     required String versao,
     required List<int> respostas,
+    String? operacaoId,
   }) async {
     final quantidade = switch (instrumento) {
       'GAD7' => 7,
@@ -72,18 +77,37 @@ class FirebaseRegistrosService {
       throw ArgumentError('Avaliação inválida.');
     }
     final uid = await _pacienteUid();
-    final ref =
-        _db.collection('usuarios').doc(uid).collection('avaliacoes').doc();
+    final ref = _db
+        .collection('usuarios')
+        .doc(uid)
+        .collection('avaliacoes')
+        .doc(operacaoId);
     if (FirebaseAuth.instance.currentUser?.uid != uid) {
       throw StateError('Sessão alterada.');
     }
-    await ref.set({
+    await _criarUmaVez(ref, uid, {
       'instrumento': instrumento,
       'versao': versao.trim(),
       'pontuacao': respostas.fold<int>(0, (total, v) => total + v),
       'criado_em': FieldValue.serverTimestamp(),
     });
     return ref.id;
+  }
+
+  /// A transação lê antes de criar; repetição do mesmo ID não sobrescreve.
+  /// Sem conexão, a operação falha e a tela mantém o ID para nova tentativa.
+  Future<void> _criarUmaVez(DocumentReference<Map<String, dynamic>> ref,
+      String uid, Map<String, dynamic> dados) async {
+    await _db.runTransaction((tx) async {
+      final existente = await tx.get(ref);
+      if (FirebaseAuth.instance.currentUser?.uid != uid) {
+        throw StateError('Sessão alterada.');
+      }
+      if (!existente.exists) tx.set(ref, dados);
+    });
+    if (FirebaseAuth.instance.currentUser?.uid != uid) {
+      throw StateError('Sessão alterada.');
+    }
   }
 
   Future<List<Map<String, dynamic>>> meusCheckins() async {

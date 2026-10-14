@@ -24,7 +24,7 @@ class DatabaseService {
 
     return openDatabase(
       path,
-      version: 8,
+      version: 9,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE usuarios (
@@ -41,6 +41,7 @@ class DatabaseService {
         await _criarTabelaCheckins(db);
         await _criarTabelaVinculos(db);
         await _criarTabelaAvaliacoes(db);
+        await _criarIndicesOperacao(db);
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
@@ -101,8 +102,22 @@ class DatabaseService {
         if (oldVersion < 8) {
           await _criarTabelaAvaliacoes(db);
         }
+        if (oldVersion < 9) {
+          await db.execute('ALTER TABLE checkins ADD COLUMN operacao_id TEXT');
+          await db
+              .execute('ALTER TABLE avaliacoes ADD COLUMN operacao_id TEXT');
+          await _criarIndicesOperacao(db);
+        }
       },
     );
+  }
+
+  Future<void> _criarIndicesOperacao(Database db) async {
+    await db.execute('CREATE UNIQUE INDEX IF NOT EXISTS idx_checkins_operacao '
+        'ON checkins(usuario_id, operacao_id) WHERE operacao_id IS NOT NULL');
+    await db.execute(
+        'CREATE UNIQUE INDEX IF NOT EXISTS idx_avaliacoes_operacao '
+        'ON avaliacoes(usuario_id, operacao_id) WHERE operacao_id IS NOT NULL');
   }
 
   /// Avaliações estruturadas de demonstração, separadas dos check-ins.
@@ -117,7 +132,8 @@ class DatabaseService {
         respostas_json TEXT NOT NULL,
         pontuacao INTEGER NOT NULL,
         item_sensivel_positivo INTEGER NOT NULL DEFAULT 0,
-        criado_em TEXT NOT NULL
+        criado_em TEXT NOT NULL,
+        operacao_id TEXT
       )
     ''');
     await db.execute(
@@ -141,8 +157,10 @@ class DatabaseService {
         CHECK(terapeuta_id != paciente_id)
       )
     ''');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_vinculos_paciente ON vinculos_terapeuticos(paciente_id, status)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_vinculos_terapeuta ON vinculos_terapeuticos(terapeuta_id, status)');
+    await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_vinculos_paciente ON vinculos_terapeuticos(paciente_id, status)');
+    await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_vinculos_terapeuta ON vinculos_terapeuticos(terapeuta_id, status)');
   }
 
   /// Cria a tabela `checkins` (e seu índice) se ainda não existirem.
@@ -174,6 +192,7 @@ class DatabaseService {
         exaustao_burnout        TEXT NOT NULL DEFAULT '',
         distanciamento_burnout  TEXT NOT NULL DEFAULT '',
         criado_em       TEXT    NOT NULL,
+        operacao_id     TEXT,
         FOREIGN KEY (usuario_id) REFERENCES usuarios (id)
       )
     ''');
@@ -381,7 +400,8 @@ class DatabaseService {
     final db = await database;
     await db.delete('checkins', where: 'usuario_id = ?', whereArgs: [id]);
     await db.delete('avaliacoes', where: 'usuario_id = ?', whereArgs: [id]);
-    await db.delete('vinculos_terapeuticos', where: 'terapeuta_id = ? OR paciente_id = ?', whereArgs: [id, id]);
+    await db.delete('vinculos_terapeuticos',
+        where: 'terapeuta_id = ? OR paciente_id = ?', whereArgs: [id, id]);
     return db.delete('usuarios', where: 'id = ?', whereArgs: [id]);
   }
 
@@ -413,9 +433,13 @@ class DatabaseService {
     String interesseFrequencia = '',
     String exaustaoBurnout = '',
     String distanciamentoBurnout = '',
+    String? operacaoId,
   }) async {
     final db = await database;
-    return db.insert('checkins', {
+    if (operacaoId != null && operacaoId.isEmpty) {
+      throw ArgumentError('Identificador de operação vazio');
+    }
+    final dados = <String, Object?>{
       'usuario_id': usuarioId,
       'data_iso': dataIso,
       'data_formatada': dataFormatada,
@@ -433,6 +457,17 @@ class DatabaseService {
       'exaustao_burnout': exaustaoBurnout,
       'distanciamento_burnout': distanciamentoBurnout,
       'criado_em': DateTime.now().toIso8601String(),
+      'operacao_id': operacaoId,
+    };
+    if (operacaoId == null) return db.insert('checkins', dados);
+    return db.transaction((txn) async {
+      final existentes = await txn.query('checkins',
+          columns: ['id'],
+          where: 'usuario_id = ? AND operacao_id = ?',
+          whereArgs: [usuarioId, operacaoId],
+          limit: 1);
+      if (existentes.isNotEmpty) return existentes.first['id'] as int;
+      return txn.insert('checkins', dados);
     });
   }
 

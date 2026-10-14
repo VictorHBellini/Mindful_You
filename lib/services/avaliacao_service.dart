@@ -30,26 +30,45 @@ class AvaliacaoService {
     required String instrumento,
     required String versao,
     required List<int> respostas,
+    String? operacaoId,
   }) async {
     final prefs = await SharedPreferences.getInstance();
     final usuarioId = prefs.getInt('usuarioId');
     if (usuarioId == null) throw StateError('Sessão não encontrada');
     final db = await DatabaseService.instance.database;
     final usuarios = await db.query('usuarios',
-      columns: ['tipo_usuario'], where: 'id = ?', whereArgs: [usuarioId], limit: 1);
+        columns: ['tipo_usuario'],
+        where: 'id = ?',
+        whereArgs: [usuarioId],
+        limit: 1);
     if (usuarios.isEmpty || usuarios.first['tipo_usuario'] != 'paciente') {
       throw StateError('Somente pacientes podem registrar avaliações');
     }
     if (versao.trim().isEmpty) throw ArgumentError('Versão obrigatória');
     final total = pontuar(instrumento, respostas);
-    return db.insert('avaliacoes', {
+    if (operacaoId != null && operacaoId.isEmpty) {
+      throw ArgumentError('Identificador de operação vazio');
+    }
+    final dados = <String, Object?>{
       'usuario_id': usuarioId,
       'instrumento': instrumento,
       'versao': versao,
       'respostas_json': jsonEncode(respostas),
       'pontuacao': total,
-      'item_sensivel_positivo': itemSensivelPositivo(instrumento, respostas) ? 1 : 0,
+      'item_sensivel_positivo':
+          itemSensivelPositivo(instrumento, respostas) ? 1 : 0,
       'criado_em': DateTime.now().toUtc().toIso8601String(),
+      'operacao_id': operacaoId,
+    };
+    if (operacaoId == null) return db.insert('avaliacoes', dados);
+    return db.transaction((txn) async {
+      final existentes = await txn.query('avaliacoes',
+          columns: ['id'],
+          where: 'usuario_id = ? AND operacao_id = ?',
+          whereArgs: [usuarioId, operacaoId],
+          limit: 1);
+      if (existentes.isNotEmpty) return existentes.first['id'] as int;
+      return txn.insert('avaliacoes', dados);
     });
   }
 
@@ -59,8 +78,9 @@ class AvaliacaoService {
     if (usuarioId == null) throw StateError('Sessão não encontrada');
     final db = await DatabaseService.instance.database;
     return db.query('avaliacoes',
-      columns: ['id', 'instrumento', 'versao', 'pontuacao', 'criado_em'],
-      where: 'usuario_id = ?', whereArgs: [usuarioId],
-      orderBy: 'criado_em DESC');
+        columns: ['id', 'instrumento', 'versao', 'pontuacao', 'criado_em'],
+        where: 'usuario_id = ?',
+        whereArgs: [usuarioId],
+        orderBy: 'criado_em DESC');
   }
 }

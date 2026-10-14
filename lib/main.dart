@@ -7,6 +7,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'firebase_options.dart';
 import 'app.dart';
 import 'features/auth/firebase_teste_tela.dart';
+import 'features/checkin/grafico_tela.dart';
 import 'features/history/historico_global.dart';
 import 'services/theme_service.dart';
 
@@ -20,10 +21,21 @@ void main() async {
   );
 
   if (kIsWeb) {
-    runApp(const MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: FirebaseTesteTela(),
-    ));
+    runApp(
+      MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: const FirebaseTesteTela(),
+        onGenerateRoute: (settings) {
+          if (settings.name == '/grafico') {
+            return MaterialPageRoute<void>(
+              settings: settings,
+              builder: (_) => const GraficoTela(),
+            );
+          }
+          return null;
+        },
+      ),
+    );
     return;
   }
 

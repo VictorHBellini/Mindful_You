@@ -1,4 +1,7 @@
+import 'package:mindful_you/services/operacao_id.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:mindful_you/services/firebase_registros_service.dart';
 import 'package:mindful_you/services/avaliacao_service.dart';
 
 /// Formulário DEMONSTRATIVO inspirado nos domínios do GAD-7 e PHQ-9.
@@ -9,7 +12,8 @@ class QuestionarioRastreioTela extends StatefulWidget {
   const QuestionarioRastreioTela({super.key, required this.instrumento});
 
   @override
-  State<QuestionarioRastreioTela> createState() => _QuestionarioRastreioTelaState();
+  State<QuestionarioRastreioTela> createState() =>
+      _QuestionarioRastreioTelaState();
 }
 
 class _QuestionarioRastreioTelaState extends State<QuestionarioRastreioTela> {
@@ -45,6 +49,7 @@ class _QuestionarioRastreioTelaState extends State<QuestionarioRastreioTela> {
   late final List<int?> _respostas;
   bool _salvando = false;
   bool _finalizado = false;
+  late final String _operacaoId = novaOperacaoId();
 
   bool get _phq9 => widget.instrumento == 'PHQ9';
   List<String> get _perguntas => _phq9 ? _phq : _gad;
@@ -59,12 +64,14 @@ class _QuestionarioRastreioTelaState extends State<QuestionarioRastreioTela> {
     if (_salvando || _finalizado) return;
     if (_respostas.any((v) => v == null)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Responda a todas as perguntas para continuar.')),
+        const SnackBar(
+            content: Text('Responda a todas as perguntas para continuar.')),
       );
       return;
     }
     final respostas = _respostas.cast<int>();
-    final sensivel = AvaliacaoService.itemSensivelPositivo(widget.instrumento, respostas);
+    final sensivel =
+        AvaliacaoService.itemSensivelPositivo(widget.instrumento, respostas);
     if (sensivel) {
       await showDialog<void>(
         context: context,
@@ -90,11 +97,21 @@ class _QuestionarioRastreioTelaState extends State<QuestionarioRastreioTela> {
     setState(() => _salvando = true);
     try {
       final total = AvaliacaoService.pontuar(widget.instrumento, respostas);
-      await AvaliacaoService.instance.registrar(
-        instrumento: widget.instrumento,
-        versao: 'demonstracao-dominios-v1',
-        respostas: respostas,
-      );
+      if (kIsWeb) {
+        await FirebaseRegistrosService.instance.registrarAvaliacao(
+          instrumento: widget.instrumento,
+          versao: 'demonstracao-dominios-v1',
+          respostas: respostas,
+          operacaoId: _operacaoId,
+        );
+      } else {
+        await AvaliacaoService.instance.registrar(
+          instrumento: widget.instrumento,
+          versao: 'demonstracao-dominios-v1',
+          respostas: respostas,
+          operacaoId: _operacaoId,
+        );
+      }
       if (!mounted) return;
       setState(() => _finalizado = true);
       await showDialog<void>(
@@ -118,7 +135,8 @@ class _QuestionarioRastreioTelaState extends State<QuestionarioRastreioTela> {
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Não foi possível salvar. Tente novamente.')),
+        const SnackBar(
+            content: Text('Não foi possível salvar. Tente novamente.')),
       );
     } finally {
       if (mounted) setState(() => _salvando = false);
@@ -131,11 +149,14 @@ class _QuestionarioRastreioTelaState extends State<QuestionarioRastreioTela> {
       return const Scaffold(body: Center(child: Text('Instrumento inválido')));
     }
     return Scaffold(
-      appBar: AppBar(title: Text(_phq9 ? 'Humor • demonstração' : 'Ansiedade • demonstração')),
+      appBar: AppBar(
+          title: Text(
+              _phq9 ? 'Humor • demonstração' : 'Ansiedade • demonstração')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Card(child: Padding(
+          const Card(
+              child: Padding(
             padding: EdgeInsets.all(16),
             child: Text(
               'Protótipo acadêmico com perguntas ilustrativas inspiradas nos domínios '
@@ -162,9 +183,11 @@ class _QuestionarioRastreioTelaState extends State<QuestionarioRastreioTela> {
                           ChoiceChip(
                             label: Text(_opcoes[valor]),
                             selected: _respostas[i] == valor,
-                            onSelected: _salvando ? null : (_) {
-                              setState(() => _respostas[i] = valor);
-                            },
+                            onSelected: _salvando
+                                ? null
+                                : (_) {
+                                    setState(() => _respostas[i] = valor);
+                                  },
                           ),
                       ],
                     ),
@@ -175,7 +198,8 @@ class _QuestionarioRastreioTelaState extends State<QuestionarioRastreioTela> {
           const SizedBox(height: 12),
           FilledButton(
             onPressed: _salvando || _finalizado ? null : _salvar,
-            child: Text(_salvando ? 'Salvando...' : 'Registrar respostas fictícias'),
+            child: Text(
+                _salvando ? 'Salvando...' : 'Registrar respostas fictícias'),
           ),
           const SizedBox(height: 24),
         ],

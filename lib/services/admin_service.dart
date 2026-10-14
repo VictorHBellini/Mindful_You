@@ -55,6 +55,5 @@ class AdminService {
     final usuarioId = prefs.getInt('usuarioId');
     final email = prefs.getString('emailUsuario');
     return usuarioId != null && email != null && ehAdmin(email);
-
   }
 }

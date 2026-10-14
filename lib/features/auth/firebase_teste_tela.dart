@@ -3,6 +3,9 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:mindful_you/features/auth/firebase_registros_teste_tela.dart';
 import 'package:flutter/material.dart';
+import 'package:mindful_you/features/checkin/questionario_tela.dart';
+import 'package:mindful_you/features/assessment/avaliacoes_tela.dart';
+import 'package:mindful_you/features/history/firebase_historico_tela.dart';
 import 'package:mindful_you/services/firebase_perfil_service.dart';
 
 /// Laboratório F2.3 isolado: somente contas e perfis fictícios.
@@ -316,6 +319,30 @@ class _FirebaseTesteTelaState extends State<FirebaseTesteTela> {
                           ),
                         );
                       },
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                  'F3.2 • Formulários fictícios integrados ao Firestore'),
+              OutlinedButton(
+                onPressed: _ocupado || _perfil?['tipo_usuario'] != 'paciente'
+                    ? null
+                    : () => Navigator.of(context).push(MaterialPageRoute<void>(
+                        builder: (_) => const QuestionarioTela())),
+                child: const Text('Responder check-in F3.2'),
+              ),
+              OutlinedButton(
+                onPressed: _ocupado || _perfil?['tipo_usuario'] != 'paciente'
+                    ? null
+                    : () => Navigator.of(context).push(MaterialPageRoute<void>(
+                        builder: (_) => const AvaliacoesTela())),
+                child: const Text('Avaliações demonstrativas F3.2'),
+              ),
+              OutlinedButton(
+                onPressed: _ocupado || _perfil?['tipo_usuario'] != 'paciente'
+                    ? null
+                    : () => Navigator.of(context).push(MaterialPageRoute<void>(
+                        builder: (_) => const FirebaseHistoricoTela())),
+                child: const Text('Histórico Firestore F3.2'),
               ),
               const SizedBox(height: 24),
               const Text(

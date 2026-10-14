@@ -71,7 +71,9 @@ class _LoginTelaState extends State<LoginTela> {
     await prefs.setString('nomeUsuario', usuario['nome'] as String);
     await prefs.setString('emailUsuario', usuario['email'] as String);
     await prefs.setInt('usuarioId', usuario['id'] as int);
-    final tipoUsuario = usuario['tipo_usuario']?.toString() == 'terapeuta' ? 'terapeuta' : 'paciente';
+    final tipoUsuario = usuario['tipo_usuario']?.toString() == 'terapeuta'
+        ? 'terapeuta'
+        : 'paciente';
     await prefs.setString('tipoUsuario', tipoUsuario);
 
     // BUG CORRIGIDO: a foto de perfil era lida de uma chave global
@@ -99,7 +101,10 @@ class _LoginTelaState extends State<LoginTela> {
     await carregarHistorico();
 
     if (!mounted) return;
-    Navigator.pushNamedAndRemoveUntil(context, tipoUsuario == 'terapeuta' ? '/painel-terapeuta' : '/inicial', (route) => false);
+    Navigator.pushNamedAndRemoveUntil(
+        context,
+        tipoUsuario == 'terapeuta' ? '/painel-terapeuta' : '/inicial',
+        (route) => false);
   }
 
   @override

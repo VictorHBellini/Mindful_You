@@ -21,8 +21,7 @@ class TermosUsoTela extends StatelessWidget {
   static const List<SecaoTextoLegal> _secoes = [
     SecaoTextoLegal(
       titulo: "1. Objetivo do aplicativo",
-      corpo:
-          "O Mindful You é uma ferramenta de acompanhamento emocional que "
+      corpo: "O Mindful You é uma ferramenta de acompanhamento emocional que "
           "permite registrar sentimentos, acompanhar o histórico de "
           "check-ins e visualizar informações relacionadas ao seu "
           "bem-estar.\n\n"
@@ -32,8 +31,7 @@ class TermosUsoTela extends StatelessWidget {
     ),
     SecaoTextoLegal(
       titulo: "2. Cadastro e acesso",
-      corpo:
-          "Para utilizar determinadas funcionalidades, o usuário poderá "
+      corpo: "Para utilizar determinadas funcionalidades, o usuário poderá "
           "fornecer informações básicas de identificação, como nome e "
           "e-mail.\n\n"
           "O usuário é responsável pela veracidade das informações "
@@ -41,38 +39,33 @@ class TermosUsoTela extends StatelessWidget {
     ),
     SecaoTextoLegal(
       titulo: "3. Uso adequado",
-      corpo:
-          "O usuário compromete-se a utilizar o aplicativo de forma ética "
+      corpo: "O usuário compromete-se a utilizar o aplicativo de forma ética "
           "e responsável, não realizando atividades que possam "
           "comprometer a segurança, integridade ou funcionamento da "
           "plataforma.",
     ),
     SecaoTextoLegal(
       titulo: "4. Disponibilidade",
-      corpo:
-          "Embora busquemos manter o aplicativo disponível continuamente, "
+      corpo: "Embora busquemos manter o aplicativo disponível continuamente, "
           "não garantimos funcionamento ininterrupto, podendo ocorrer "
           "manutenções, atualizações ou falhas técnicas.",
     ),
     SecaoTextoLegal(
       titulo: "5. Limitação de responsabilidade",
-      corpo:
-          "As informações e sugestões apresentadas pelo aplicativo "
+      corpo: "As informações e sugestões apresentadas pelo aplicativo "
           "possuem caráter orientativo.\n\n"
           "O Mindful You não realiza diagnósticos médicos nem oferece "
           "tratamento psicológico.",
     ),
     SecaoTextoLegal(
       titulo: "6. Alterações dos termos",
-      corpo:
-          "Estes Termos de Uso poderão ser atualizados periodicamente. "
+      corpo: "Estes Termos de Uso poderão ser atualizados periodicamente. "
           "Sempre que houver alterações relevantes, a versão atualizada "
           "será disponibilizada dentro do aplicativo.",
     ),
     SecaoTextoLegal(
       titulo: "7. Contato",
-      corpo:
-          "Em caso de dúvidas, sugestões ou solicitações relacionadas ao "
+      corpo: "Em caso de dúvidas, sugestões ou solicitações relacionadas ao "
           "aplicativo, entre em contato pelos canais oficiais "
           "disponibilizados pelo desenvolvedor.",
     ),
