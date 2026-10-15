@@ -15,7 +15,7 @@ class FirebaseContaVinculoService {
     bytes[6] = (bytes[6] & 0x0f) | 0x40;
     bytes[8] = (bytes[8] & 0x3f) | 0x80;
     final h = bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
-    return '${h.substring(0,8)}-${h.substring(8,12)}-${h.substring(12,16)}-${h.substring(16,20)}-${h.substring(20)}';
+    return '${h.substring(0, 8)}-${h.substring(8, 12)}-${h.substring(12, 16)}-${h.substring(16, 20)}-${h.substring(20)}';
   }
 
   static Future<String> _instalacao() async {
@@ -27,20 +27,79 @@ class FirebaseContaVinculoService {
     return novo;
   }
 
-  static Future<String> solicitarPendente({required String email, required String senha}) async {
-    const habilitado = bool.fromEnvironment('MINDFUL_FIREBASE_EMULATORS', defaultValue: false);
-    if (!habilitado) throw StateError('Disponível somente no ambiente demonstrativo com emuladores.');
+  /// Diagnóstico local somente de leitura.
+  /// Não confirma identidade Firebase e não autoriza sincronização.
+  static Future<String> diagnosticarVinculoLocal() async {
+    final sessao = await SessionService.validar();
+
+    if (sessao == null) {
+      return 'Entre na sua conta local para consultar o vínculo.';
+    }
+
+    final db = await DatabaseService.instance.database;
+
+    final registros = await db.query(
+      'vinculos_contas_firebase',
+      columns: ['estado'],
+      where: 'usuario_id = ?',
+      whereArgs: [sessao.id],
+      limit: 1,
+    );
+
+    final sessaoAtual = await SessionService.validar();
+
+    if (sessaoAtual == null || sessaoAtual.id != sessao.id) {
+      return 'A sessão local mudou. Consulte novamente.';
+    }
+
+    if (registros.isEmpty) {
+      return 'Esta conta local não possui solicitação de vínculo.';
+    }
+
+    switch (registros.first['estado']) {
+      case 'pendente':
+        return 'Existe uma solicitação pendente salva neste dispositivo. '
+            'Ela não confirma que a conta ainda existe no Firebase. '
+            'Sincronização desativada.';
+
+      case 'confirmado':
+        return 'Existe um registro local de vínculo confirmado. '
+            'A identidade remota não foi verificada nesta consulta. '
+            'Nenhuma sincronização foi autorizada.';
+
+      case 'revogado':
+        return 'Existe um registro local de vínculo revogado. '
+            'Nenhuma nova vinculação foi realizada.';
+
+      default:
+        return 'Estado de vínculo desconhecido. Nenhuma alteração realizada.';
+    }
+  }
+
+  static Future<String> solicitarPendente(
+      {required String email, required String senha}) async {
+    const habilitado =
+        bool.fromEnvironment('MINDFUL_FIREBASE_EMULATORS', defaultValue: false);
+    if (!habilitado) {
+      throw StateError(
+          'Disponível somente no ambiente demonstrativo com emuladores.');
+    }
     final inicial = await SessionService.validar();
-    if (inicial == null) throw StateError('Entre na conta local antes de solicitar a vinculação.');
+    if (inicial == null) {
+      throw StateError('Entre na conta local antes de solicitar a vinculação.');
+    }
     final auth = FirebaseAuth.instance;
     try {
       // Exige autenticação explícita na conta Firebase de teste.
       await auth.signOut();
-      final cred = await auth.signInWithEmailAndPassword(email: email.trim(), password: senha);
+      final cred = await auth.signInWithEmailAndPassword(
+          email: email.trim(), password: senha);
       final uid = cred.user?.uid;
       if (uid == null) throw StateError('Firebase não retornou UID.');
       final antes = await SessionService.validar();
-      if (antes == null || antes.id != inicial.id) throw StateError('A sessão local mudou. Solicitação cancelada.');
+      if (antes == null || antes.id != inicial.id) {
+        throw StateError('A sessão local mudou. Solicitação cancelada.');
+      }
       // Evita chamar o backend quando este UID já pertence a outra conta local.
       // A checagem dentro da transação, abaixo, continua sendo obrigatória.
       final dbPre = await DatabaseService.instance.database;
@@ -52,68 +111,84 @@ class FirebaseContaVinculoService {
         limit: 1,
       );
       if (donoPre.isNotEmpty && donoPre.first['usuario_id'] != inicial.id) {
-        throw StateError('Esta conta Firebase já possui uma solicitação de vínculo em outra conta local deste dispositivo.');
+        throw StateError(
+            'Esta conta Firebase já possui uma solicitação de vínculo em outra conta local deste dispositivo.');
       }
       final idInstalacao = await _instalacao();
-      final callable = FirebaseFunctions.instanceFor(region: 'southamerica-east1').httpsCallable('solicitarVinculoDemo');
-      final resposta = await callable.call<Map<String, dynamic>>({'installationId': idInstalacao});
-      if (resposta.data['estado'] != 'pendente' || resposta.data['uid'] != uid) {
+      final callable =
+          FirebaseFunctions.instanceFor(region: 'southamerica-east1')
+              .httpsCallable('solicitarVinculoDemo');
+      final resposta = await callable
+          .call<Map<String, dynamic>>({'installationId': idInstalacao});
+      if (resposta.data['estado'] != 'pendente' ||
+          resposta.data['uid'] != uid) {
         throw StateError('Resposta inesperada do backend.');
       }
       final atual = await SessionService.validar();
-      if (atual == null || atual.id != inicial.id || auth.currentUser?.uid != uid) {
+      if (atual == null ||
+          atual.id != inicial.id ||
+          auth.currentUser?.uid != uid) {
         throw StateError('Sessão alterada durante a solicitação.');
       }
       final db = await DatabaseService.instance.database;
       try {
-      await db.transaction((txn) async {
-        // Verificação adicional contra troca de usuário entre chamadas assíncronas.
-        // Nunca chamar SessionService.validar() dentro de db.transaction:
-        // ele executa db.query fora da transação e pode bloquear o SQLite.
-        final prefsTransacao = await SharedPreferences.getInstance();
-        if (prefsTransacao.getInt('usuarioId') != inicial.id ||
-            auth.currentUser?.uid != uid) {
-          throw StateError('Sessão alterada antes da gravação.');
-        }
-        final usuarios = await txn.query(
-          'usuarios',
-          columns: ['id', 'tipo_usuario'],
-          where: 'id = ?',
-          whereArgs: [inicial.id],
-          limit: 1,
-        );
-        if (usuarios.isEmpty ||
-            !['paciente', 'terapeuta'].contains(usuarios.first['tipo_usuario'])) {
-          throw StateError('Conta local inválida.');
-        }
-        // Impede o mesmo UID em duas contas locais, inclusive sob concorrência.
-        final donoUid = await txn.query(
-          'vinculos_contas_firebase',
-          columns: ['usuario_id'],
-          where: 'firebase_uid = ?',
-          whereArgs: [uid],
-          limit: 1,
-        );
-        if (donoUid.isNotEmpty && donoUid.first['usuario_id'] != inicial.id) {
-          throw StateError('Esta conta Firebase já possui uma solicitação de vínculo em outra conta local deste dispositivo.');
-        }
-        final existente = await txn.query('vinculos_contas_firebase', where: 'usuario_id = ?', whereArgs: [inicial.id], limit: 1);
-        if (existente.isNotEmpty) {
-          if (existente.first['firebase_uid'] != uid || existente.first['estado'] != 'pendente') {
-            throw StateError('A conta local já possui outro vínculo. Nenhuma alteração realizada.');
+        await db.transaction((txn) async {
+          // Verificação adicional contra troca de usuário entre chamadas assíncronas.
+          // Nunca chamar SessionService.validar() dentro de db.transaction:
+          // ele executa db.query fora da transação e pode bloquear o SQLite.
+          final prefsTransacao = await SharedPreferences.getInstance();
+          if (prefsTransacao.getInt('usuarioId') != inicial.id ||
+              auth.currentUser?.uid != uid) {
+            throw StateError('Sessão alterada antes da gravação.');
           }
-        } else {
-          await txn.insert('vinculos_contas_firebase', {
-            'usuario_id': inicial.id,
-            'firebase_uid': uid,
-            'estado': 'pendente',
-            'criado_em': DateTime.now().toUtc().toIso8601String(),
-          }, conflictAlgorithm: ConflictAlgorithm.abort);
-        }
-      });
+          final usuarios = await txn.query(
+            'usuarios',
+            columns: ['id', 'tipo_usuario'],
+            where: 'id = ?',
+            whereArgs: [inicial.id],
+            limit: 1,
+          );
+          if (usuarios.isEmpty ||
+              !['paciente', 'terapeuta']
+                  .contains(usuarios.first['tipo_usuario'])) {
+            throw StateError('Conta local inválida.');
+          }
+          // Impede o mesmo UID em duas contas locais, inclusive sob concorrência.
+          final donoUid = await txn.query(
+            'vinculos_contas_firebase',
+            columns: ['usuario_id'],
+            where: 'firebase_uid = ?',
+            whereArgs: [uid],
+            limit: 1,
+          );
+          if (donoUid.isNotEmpty && donoUid.first['usuario_id'] != inicial.id) {
+            throw StateError(
+                'Esta conta Firebase já possui uma solicitação de vínculo em outra conta local deste dispositivo.');
+          }
+          final existente = await txn.query('vinculos_contas_firebase',
+              where: 'usuario_id = ?', whereArgs: [inicial.id], limit: 1);
+          if (existente.isNotEmpty) {
+            if (existente.first['firebase_uid'] != uid ||
+                existente.first['estado'] != 'pendente') {
+              throw StateError(
+                  'A conta local já possui outro vínculo. Nenhuma alteração realizada.');
+            }
+          } else {
+            await txn.insert(
+                'vinculos_contas_firebase',
+                {
+                  'usuario_id': inicial.id,
+                  'firebase_uid': uid,
+                  'estado': 'pendente',
+                  'criado_em': DateTime.now().toUtc().toIso8601String(),
+                },
+                conflictAlgorithm: ConflictAlgorithm.abort);
+          }
+        });
       } on DatabaseException catch (e) {
         if (e.isUniqueConstraintError()) {
-          throw StateError('Conflito de vínculo: esta conta Firebase ou conta local já possui uma solicitação neste dispositivo.');
+          throw StateError(
+              'Conflito de vínculo: esta conta Firebase ou conta local já possui uma solicitação neste dispositivo.');
         }
         rethrow;
       }
