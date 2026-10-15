@@ -119,9 +119,10 @@ class _InicialTelaState extends State<InicialTela> {
 
     return Scaffold(
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => Navigator.pushNamed(context, '/consentimentos'),
-        icon: const Icon(Icons.shield_outlined),
-        label: const Text('Consentimentos'),
+        onPressed: () => Navigator.pushNamed(context, '/questionario'),
+        icon: const Icon(Icons.edit_note_rounded),
+        label: const Text('Fazer check-in'),
+        tooltip: 'Iniciar check-in emocional',
       ),
       drawer: const MenuLateral(),
       backgroundColor: const Color(0xFFF8F5F2),
@@ -391,76 +392,83 @@ class _InicialTelaState extends State<InicialTela> {
 
                     const SizedBox(height: 13),
 
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(18),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: const Color(
-                            0xFFE8DFDA,
+                    InkWell(
+                      borderRadius: BorderRadius.circular(20),
+                      onTap: ultimoSentimento == "Nenhum"
+                          ? null
+                          : () => Navigator.pushNamed(context, '/historico'),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(18),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: const Color(
+                              0xFFE8DFDA,
+                            ),
                           ),
                         ),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 55,
-                            height: 55,
-                            decoration: BoxDecoration(
-                              color: const Color(
-                                0xFFF3ECE8,
-                              ),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Center(
-                              child: Text(
-                                ultimoEmoji,
-                                style: const TextStyle(
-                                  fontSize: 28,
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 55,
+                              height: 55,
+                              decoration: BoxDecoration(
+                                color: const Color(
+                                  0xFFF3ECE8,
                                 ),
+                                shape: BoxShape.circle,
                               ),
-                            ),
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  ultimoSentimento == "Nenhum"
-                                      ? "Ainda não realizado"
-                                      : "Você se sentiu $ultimoSentimento",
+                              child: Center(
+                                child: Text(
+                                  ultimoEmoji,
                                   style: const TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(
-                                      0xFF4F4039,
-                                    ),
+                                    fontSize: 28,
                                   ),
                                 ),
-                                const SizedBox(
-                                  height: 5,
-                                ),
-                                Text(
-                                  ultimaData,
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: Color(
-                                      0xFF95877F,
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    ultimoSentimento == "Nenhum"
+                                        ? "Ainda não realizado"
+                                        : "Você se sentiu $ultimoSentimento",
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(
+                                        0xFF4F4039,
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(
+                                    height: 5,
+                                  ),
+                                  Text(
+                                    ultimaData,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Color(
+                                        0xFF95877F,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                          const Icon(
-                            Icons.arrow_forward_ios_rounded,
-                            size: 16,
-                            color: Color(0xFFB0A29A),
-                          ),
-                        ],
+                            if (ultimoSentimento != "Nenhum")
+                              const Icon(
+                                Icons.arrow_forward_ios_rounded,
+                                size: 16,
+                                color: Color(0xFFB0A29A),
+                              ),
+                          ],
+                        ),
                       ),
                     ),
 

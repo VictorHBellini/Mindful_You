@@ -695,393 +695,412 @@ class _PerfilTelaState extends State<PerfilTela>
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setModal) {
-            return Container(
+            return Padding(
               padding: EdgeInsets.only(
-                left: 24,
-                right: 24,
-                top: 12,
-                bottom: MediaQuery.of(context).viewInsets.bottom + 25,
+                bottom: MediaQuery.of(context).viewInsets.bottom,
               ),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-              ),
-              child: Form(
-                key: formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 45,
-                      height: 5,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE0D8D3),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    const SizedBox(height: 22),
-                    const Text(
-                      "Editar perfil",
-                      style: TextStyle(
-                        fontSize: 23,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF40352F),
-                      ),
-                    ),
-                    const SizedBox(height: 25),
-
-                    // NOME
-                    TextFormField(
-                      controller: nomeController,
-                      textCapitalization: TextCapitalization.words,
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return "Digite seu nome";
-                        }
-                        if (value.trim().length < 3) {
-                          return "Digite um nome válido";
-                        }
-                        return null;
-                      },
-                      decoration: InputDecoration(
-                        labelText: "Nome completo",
-                        prefixIcon: const Icon(
-                          Icons.person_outline_rounded,
-                          color: Color(0xFF8D6E63),
-                        ),
-                        filled: true,
-                        fillColor: const Color(0xFFF7F3F0),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // EMAIL
-                    TextFormField(
-                      controller: emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return "Digite seu e-mail";
-                        }
-                        if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
-                            .hasMatch(value.trim())) {
-                          return "Digite um e-mail válido";
-                        }
-                        return null;
-                      },
-                      decoration: InputDecoration(
-                        labelText: "E-mail",
-                        prefixIcon: const Icon(
-                          Icons.email_outlined,
-                          color: Color(0xFF8D6E63),
-                        ),
-                        filled: true,
-                        fillColor: const Color(0xFFF7F3F0),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 28),
-
-                    Container(
-                      height: 1,
-                      color: const Color(0xFFE8DFDA),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        "Alterar senha",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFF40352F),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    const Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        "Deixe os campos abaixo em branco para manter a senha atual.",
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF95877F),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // SENHA ATUAL
-                    TextFormField(
-                      controller: senhaAtualController,
-                      obscureText: obscureSenhaAtual,
-                      decoration: InputDecoration(
-                        labelText: "Senha atual",
-                        prefixIcon: const Icon(
-                          Icons.lock_outline,
-                          color: Color(0xFF8D6E63),
-                        ),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            obscureSenhaAtual
-                                ? Icons.visibility_off_outlined
-                                : Icons.visibility_outlined,
-                            color: const Color(0xFF8D6E63),
-                          ),
-                          onPressed: () => setModal(
-                            () => obscureSenhaAtual = !obscureSenhaAtual,
+              child: Container(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.sizeOf(context).height -
+                      MediaQuery.of(context).viewInsets.bottom -
+                      24,
+                ),
+                padding: const EdgeInsets.only(
+                  left: 24,
+                  right: 24,
+                  top: 12,
+                  bottom: 25,
+                ),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+                ),
+                child: SingleChildScrollView(
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.manual,
+                  child: Form(
+                    key: formKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 45,
+                          height: 5,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE0D8D3),
+                            borderRadius: BorderRadius.circular(10),
                           ),
                         ),
-                        filled: true,
-                        fillColor: const Color(0xFFF7F3F0),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // NOVA SENHA
-                    TextFormField(
-                      controller: novaSenhaController,
-                      obscureText: obscureNovaSenha,
-                      decoration: InputDecoration(
-                        labelText: "Nova senha",
-                        prefixIcon: const Icon(
-                          Icons.lock_reset_outlined,
-                          color: Color(0xFF8D6E63),
-                        ),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            obscureNovaSenha
-                                ? Icons.visibility_off_outlined
-                                : Icons.visibility_outlined,
-                            color: const Color(0xFF8D6E63),
-                          ),
-                          onPressed: () => setModal(
-                            () => obscureNovaSenha = !obscureNovaSenha,
+                        const SizedBox(height: 22),
+                        const Text(
+                          "Editar perfil",
+                          style: TextStyle(
+                            fontSize: 23,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF40352F),
                           ),
                         ),
-                        filled: true,
-                        fillColor: const Color(0xFFF7F3F0),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                    ),
+                        const SizedBox(height: 25),
 
-                    const SizedBox(height: 16),
-
-                    // CONFIRMAR NOVA SENHA
-                    TextFormField(
-                      controller: confirmarSenhaController,
-                      obscureText: obscureConfirmarSenha,
-                      decoration: InputDecoration(
-                        labelText: "Confirmar nova senha",
-                        prefixIcon: const Icon(
-                          Icons.lock_reset_outlined,
-                          color: Color(0xFF8D6E63),
-                        ),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            obscureConfirmarSenha
-                                ? Icons.visibility_off_outlined
-                                : Icons.visibility_outlined,
-                            color: const Color(0xFF8D6E63),
-                          ),
-                          onPressed: () => setModal(
-                            () =>
-                                obscureConfirmarSenha = !obscureConfirmarSenha,
-                          ),
-                        ),
-                        filled: true,
-                        fillColor: const Color(0xFFF7F3F0),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                    ),
-
-                    if (erroSenha != null) ...[
-                      const SizedBox(height: 12),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 10,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFEBEB),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color:
-                                const Color(0xFFC0392B).withValues(alpha: 0.3),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.error_outline,
-                              color: Color(0xFFC0392B),
-                              size: 18,
+                        // NOME
+                        TextFormField(
+                          controller: nomeController,
+                          textCapitalization: TextCapitalization.words,
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return "Digite seu nome";
+                            }
+                            if (value.trim().length < 3) {
+                              return "Digite um nome válido";
+                            }
+                            return null;
+                          },
+                          decoration: InputDecoration(
+                            labelText: "Nome completo",
+                            prefixIcon: const Icon(
+                              Icons.person_outline_rounded,
+                              color: Color(0xFF8D6E63),
                             ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                erroSenha!,
-                                style: const TextStyle(
+                            filled: true,
+                            fillColor: const Color(0xFFF7F3F0),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        // EMAIL
+                        TextFormField(
+                          controller: emailController,
+                          keyboardType: TextInputType.emailAddress,
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return "Digite seu e-mail";
+                            }
+                            if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+                                .hasMatch(value.trim())) {
+                              return "Digite um e-mail válido";
+                            }
+                            return null;
+                          },
+                          decoration: InputDecoration(
+                            labelText: "E-mail",
+                            prefixIcon: const Icon(
+                              Icons.email_outlined,
+                              color: Color(0xFF8D6E63),
+                            ),
+                            filled: true,
+                            fillColor: const Color(0xFFF7F3F0),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 28),
+
+                        Container(
+                          height: 1,
+                          color: const Color(0xFFE8DFDA),
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            "Alterar senha",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFF40352F),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        const Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            "Deixe os campos abaixo em branco para manter a senha atual.",
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF95877F),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // SENHA ATUAL
+                        TextFormField(
+                          controller: senhaAtualController,
+                          obscureText: obscureSenhaAtual,
+                          decoration: InputDecoration(
+                            labelText: "Senha atual",
+                            prefixIcon: const Icon(
+                              Icons.lock_outline,
+                              color: Color(0xFF8D6E63),
+                            ),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                obscureSenhaAtual
+                                    ? Icons.visibility_off_outlined
+                                    : Icons.visibility_outlined,
+                                color: const Color(0xFF8D6E63),
+                              ),
+                              onPressed: () => setModal(
+                                () => obscureSenhaAtual = !obscureSenhaAtual,
+                              ),
+                            ),
+                            filled: true,
+                            fillColor: const Color(0xFFF7F3F0),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        // NOVA SENHA
+                        TextFormField(
+                          controller: novaSenhaController,
+                          obscureText: obscureNovaSenha,
+                          decoration: InputDecoration(
+                            labelText: "Nova senha",
+                            prefixIcon: const Icon(
+                              Icons.lock_reset_outlined,
+                              color: Color(0xFF8D6E63),
+                            ),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                obscureNovaSenha
+                                    ? Icons.visibility_off_outlined
+                                    : Icons.visibility_outlined,
+                                color: const Color(0xFF8D6E63),
+                              ),
+                              onPressed: () => setModal(
+                                () => obscureNovaSenha = !obscureNovaSenha,
+                              ),
+                            ),
+                            filled: true,
+                            fillColor: const Color(0xFFF7F3F0),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        // CONFIRMAR NOVA SENHA
+                        TextFormField(
+                          controller: confirmarSenhaController,
+                          obscureText: obscureConfirmarSenha,
+                          decoration: InputDecoration(
+                            labelText: "Confirmar nova senha",
+                            prefixIcon: const Icon(
+                              Icons.lock_reset_outlined,
+                              color: Color(0xFF8D6E63),
+                            ),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                obscureConfirmarSenha
+                                    ? Icons.visibility_off_outlined
+                                    : Icons.visibility_outlined,
+                                color: const Color(0xFF8D6E63),
+                              ),
+                              onPressed: () => setModal(
+                                () => obscureConfirmarSenha =
+                                    !obscureConfirmarSenha,
+                              ),
+                            ),
+                            filled: true,
+                            fillColor: const Color(0xFFF7F3F0),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                        ),
+
+                        if (erroSenha != null) ...[
+                          const SizedBox(height: 12),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 10,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFEBEB),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: const Color(0xFFC0392B)
+                                    .withValues(alpha: 0.3),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.error_outline,
                                   color: Color(0xFFC0392B),
-                                  fontSize: 13,
+                                  size: 18,
                                 ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    erroSenha!,
+                                    style: const TextStyle(
+                                      color: Color(0xFFC0392B),
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+
+                        const SizedBox(height: 24),
+
+                        SizedBox(
+                          width: double.infinity,
+                          height: 55,
+                          child: ElevatedButton(
+                            onPressed: salvando
+                                ? null
+                                : () async {
+                                    if (!formKey.currentState!.validate()) {
+                                      return;
+                                    }
+
+                                    final senhaAtual =
+                                        senhaAtualController.text;
+                                    final novaSenha = novaSenhaController.text;
+                                    final confirmarSenha =
+                                        confirmarSenhaController.text;
+
+                                    final quiseTrocarSenha =
+                                        senhaAtual.isNotEmpty ||
+                                            novaSenha.isNotEmpty ||
+                                            confirmarSenha.isNotEmpty;
+
+                                    if (quiseTrocarSenha) {
+                                      if (senhaAtual.isEmpty ||
+                                          novaSenha.isEmpty ||
+                                          confirmarSenha.isEmpty) {
+                                        setModal(() => erroSenha =
+                                            'Preencha os 3 campos de senha, ou deixe todos em branco.');
+                                        return;
+                                      }
+                                      if (novaSenha.length < 8) {
+                                        setModal(() => erroSenha =
+                                            'A nova senha deve ter pelo menos 8 caracteres.');
+                                        return;
+                                      }
+                                      if (novaSenha != confirmarSenha) {
+                                        setModal(() => erroSenha =
+                                            'A nova senha e a confirmação não coincidem.');
+                                        return;
+                                      }
+
+                                      setModal(() {
+                                        erroSenha = null;
+                                        salvando = true;
+                                      });
+
+                                      final usuarioAtual = _usuarioId == null
+                                          ? null
+                                          : await DatabaseService.instance
+                                              .buscarPorEmail(emailUsuario);
+
+                                      if (usuarioAtual == null) {
+                                        setModal(() {
+                                          salvando = false;
+                                          erroSenha =
+                                              'Não foi possível confirmar seu usuário. Tente novamente.';
+                                        });
+                                        return;
+                                      }
+
+                                      final senhaAtualCorreta =
+                                          await DatabaseService.instance
+                                              .senhaCorreta(
+                                        usuario: usuarioAtual,
+                                        senhaDigitada: senhaAtual,
+                                      );
+
+                                      if (!senhaAtualCorreta) {
+                                        setModal(() {
+                                          salvando = false;
+                                          erroSenha = 'Senha atual incorreta.';
+                                        });
+                                        return;
+                                      }
+
+                                      await DatabaseService.instance
+                                          .atualizarSenha(
+                                        id: _usuarioId!,
+                                        novaSenha: novaSenha,
+                                      );
+                                    } else {
+                                      setModal(() => salvando = true);
+                                    }
+
+                                    await salvarDados(
+                                      nome: nomeController.text.trim(),
+                                      email: emailController.text.trim(),
+                                    );
+
+                                    if (!context.mounted) return;
+                                    Navigator.pop(context);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          quiseTrocarSenha
+                                              ? "Perfil e senha atualizados com sucesso!"
+                                              : "Perfil atualizado com sucesso!",
+                                        ),
+                                        backgroundColor:
+                                            const Color(0xFF8D6E63),
+                                      ),
+                                    );
+                                  },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF8D6E63),
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-                    ],
-
-                    const SizedBox(height: 24),
-
-                    SizedBox(
-                      width: double.infinity,
-                      height: 55,
-                      child: ElevatedButton(
-                        onPressed: salvando
-                            ? null
-                            : () async {
-                                if (!formKey.currentState!.validate()) return;
-
-                                final senhaAtual = senhaAtualController.text;
-                                final novaSenha = novaSenhaController.text;
-                                final confirmarSenha =
-                                    confirmarSenhaController.text;
-
-                                final quiseTrocarSenha =
-                                    senhaAtual.isNotEmpty ||
-                                        novaSenha.isNotEmpty ||
-                                        confirmarSenha.isNotEmpty;
-
-                                if (quiseTrocarSenha) {
-                                  if (senhaAtual.isEmpty ||
-                                      novaSenha.isEmpty ||
-                                      confirmarSenha.isEmpty) {
-                                    setModal(() => erroSenha =
-                                        'Preencha os 3 campos de senha, ou deixe todos em branco.');
-                                    return;
-                                  }
-                                  if (novaSenha.length < 8) {
-                                    setModal(() => erroSenha =
-                                        'A nova senha deve ter pelo menos 8 caracteres.');
-                                    return;
-                                  }
-                                  if (novaSenha != confirmarSenha) {
-                                    setModal(() => erroSenha =
-                                        'A nova senha e a confirmação não coincidem.');
-                                    return;
-                                  }
-
-                                  setModal(() {
-                                    erroSenha = null;
-                                    salvando = true;
-                                  });
-
-                                  final usuarioAtual = _usuarioId == null
-                                      ? null
-                                      : await DatabaseService.instance
-                                          .buscarPorEmail(emailUsuario);
-
-                                  if (usuarioAtual == null) {
-                                    setModal(() {
-                                      salvando = false;
-                                      erroSenha =
-                                          'Não foi possível confirmar seu usuário. Tente novamente.';
-                                    });
-                                    return;
-                                  }
-
-                                  final senhaAtualCorreta =
-                                      await DatabaseService.instance
-                                          .senhaCorreta(
-                                    usuario: usuarioAtual,
-                                    senhaDigitada: senhaAtual,
-                                  );
-
-                                  if (!senhaAtualCorreta) {
-                                    setModal(() {
-                                      salvando = false;
-                                      erroSenha = 'Senha atual incorreta.';
-                                    });
-                                    return;
-                                  }
-
-                                  await DatabaseService.instance.atualizarSenha(
-                                    id: _usuarioId!,
-                                    novaSenha: novaSenha,
-                                  );
-                                } else {
-                                  setModal(() => salvando = true);
-                                }
-
-                                await salvarDados(
-                                  nome: nomeController.text.trim(),
-                                  email: emailController.text.trim(),
-                                );
-
-                                if (!context.mounted) return;
-                                Navigator.pop(context);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      quiseTrocarSenha
-                                          ? "Perfil e senha atualizados com sucesso!"
-                                          : "Perfil atualizado com sucesso!",
+                            child: salvando
+                                ? const SizedBox(
+                                    width: 22,
+                                    height: 22,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.5,
+                                      color: Colors.white,
                                     ),
-                                    backgroundColor: const Color(0xFF8D6E63),
+                                  )
+                                : const Text(
+                                    "Salvar alterações",
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
-                                );
-                              },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF8D6E63),
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                        child: salvando
-                            ? const SizedBox(
-                                width: 22,
-                                height: 22,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2.5,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : const Text(
-                                "Salvar alterações",
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                      ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             );

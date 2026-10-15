@@ -586,14 +586,14 @@ class _HistoricoTelaState extends State<HistoricoTela>
       titulo = 'Seu bem-estar está evoluindo';
 
       descricao = 'Comparando seus registros, identificamos '
-          'uma tendência positiva na sua jornada.';
+          'uma diferença positiva entre o primeiro e o último registro.';
 
       icone = Icons.trending_up_rounded;
     } else {
       titulo = 'Seu bem-estar apresentou uma queda';
 
       descricao = 'Seus últimos registros mostram uma '
-          'variação negativa. Observe como você '
+          'diferença negativa entre o primeiro e o último registro. Observe como você '
           'tem se sentido nos próximos dias.';
 
       icone = Icons.trending_down_rounded;
@@ -668,8 +668,8 @@ class _HistoricoTelaState extends State<HistoricoTela>
                     ),
                     child: Text(
                       positiva
-                          ? '+$evolucao% de evolução'
-                          : '$evolucao% de variação',
+                          ? '+$evolucao p.p. de variação'
+                          : '$evolucao p.p. de variação',
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
@@ -768,12 +768,18 @@ class _HistoricoTelaState extends State<HistoricoTela>
   Widget _graficoEvolucao(
     List<Map<String, dynamic>> historicos,
   ) {
-    final dados =
-        historicos.take(7).map(_getBemEstar).toList().reversed.toList();
+    final registros = historicos.take(7).toList().reversed.toList();
+    final dados = registros.map(_getBemEstar).toList();
+
+    String rotuloData(Map<String, dynamic> registro) {
+      final data = DateTime.tryParse(registro['dataIso']?.toString() ?? '');
+      if (data == null) return 'Sem data';
+      return '${data.day.toString().padLeft(2, '0')}/${data.month.toString().padLeft(2, '0')}';
+    }
 
     return Container(
       width: double.infinity,
-      height: 230,
+      height: 260,
       padding: const EdgeInsets.fromLTRB(
         16,
         18,
@@ -828,11 +834,45 @@ class _HistoricoTelaState extends State<HistoricoTela>
           ),
           const SizedBox(height: 12),
           Expanded(
-            child: CustomPaint(
-              painter: _GraficoHistoricoPainter(
-                dados: dados,
-              ),
-              child: const SizedBox.expand(),
+            child: Row(
+              children: [
+                const SizedBox(
+                  width: 32,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('100',
+                          style: TextStyle(fontSize: 10, color: kCinza)),
+                      Text('50', style: TextStyle(fontSize: 10, color: kCinza)),
+                      Text('0', style: TextStyle(fontSize: 10, color: kCinza)),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
+                    child: CustomPaint(
+                      painter: _GraficoHistoricoPainter(dados: dados),
+                      child: const SizedBox.expand(),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 6),
+          Padding(
+            padding: const EdgeInsets.only(left: 38, right: 6),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(rotuloData(registros.first),
+                    style: const TextStyle(fontSize: 10, color: kCinza)),
+                Text(rotuloData(registros.last),
+                    style: const TextStyle(fontSize: 10, color: kCinza)),
+              ],
             ),
           ),
         ],

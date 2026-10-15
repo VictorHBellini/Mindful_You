@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:mindful_you/services/firebase_registros_service.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mindful_you/services/pdf_service.dart';
 import 'package:mindful_you/widgets/menu_lateral_tela.dart';
@@ -313,14 +312,6 @@ class _GraficoTelaState extends State<GraficoTela> {
     // quanto menor a produtividade, maior a atenção.
     // ============================================================
 
-    final double atencaoCansaco = cansaco.clamp(0.0, 100.0);
-
-    final double atencaoAnsiedade = ansiedade.clamp(0.0, 100.0);
-
-    final double atencaoSono = sono.clamp(0.0, 100.0);
-
-    final double atencaoProdutividade = (100 - produtividade).clamp(0.0, 100.0);
-
     final String principalPonto = obterPrincipalPontoAtencao(
       cansaco,
       ansiedade,
@@ -500,162 +491,56 @@ class _GraficoTelaState extends State<GraficoTela> {
                       ),
                       child: Column(
                         children: [
-                          // ==========================================
-                          // GRÁFICO
-                          // ==========================================
-
-                          SizedBox(
-                            width: 210,
-                            height: 210,
-                            child: Stack(
-                              alignment: Alignment.center,
+                          // Resumo do principal ponto de atenção.
+                          // Os indicadores abaixo são independentes:
+                          // não devem ser representados como fatias de um total.
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(18),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF7F1EC),
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                            child: Column(
                               children: [
-                                PieChart(
-                                  PieChartData(
-                                    sectionsSpace: 3,
-                                    centerSpaceRadius: 55,
-                                    borderData: FlBorderData(
-                                      show: false,
-                                    ),
-                                    sections: [
-                                      PieChartSectionData(
-                                        color: const Color(
-                                          0xFF7895E8,
-                                        ),
-                                        value: atencaoCansaco,
-                                        radius: 42,
-                                        showTitle: false,
-                                      ),
-                                      PieChartSectionData(
-                                        color: const Color(
-                                          0xFFA98BE6,
-                                        ),
-                                        value: atencaoSono,
-                                        radius: 42,
-                                        showTitle: false,
-                                      ),
-                                      PieChartSectionData(
-                                        color: const Color(
-                                          0xFFE8B46D,
-                                        ),
-                                        value: atencaoAnsiedade,
-                                        radius: 42,
-                                        showTitle: false,
-                                      ),
-                                      PieChartSectionData(
-                                        color: const Color(
-                                          0xFFE8D45B,
-                                        ),
-                                        value: atencaoProdutividade,
-                                        radius: 42,
-                                        showTitle: false,
-                                      ),
-                                    ],
+                                const Icon(
+                                  Icons.self_improvement_outlined,
+                                  size: 30,
+                                  color: Color(0xFF8D837A),
+                                ),
+                                const SizedBox(height: 10),
+                                const Text(
+                                  'Principal ponto de atenção',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Color(0xFF85807A),
                                   ),
                                 ),
-
-                                // ====================================
-                                // TEXTO CENTRAL
-                                // ====================================
-
-                                Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Text(
-                                      "Nível de",
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                        color: Color(
-                                          0xFF8A837C,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(
-                                      height: 2,
-                                    ),
-                                    const Text(
-                                      "atenção",
-                                      style: TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(
-                                          0xFF393532,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(
-                                      height: 5,
-                                    ),
-                                    const Icon(
-                                      Icons.self_improvement_outlined,
-                                      size: 27,
-                                      color: Color(
-                                        0xFF8D837A,
-                                      ),
-                                    ),
-                                    const SizedBox(
-                                      height: 4,
-                                    ),
-                                    Text(
-                                      principalPonto,
-                                      textAlign: TextAlign.center,
-                                      style: const TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(
-                                          0xFF393532,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
+                                const SizedBox(height: 6),
+                                Text(
+                                  principalPonto,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontSize: 19,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF393532),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                const Text(
+                                  'Este resultado é informativo e não representa um diagnóstico.',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    height: 1.4,
+                                    color: Color(0xFF918A84),
+                                  ),
                                 ),
                               ],
                             ),
                           ),
-
-                          const SizedBox(height: 8),
-
-                          // ==========================================
-                          // TEXTO EXPLICATIVO
-                          // ==========================================
-
-                          const Text(
-                            "O indicador que merece maior atenção no momento é:",
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Color(0xFF85807A),
-                            ),
-                          ),
-
-                          const SizedBox(height: 4),
-
-                          Text(
-                            principalPonto,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF393532),
-                            ),
-                          ),
-
-                          const SizedBox(height: 8),
-
-                          Text(
-                            "Isso não representa um diagnóstico, "
-                            "mas apenas uma indicação de quais "
-                            "áreas merecem mais atenção.",
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              height: 1.4,
-                              color: Color(0xFF918A84),
-                            ),
-                          ),
-
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 22),
 
                           // ==========================================
                           // INDICADORES
@@ -673,9 +558,21 @@ class _GraficoTelaState extends State<GraficoTela> {
                             ),
                           ),
 
-                          const SizedBox(
-                            height: 18,
+                          const SizedBox(height: 8),
+                          const Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              'Cada barra tem sua própria escala de 0% a 100%. '
+                              'Cansaço, falta de sono e ansiedade maiores indicam '
+                              'mais atenção; produtividade menor indica mais atenção.',
+                              style: TextStyle(
+                                fontSize: 12,
+                                height: 1.4,
+                                color: Color(0xFF817A74),
+                              ),
+                            ),
                           ),
+                          const SizedBox(height: 18),
 
                           indicadorLegenda(
                             "Cansaço",
