@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mindful_you/services/operacao_id.dart';
+import 'package:mindful_you/services/checkin_indicadores.dart';
 
 /// Check-in breve de autorrelato. Não é instrumento diagnóstico ou escala validada.
 class QuestionarioTela extends StatefulWidget {
@@ -110,26 +111,21 @@ class _QuestionarioTelaState extends State<QuestionarioTela> {
 
   void _concluir() {
     setState(() => _enviando = true);
-    // A tela de resultados utiliza 'sono' como FALTA de sono.
-    // O formulário coleta qualidade do sono: a conversão é intencional.
+    final indicadores = CheckinIndicadores(
+      bemEstar: _bemEstar,
+      ansiedade: _ansiedade,
+      energia: _energia,
+      qualidadeSono: _qualidadeSono,
+      atividadeSignificativa: _atividadeImportante,
+    );
     Navigator.of(context).pushReplacementNamed(
       '/grafico',
       arguments: <String, dynamic>{
         'operacaoId': _operacaoId,
-        'cansaco': 100 - _energia,
-        'ansiedade': _ansiedade,
-        'sono': 100 - _qualidadeSono,
-        'produtividade': _atividadeImportante == 'Sim'
-            ? 100.0
-            : _atividadeImportante == 'Parcialmente'
-                ? 50.0
-                : _atividadeImportante == 'Não'
-                    ? 0.0
-                    : 50.0,
+        ...indicadores.toDados(),
         'sentimento': _sentimento,
         'emoji': _emoji.isEmpty ? '🙂' : _emoji,
         'emocaoPredominante': _sentimento,
-        'bemEstar': _bemEstar,
         // Chaves legadas preservadas. Campos não perguntados ficam vazios,
         // sem inventar respostas ou atribuir frequências clínicas.
         'humorFrequencia': '',
@@ -143,7 +139,7 @@ class _QuestionarioTelaState extends State<QuestionarioTela> {
         'reacaoDiferente': '',
         'dificuldadeLidar': '',
         'estrategias': <String>[],
-        'ajudou': 50.0,
+        'ajudou': null,
         'atividadeImportante': _atividadeImportante,
         'energia': _energia,
         'autocuidado': '',

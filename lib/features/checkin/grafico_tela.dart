@@ -7,6 +7,32 @@ import 'package:mindful_you/widgets/menu_lateral_tela.dart';
 import 'package:mindful_you/widgets/avatar_perfil.dart';
 import 'package:mindful_you/features/history/historico_global.dart';
 
+double? _indicadorNumerico(Map<String, dynamic> dados, String chave) {
+  final valor = dados[chave];
+  if (valor is num && valor.isFinite && valor >= 0 && valor <= 100) {
+    return valor.toDouble();
+  }
+  return null;
+}
+
+String _atividadeExibida(String? valor) =>
+    valor == null || valor.isEmpty || valor == 'Prefiro não responder'
+        ? 'Não informado'
+        : valor;
+
+String _percentual(double? valor) =>
+    valor == null ? 'Não informado' : '${valor.round()}%';
+
+String _principalAtencao(double? cansaco, double? ansiedade, double? sono) {
+  final pontos = <String, double>{
+    if (cansaco != null) 'Cansaço estimado': cansaco,
+    if (ansiedade != null) 'Ansiedade percebida': ansiedade,
+    if (sono != null) 'Dificuldade percebida com o sono': sono,
+  };
+  if (pontos.isEmpty) return 'Não informado';
+  return pontos.entries.reduce((a, b) => a.value >= b.value ? a : b).key;
+}
+
 class GraficoTela extends StatefulWidget {
   const GraficoTela({super.key});
 
@@ -49,10 +75,18 @@ class _GraficoTelaState extends State<GraficoTela> {
         ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>? ??
             {};
 
-    final double cansaco = (dados['cansaco'] ?? 55).toDouble();
-    final double ansiedade = (dados['ansiedade'] ?? 15).toDouble();
-    final double sono = (dados['sono'] ?? 25).toDouble();
-    final double produtividade = (dados['produtividade'] ?? 5).toDouble();
+    final double? cansaco = _indicadorNumerico(dados, 'cansaco');
+    final double? ansiedade = _indicadorNumerico(dados, 'ansiedade');
+    final double? sono = _indicadorNumerico(dados, 'sono');
+    final double? produtividade = _indicadorNumerico(dados, 'produtividade');
+    final String? atividade = dados['atividadeSignificativa'] as String?;
+    final double? bemEstar = _indicadorNumerico(dados, 'bemEstar');
+    if (bemEstar == null ||
+        cansaco == null ||
+        ansiedade == null ||
+        sono == null) {
+      return;
+    }
     final String sentimento = (dados['sentimento'] as String?) ?? '';
     final String emoji = (dados['emoji'] as String?) ?? '🙂';
 
@@ -65,16 +99,7 @@ class _GraficoTelaState extends State<GraficoTela> {
     final String distanciamentoBurnout =
         (dados['distanciamentoBurnout'] as String?) ?? '';
 
-    final double bemEstar =
-        ((100 - cansaco) + (100 - ansiedade) + (100 - sono) + produtividade) /
-            4;
-
-    final String principal = obterPrincipalPontoAtencao(
-      cansaco,
-      ansiedade,
-      sono,
-      produtividade,
-    );
+    final String principal = _principalAtencao(cansaco, ansiedade, sono);
 
     Color corResultado;
     if (bemEstar >= 70) {
@@ -112,6 +137,7 @@ class _GraficoTelaState extends State<GraficoTela> {
       'emoji': emoji,
       'cor': corResultado,
       'bemEstar': bemEstar.round(),
+      'atividadeSignificativa': atividade,
       'dadosGrafico': {
         'cansaco': cansaco,
         'ansiedade': ansiedade,
@@ -120,17 +146,17 @@ class _GraficoTelaState extends State<GraficoTela> {
       },
       // Mantém compatibilidade com a tela de Relatório (RegistrosTela),
       // que espera 'perguntas' e 'respostas'.
-      'perguntas': const [
-        'Cansaço',
-        'Ansiedade',
-        'Falta de sono',
-        'Produtividade',
+      'perguntas': [
+        'Cansaço estimado',
+        'Ansiedade percebida',
+        'Dificuldade percebida com o sono',
+        'Atividade significativa',
       ],
       'respostas': [
-        '${cansaco.toInt()}%',
-        '${ansiedade.toInt()}%',
-        '${sono.toInt()}%',
-        '${produtividade.toInt()}%',
+        _percentual(cansaco),
+        _percentual(ansiedade),
+        _percentual(sono),
+        _atividadeExibida(atividade),
       ],
       'principalPonto': principal,
       'humorFrequencia': humorFrequencia,
@@ -141,6 +167,12 @@ class _GraficoTelaState extends State<GraficoTela> {
 
     try {
       if (kIsWeb) {
+        // API de demonstração legada: não enviar valores ausentes como zero.
+        if (produtividade == null) {
+          // A API web legada exige produtividade numérica.
+          // Não inventar esse valor a partir da atividade significativa.
+          return;
+        }
         await FirebaseRegistrosService.instance.registrarCheckin(
           bemEstar: bemEstar.round(),
           ansiedade: ansiedade,
@@ -181,25 +213,23 @@ class _GraficoTelaState extends State<GraficoTela> {
   // ============================================================
 
   Future<void> gerarPDF({
-    required double cansaco,
-    required double ansiedade,
-    required double sono,
-    required double produtividade,
+    required double? cansaco,
+    required double? ansiedade,
+    required double? sono,
+    required int? bemEstar,
+    required String? atividade,
     String humorFrequencia = '',
     String interesseFrequencia = '',
     String exaustaoBurnout = '',
     String distanciamentoBurnout = '',
   }) async {
-    final principal = obterPrincipalPontoAtencao(
-      cansaco,
-      ansiedade,
-      sono,
-      produtividade,
-    );
-
-    final double bemEstar =
-        ((100 - cansaco) + (100 - ansiedade) + (100 - sono) + produtividade) /
-            4;
+    final principal = _principalAtencao(cansaco, ansiedade, sono);
+    if (bemEstar == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Bem-estar não informado; relatório indisponível.'),
+      ));
+      return;
+    }
 
     // Usa o mesmo layout de PDF que a tela de Relatório (aberta a
     // partir do Histórico), em vez de montar o documento aqui. Os
@@ -208,22 +238,22 @@ class _GraficoTelaState extends State<GraficoTela> {
     final pdf = PdfService.construirRelatorioCheckin(
       usuario: nomeUsuario,
       principalPonto: principal,
-      bemEstar: bemEstar.round(),
+      bemEstar: bemEstar,
       perguntas: [
-        'Cansaço',
-        'Ansiedade',
-        'Falta de sono',
-        'Produtividade',
+        'Cansaço estimado',
+        'Ansiedade percebida',
+        'Dificuldade percebida com o sono',
+        'Atividade significativa',
         if (humorFrequencia.isNotEmpty) 'Humor (desânimo ou tristeza)',
         if (interesseFrequencia.isNotEmpty) 'Interesse ou prazer',
         if (exaustaoBurnout.isNotEmpty) 'Exaustão emocional',
         if (distanciamentoBurnout.isNotEmpty) 'Distanciamento ou desmotivação',
       ],
       respostas: [
-        '${cansaco.toInt()}%',
-        '${ansiedade.toInt()}%',
-        '${sono.toInt()}%',
-        '${produtividade.toInt()}%',
+        _percentual(cansaco),
+        _percentual(ansiedade),
+        _percentual(sono),
+        _atividadeExibida(atividade),
         if (humorFrequencia.isNotEmpty) humorFrequencia,
         if (interesseFrequencia.isNotEmpty) interesseFrequencia,
         if (exaustaoBurnout.isNotEmpty) exaustaoBurnout,
@@ -261,13 +291,11 @@ class _GraficoTelaState extends State<GraficoTela> {
         ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>? ??
             {};
 
-    final double cansaco = (dados['cansaco'] ?? 55).toDouble();
-
-    final double ansiedade = (dados['ansiedade'] ?? 15).toDouble();
-
-    final double sono = (dados['sono'] ?? 25).toDouble();
-
-    final double produtividade = (dados['produtividade'] ?? 5).toDouble();
+    final double? cansaco = _indicadorNumerico(dados, 'cansaco');
+    final double? ansiedade = _indicadorNumerico(dados, 'ansiedade');
+    final double? sono = _indicadorNumerico(dados, 'sono');
+    final int? bemEstar = _indicadorNumerico(dados, 'bemEstar')?.round();
+    final String? atividade = dados['atividadeSignificativa'] as String?;
 
     // Sinais de humor e energia (ver observação em
     // `historico_global.dart`, seção "SINAIS DE HUMOR E ENERGIA").
@@ -308,22 +336,14 @@ class _GraficoTelaState extends State<GraficoTela> {
     // Para os três primeiros indicadores:
     // quanto maior, maior a atenção.
     //
-    // Para produtividade:
-    // quanto menor a produtividade, maior a atenção.
+    // Atividade significativa é categórica e não entra na comparação.
     // ============================================================
 
-    final String principalPonto = obterPrincipalPontoAtencao(
-      cansaco,
-      ansiedade,
-      sono,
-      produtividade,
-    );
-
+    final String principalPonto = _principalAtencao(cansaco, ansiedade, sono);
     final List<Map<String, dynamic>> recomendacoes = obterRecomendacoes(
       cansaco,
       ansiedade,
       sono,
-      produtividade,
     );
 
     return Scaffold(
@@ -542,6 +562,14 @@ class _GraficoTelaState extends State<GraficoTela> {
                           ),
                           const SizedBox(height: 22),
 
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                                'Bem-estar informado: ${bemEstar == null ? 'Não informado' : '$bemEstar%'}',
+                                style: const TextStyle(
+                                    fontSize: 16, fontWeight: FontWeight.w600)),
+                          ),
+                          const SizedBox(height: 14),
                           // ==========================================
                           // INDICADORES
                           // ==========================================
@@ -563,8 +591,7 @@ class _GraficoTelaState extends State<GraficoTela> {
                             alignment: Alignment.centerLeft,
                             child: Text(
                               'Cada barra tem sua própria escala de 0% a 100%. '
-                              'Cansaço, falta de sono e ansiedade maiores indicam '
-                              'mais atenção; produtividade menor indica mais atenção.',
+                              'Valores maiores de cansaço estimado, ansiedade percebida e dificuldade com o sono indicam mais atenção.',
                               style: TextStyle(
                                 fontSize: 12,
                                 height: 1.4,
@@ -584,7 +611,7 @@ class _GraficoTelaState extends State<GraficoTela> {
                           ),
 
                           indicadorLegenda(
-                            "Falta de sono",
+                            "Dificuldade com o sono",
                             sono,
                             const Color(
                               0xFFA98BE6,
@@ -601,14 +628,16 @@ class _GraficoTelaState extends State<GraficoTela> {
                             Icons.psychology_outlined,
                           ),
 
-                          indicadorLegenda(
-                            "Produtividade",
-                            produtividade,
-                            const Color(
-                              0xFFE8D45B,
-                            ),
-                            Icons.trending_up,
-                            produtividade: true,
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: Row(children: [
+                              const Icon(Icons.task_alt_outlined,
+                                  color: Color(0xFFE8D45B)),
+                              const SizedBox(width: 12),
+                              const Expanded(
+                                  child: Text('Atividade significativa')),
+                              Text(_atividadeExibida(atividade)),
+                            ]),
                           ),
 
                           const SizedBox(height: 5),
@@ -778,7 +807,8 @@ class _GraficoTelaState extends State<GraficoTela> {
                                 cansaco: cansaco,
                                 ansiedade: ansiedade,
                                 sono: sono,
-                                produtividade: produtividade,
+                                bemEstar: bemEstar,
+                                atividade: atividade,
                                 humorFrequencia: humorFrequencia,
                                 interesseFrequencia: interesseFrequencia,
                                 exaustaoBurnout: exaustaoBurnout,
@@ -914,20 +944,22 @@ class _GraficoTelaState extends State<GraficoTela> {
 
   Widget indicadorLegenda(
     String nome,
-    double valor,
+    double? valor,
     Color cor,
     IconData icone, {
     bool produtividade = false,
   }) {
-    final String status = obterStatusIndicador(
-      valor,
-      produtividade: produtividade,
-    );
+    final String status = valor == null
+        ? "Não informado"
+        : obterStatusIndicador(
+            valor,
+            produtividade: produtividade,
+          );
 
-    final bool atencao = status != "Normal";
+    final bool atencao = valor != null && status != "Normal";
 
     final Color corStatus = obterCorStatus(
-      valor,
+      valor ?? 0,
       produtividade: produtividade,
     );
 
@@ -984,7 +1016,7 @@ class _GraficoTelaState extends State<GraficoTela> {
                   ),
                 ),
               Text(
-                "${valor.toInt()}%",
+                _percentual(valor),
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
@@ -997,7 +1029,7 @@ class _GraficoTelaState extends State<GraficoTela> {
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
             child: LinearProgressIndicator(
-              value: (valor / 100).clamp(0.0, 1.0),
+              value: ((valor ?? 0) / 100).clamp(0.0, 1.0),
               minHeight: 6,
               backgroundColor: const Color(0xFFF0EDE9),
               valueColor: AlwaysStoppedAnimation<Color>(
@@ -1302,42 +1334,14 @@ class _GraficoTelaState extends State<GraficoTela> {
   }
 
   // ============================================================
-  // PRINCIPAL PONTO DE ATENÇÃO
-  // ============================================================
-
-  String obterPrincipalPontoAtencao(
-    double cansaco,
-    double ansiedade,
-    double sono,
-    double produtividade,
-  ) {
-    final Map<String, double> pontos = {
-      "Cansaço": cansaco,
-      "Ansiedade": ansiedade,
-      "Falta de sono": sono,
-      "Baixa produtividade": 100 - produtividade,
-    };
-
-    String maior = pontos.keys.first;
-
-    for (final item in pontos.entries) {
-      if (item.value > pontos[maior]!) {
-        maior = item.key;
-      }
-    }
-
-    return maior;
-  }
-
   // ============================================================
   // RECOMENDAÇÕES DINÂMICAS
   // ============================================================
 
   List<Map<String, dynamic>> obterRecomendacoes(
-    double cansaco,
-    double ansiedade,
-    double sono,
-    double produtividade,
+    double? cansaco,
+    double? ansiedade,
+    double? sono,
   ) {
     final List<Map<String, dynamic>> lista = [];
 
@@ -1345,7 +1349,7 @@ class _GraficoTelaState extends State<GraficoTela> {
     // CANSAÇO
     // ==========================================================
 
-    if (cansaco >= 50) {
+    if (cansaco != null && cansaco >= 50) {
       lista.add({
         'icone': Icons.airline_seat_flat,
         'titulo': "Respeite seus momentos de descanso",
@@ -1362,7 +1366,7 @@ class _GraficoTelaState extends State<GraficoTela> {
     // ANSIEDADE
     // ==========================================================
 
-    if (ansiedade >= 50) {
+    if (ansiedade != null && ansiedade >= 50) {
       lista.add({
         'icone': Icons.self_improvement_outlined,
         'titulo': "Reserve alguns minutos para desacelerar",
@@ -1379,7 +1383,7 @@ class _GraficoTelaState extends State<GraficoTela> {
     // SONO
     // ==========================================================
 
-    if (sono >= 50) {
+    if (sono != null && sono >= 50) {
       lista.add({
         'icone': Icons.bedtime_outlined,
         'titulo': "Priorize uma rotina de sono",
@@ -1388,22 +1392,6 @@ class _GraficoTelaState extends State<GraficoTela> {
             "estímulos antes de dormir.",
         'cor': const Color(0xFFE7C7C9),
         'prioridade': sono,
-      });
-    }
-
-    // ==========================================================
-    // PRODUTIVIDADE
-    // ==========================================================
-
-    if (produtividade < 50) {
-      lista.add({
-        'icone': Icons.trending_up,
-        'titulo': "Organize suas tarefas",
-        'desc': "Experimente dividir suas atividades "
-            "em pequenas etapas e estabelecer "
-            "prioridades para evitar sobrecarga.",
-        'cor': const Color(0xFFE9C8AE),
-        'prioridade': 100 - produtividade,
       });
     }
 
