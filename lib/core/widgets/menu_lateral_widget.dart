@@ -1,4 +1,4 @@
-import 'package:mindful_you/services/session_service.dart';
+﻿import 'package:mindful_you/services/session_service.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -45,7 +45,7 @@ class _MenuLateralState extends State<MenuLateral> {
   // A leitura da foto salva (chave 'fotoPerfil') e o fallback para o
   // avatar padrão agora vivem em `AvatarPerfil` (widgets/avatar_perfil.dart),
   // compartilhado com `inicial_tela.dart`, `historico_tela.dart` e
-  // `grafico_tela.dart`, para que todas as telas sempre mostrem a mesma
+  // `resultado_grafico_screen.dart`, para que todas as telas sempre mostrem a mesma
   // foto de perfil.
 
   // ================================================================
