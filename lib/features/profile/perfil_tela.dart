@@ -6,7 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mindful_you/services/database_service.dart';
 import 'package:mindful_you/services/foto_perfil_service.dart';
 import 'package:mindful_you/widgets/avatar_perfil.dart';
-import 'package:mindful_you/widgets/menu_lateral_tela.dart';
+import 'package:mindful_you/core/widgets/menu_lateral_widget.dart';
 
 class PerfilTela extends StatefulWidget {
   const PerfilTela({super.key});

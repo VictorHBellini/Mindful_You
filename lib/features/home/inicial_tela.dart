@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mindful_you/features/history/historico_global.dart';
-import 'package:mindful_you/widgets/menu_lateral_tela.dart';
+import 'package:mindful_you/core/widgets/menu_lateral_widget.dart';
 import 'package:mindful_you/widgets/avatar_perfil.dart';
 
 class InicialTela extends StatefulWidget {

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mindful_you/features/history/historico_global.dart';
 import 'package:mindful_you/services/admin_service.dart';
 import 'package:mindful_you/services/database_service.dart';
-import 'package:mindful_you/widgets/recuperar_senha_tela.dart';
+import 'package:mindful_you/features/auth/screens/recuperar_senha_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginTela extends StatefulWidget {

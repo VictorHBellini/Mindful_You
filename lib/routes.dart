@@ -18,7 +18,7 @@ import 'package:mindful_you/features/checkin/questionario_tela.dart';
 import 'package:mindful_you/features/settings/configuracoes_tela.dart';
 import 'package:mindful_you/features/legal/termos_uso_tela.dart';
 import 'package:mindful_you/features/legal/politica_privacidade_tela.dart';
-import 'package:mindful_you/widgets/dicas_page.dart';
+import 'package:mindful_you/features/tips/screens/dicas_screen.dart';
 
 class AppRoutes {
   static const firebaseTeste = '/firebase-teste';
