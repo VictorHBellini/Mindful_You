@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mindful_you/services/operacao_id.dart';
+import 'package:mindful_you/core/utils/operacao_id.dart';
 import 'package:mindful_you/services/checkin_indicadores.dart';
 
 /// Check-in breve de autorrelato. Não é instrumento diagnóstico ou escala validada.

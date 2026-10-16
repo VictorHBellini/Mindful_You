@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:mindful_you/widgets/responsive_center.dart';
+import 'package:mindful_you/core/widgets/responsive_center.dart';
 
 class DicasTela extends StatelessWidget {
   const DicasTela({super.key});

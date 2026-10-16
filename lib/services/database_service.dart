@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
-import 'package:mindful_you/services/crypto_utils.dart';
+import 'package:mindful_you/core/utils/crypto_utils.dart';
 
 /// Serviço singleton para gerenciar o banco de dados SQLite local.
 class DatabaseService {

@@ -1,4 +1,4 @@
-import 'package:mindful_you/services/operacao_id.dart';
+import 'package:mindful_you/core/utils/operacao_id.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:mindful_you/services/firebase_registros_service.dart';

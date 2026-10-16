@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mindful_you/services/crypto_utils.dart';
+import 'package:mindful_you/core/utils/crypto_utils.dart';
 
 void main() {
   test('PBKDF2 determinístico e comprimento correto', () {

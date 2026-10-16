@@ -304,14 +304,19 @@ class _ConfiguracaoTelaState extends State<ConfiguracaoTela> {
                 ),
               ),
               const SizedBox(height: 18),
-              if (const bool.fromEnvironment('MINDFUL_FIREBASE_EMULATORS', defaultValue: false))
-                _sectionCard(child: ListTile(
+              if (const bool.fromEnvironment('MINDFUL_FIREBASE_EMULATORS',
+                  defaultValue: false))
+                _sectionCard(
+                    child: ListTile(
                   leading: const Icon(Icons.link),
                   title: const Text('Vincular Firebase (demonstração)'),
-                  subtitle: const Text('Solicitação pendente; sem sincronização'),
-                  onTap: () => Navigator.push(context, MaterialPageRoute<void>(
-                    builder: (_) => const VincularFirebaseDemoTela(),
-                  )),
+                  subtitle:
+                      const Text('Solicitação pendente; sem sincronização'),
+                  onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute<void>(
+                        builder: (_) => const VincularFirebaseDemoTela(),
+                      )),
                 )),
               const SizedBox(height: 18),
               Container(
