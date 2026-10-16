@@ -10,7 +10,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'firebase_options.dart';
 import 'app.dart';
 import 'features/auth/firebase_teste_tela.dart';
-import 'features/checkin/grafico_tela.dart';
+import 'features/checkin/screens/resultado_grafico_screen.dart';
 import 'features/history/historico_global.dart';
 import 'services/theme_service.dart';
 

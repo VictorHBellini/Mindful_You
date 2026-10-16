@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:mindful_you/features/auth/firebase_registros_teste_tela.dart';
 import 'package:flutter/material.dart';
-import 'package:mindful_you/features/checkin/questionario_tela.dart';
+import 'package:mindful_you/features/checkin/screens/questionario_screen.dart';
 import 'package:mindful_you/features/assessment/avaliacoes_tela.dart';
 import 'package:mindful_you/features/history/firebase_historico_tela.dart';
 import 'package:mindful_you/services/firebase_perfil_service.dart';
