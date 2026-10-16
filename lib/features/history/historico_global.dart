@@ -38,11 +38,12 @@ Future<int?> _usuarioIdAtual() async {
 /// que as telas (Histórico, Gráfico, Relatório etc) já esperavam
 /// quando o histórico vinha do SharedPreferences.
 Map<String, dynamic> _linhaParaEntrada(Map<String, dynamic> linha) {
-  final cansaco = (linha['cansaco'] as num?) ?? 0;
-  final ansiedade = (linha['ansiedade'] as num?) ?? 0;
-  final sono = (linha['sono'] as num?) ?? 0;
-  final produtividade = (linha['produtividade'] as num?) ?? 0;
+  final cansaco = linha['cansaco'] as num?;
+  final ansiedade = linha['ansiedade'] as num?;
+  final sono = linha['sono'] as num?;
+  final produtividade = linha['produtividade'] as num?;
 
+  final atividade = linha['atividade_significativa']?.toString();
   final sentimento = linha['sentimento']?.toString() ?? '';
   final emoji = linha['emoji']?.toString() ?? '';
 
@@ -71,11 +72,13 @@ Map<String, dynamic> _linhaParaEntrada(Map<String, dynamic> linha) {
         ? Color(linha['cor_valor'] as int)
         : const Color(0xFFE8DCD4),
     'bemEstar': linha['bem_estar'],
+    'atividadeSignificativa': atividade,
     'dadosGrafico': {
       'cansaco': cansaco,
       'ansiedade': ansiedade,
       'sono': sono,
       'produtividade': produtividade,
+      'atividadeSignificativa': atividade,
     },
     // Sinais de humor e energia — ver observação no topo da seção
     // "SINAIS DE HUMOR E ENERGIA" mais abaixo neste arquivo.
@@ -93,17 +96,22 @@ Map<String, dynamic> _linhaParaEntrada(Map<String, dynamic> linha) {
       'Cansaço',
       'Ansiedade',
       'Falta de sono',
-      'Produtividade',
+      if (atividade == null) 'Produtividade' else 'Atividade significativa',
       if (humorFrequencia.isNotEmpty) 'Humor (desânimo ou tristeza)',
       if (interesseFrequencia.isNotEmpty) 'Interesse ou prazer',
       if (exaustaoBurnout.isNotEmpty) 'Exaustão emocional',
       if (distanciamentoBurnout.isNotEmpty) 'Distanciamento ou desmotivação',
     ],
     'respostas': [
-      '${cansaco.toInt()}%',
-      '${ansiedade.toInt()}%',
-      '${sono.toInt()}%',
-      '${produtividade.toInt()}%',
+      (cansaco == null ? 'Não informado' : '${cansaco.toInt()}%'),
+      (ansiedade == null ? 'Não informado' : '${ansiedade.toInt()}%'),
+      (sono == null ? 'Não informado' : '${sono.toInt()}%'),
+      if (atividade == null)
+        (produtividade == null ? 'Não informado' : '${produtividade.toInt()}%')
+      else if (atividade == 'Prefiro não responder')
+        'Não informado'
+      else
+        atividade,
       if (humorFrequencia.isNotEmpty) humorFrequencia,
       if (interesseFrequencia.isNotEmpty) interesseFrequencia,
       if (exaustaoBurnout.isNotEmpty) exaustaoBurnout,
@@ -160,8 +168,9 @@ Future<void> adicionarHistorico(Map<String, dynamic> entrada) async {
     cansaco: (dadosGrafico['cansaco'] as num?)?.toDouble() ?? 0,
     ansiedade: (dadosGrafico['ansiedade'] as num?)?.toDouble() ?? 0,
     sono: (dadosGrafico['sono'] as num?)?.toDouble() ?? 0,
-    produtividade: (dadosGrafico['produtividade'] as num?)?.toDouble() ?? 0,
-    bemEstar: (entrada['bemEstar'] as num?)?.round() ?? 0,
+    produtividade: (dadosGrafico['produtividade'] as num?)?.toDouble(),
+    atividadeSignificativa: entrada['atividadeSignificativa']?.toString(),
+    bemEstar: (entrada['bemEstar'] as num).round(),
     principalPonto: entrada['principalPonto']?.toString() ?? '',
     corValor: cor is Color ? cor.toARGB32() : 0xFFE8DCD4,
     humorFrequencia: entrada['humorFrequencia']?.toString() ?? '',
@@ -259,61 +268,27 @@ int calcularSequenciaAtual(List<Map<String, dynamic>> historico) {
 // mostrar um número de "bem-estar" diferente do mostrado no Histórico
 // para o mesmo usuário. Agora as duas usam estas funções.
 
-/// Retorna a pontuação de bem-estar (0 a 100) de um único registro do
-/// histórico, tentando primeiro os campos numéricos diretos e, na
-/// falta deles, calculando a média de `dadosGrafico` ou interpretando
-/// o campo `status`.
-int obterBemEstarDoRegistro(Map<String, dynamic> item) {
-  final campos = [
-    'bemEstar',
-    'bem_estar',
-    'pontuacao',
-    'porcentagem',
-    'percentual',
-    'score',
-    'media',
-  ];
-
-  for (final campo in campos) {
-    final valor = item[campo];
-    if (valor is num) {
-      return valor.clamp(0, 100).round();
-    }
+/// Pontuação explicitamente registrada; não deduz bem-estar de outros sinais.
+/// Retorna null para registros legados que não tenham pontuação.
+int? obterBemEstarInformado(Map<String, dynamic> item) {
+  final valor = item['bemEstar'] ?? item['bem_estar'];
+  if (valor is! num || !valor.isFinite || valor < 0 || valor > 100) {
+    return null;
   }
-
-  final dados = item['dadosGrafico'];
-  if (dados is Map) {
-    final numeros = <double>[];
-    for (final valor in dados.values) {
-      if (valor is num) numeros.add(valor.toDouble());
-    }
-    if (numeros.isNotEmpty) {
-      final media = numeros.reduce((a, b) => a + b) / numeros.length;
-      return media.clamp(0, 100).round();
-    }
-  }
-
-  final status = item['status']?.toString().toLowerCase() ?? '';
-
-  if (status.contains('muito bem') || status.contains('excelente')) {
-    return 90;
-  }
-  if (status.contains('bem')) return 80;
-  if (status.contains('regular') || status.contains('normal')) return 65;
-  if (status.contains('mal') || status.contains('baixo')) return 40;
-
-  return 70;
+  return valor.round();
 }
 
-/// Média de bem-estar (0 a 100) de todos os registros informados.
-/// Retorna 0 se o histórico estiver vazio.
+/// API legada: telas que exigem int recebem 0 se não houver registro válido.
+/// Para distinguir ausência de zero, use obterBemEstarInformado.
+int obterBemEstarDoRegistro(Map<String, dynamic> item) =>
+    obterBemEstarInformado(item) ?? 0;
+
+/// Média apenas de valores efetivamente informados.
 int calcularMediaBemEstar(List<Map<String, dynamic>> historico) {
-  if (historico.isEmpty) return 0;
-
-  final valores = historico.map(obterBemEstarDoRegistro).toList();
-  final soma = valores.reduce((a, b) => a + b);
-
-  return (soma / valores.length).round();
+  final valores =
+      historico.map(obterBemEstarInformado).whereType<int>().toList();
+  if (valores.isEmpty) return 0;
+  return (valores.reduce((a, b) => a + b) / valores.length).round();
 }
 
 // ============================================================

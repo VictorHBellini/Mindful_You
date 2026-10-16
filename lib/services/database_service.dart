@@ -25,7 +25,7 @@ class DatabaseService {
 
     return openDatabase(
       path,
-      version: 11,
+      version: 12,
       // A configuração precisa ocorrer antes das migrações/transações.
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
@@ -149,6 +149,32 @@ class DatabaseService {
           // Somente estrutura local: não autoriza sincronização Firebase.
           await _criarTabelaVinculosFirebase(db);
         }
+        if (oldVersion < 12) {
+          // Preserva todos os IDs e registros. Só produtividade passa a aceitar NULL.
+          // A resposta categórica de atividade é um dado novo, não inferível
+          // dos percentuais legados.
+          await db
+              .execute('ALTER TABLE checkins RENAME TO checkins_legado_v11');
+          await db.execute('DROP INDEX IF EXISTS idx_checkins_usuario_id');
+          await db.execute('DROP INDEX IF EXISTS idx_checkins_operacao');
+          await _criarTabelaCheckins(db);
+          await db.execute('''
+            INSERT INTO checkins (
+              id, usuario_id, data_iso, data_formatada, sentimento, emoji,
+              cansaco, ansiedade, sono, produtividade, bem_estar,
+              principal_ponto, cor_valor, humor_frequencia,
+              interesse_frequencia, exaustao_burnout, distanciamento_burnout,
+              criado_em, operacao_id
+            ) SELECT
+              id, usuario_id, data_iso, data_formatada, sentimento, emoji,
+              cansaco, ansiedade, sono, produtividade, bem_estar,
+              principal_ponto, cor_valor, humor_frequencia,
+              interesse_frequencia, exaustao_burnout, distanciamento_burnout,
+              criado_em, operacao_id FROM checkins_legado_v11
+          ''');
+          await db.execute('DROP TABLE checkins_legado_v11');
+          await _criarIndicesOperacao(db);
+        }
       },
     );
   }
@@ -242,7 +268,8 @@ class DatabaseService {
         cansaco         REAL    NOT NULL,
         ansiedade       REAL    NOT NULL,
         sono            REAL    NOT NULL,
-        produtividade   REAL    NOT NULL,
+        produtividade   REAL,
+        atividade_significativa TEXT,
         bem_estar       INTEGER NOT NULL,
         principal_ponto TEXT    NOT NULL DEFAULT '',
         cor_valor       INTEGER NOT NULL,
@@ -503,7 +530,8 @@ class DatabaseService {
     required double cansaco,
     required double ansiedade,
     required double sono,
-    required double produtividade,
+    double? produtividade,
+    String? atividadeSignificativa,
     required int bemEstar,
     required String principalPonto,
     required int corValor,
@@ -527,6 +555,7 @@ class DatabaseService {
       'ansiedade': ansiedade,
       'sono': sono,
       'produtividade': produtividade,
+      'atividade_significativa': atividadeSignificativa,
       'bem_estar': bemEstar,
       'principal_ponto': principalPonto,
       'cor_valor': corValor,
