@@ -2,7 +2,7 @@ import 'package:mindful_you/core/utils/operacao_id.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:mindful_you/services/firebase_registros_service.dart';
-import 'package:mindful_you/services/avaliacao_service.dart';
+import 'package:mindful_you/features/assessment/services/avaliacao_service.dart';
 
 /// Formulário DEMONSTRATIVO inspirado nos domínios do GAD-7 e PHQ-9.
 /// A redação abaixo NÃO é uma versão brasileira validada das escalas.

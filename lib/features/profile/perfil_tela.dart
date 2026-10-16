@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mindful_you/services/database_service.dart';
-import 'package:mindful_you/services/foto_perfil_service.dart';
+import 'package:mindful_you/features/profile/services/foto_perfil_service.dart';
 import 'package:mindful_you/widgets/avatar_perfil.dart';
 import 'package:mindful_you/core/widgets/menu_lateral_widget.dart';
 
@@ -199,34 +199,37 @@ class _PerfilTelaState extends State<PerfilTela>
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        Container(
-          width: 136,
-          height: 136,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.white, width: 5),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.12),
-                blurRadius: 18,
-                offset: const Offset(0, 7),
-              ),
-            ],
-          ),
-          child: ClipOval(
-            child: hasFile
-                ? Image.file(
-                    File(_fotoPath!),
-                    fit: BoxFit.cover,
-                    width: 136,
-                    height: 136,
-                  )
-                : Image.asset(
-                    AvatarPerfil.assetPadrao,
-                    fit: BoxFit.cover,
-                    width: 136,
-                    height: 136,
-                  ),
+        GestureDetector(
+          onTap: mostrarOpcoesFoto,
+          child: Container(
+            width: 136,
+            height: 136,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 5),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.12),
+                  blurRadius: 18,
+                  offset: const Offset(0, 7),
+                ),
+              ],
+            ),
+            child: ClipOval(
+              child: hasFile
+                  ? Image.file(
+                      File(_fotoPath!),
+                      fit: BoxFit.cover,
+                      width: 136,
+                      height: 136,
+                    )
+                  : Image.asset(
+                      AvatarPerfil.assetPadrao,
+                      fit: BoxFit.cover,
+                      width: 136,
+                      height: 136,
+                    ),
+            ),
           ),
         ),
 
@@ -277,25 +280,32 @@ class _PerfilTelaState extends State<PerfilTela>
               // ======================================================
               // CABEÇALHO — visual refinado, sem alteração de lógica.
               // ======================================================
-              Container(
+              SizedBox(
                 width: double.infinity,
-                height: 292,
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Color(0xFFE9DED6),
-                      Color(0xFFF3EBE5),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.vertical(
-                    bottom: Radius.circular(32),
-                  ),
-                ),
+                height: 370,
                 child: Stack(
-                  clipBehavior: Clip.none,
                   children: [
+                    // O fundo ocupa apenas o cabeçalho original (292 px).
+                    // A área restante faz parte do Stack para que a foto
+                    // sobreposta continue recebendo eventos de toque.
+                    Positioned.fill(
+                      bottom: 78,
+                      child: Container(
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Color(0xFFE9DED6),
+                              Color(0xFFF3EBE5),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.vertical(
+                            bottom: Radius.circular(32),
+                          ),
+                        ),
+                      ),
+                    ),
                     // DECORAÇÃO ANIMADA
                     Positioned(
                       top: -72,
@@ -369,7 +379,7 @@ class _PerfilTelaState extends State<PerfilTela>
 
                     // FOTO
                     Positioned(
-                      bottom: -68,
+                      bottom: 10,
                       left: 0,
                       right: 0,
                       child: Center(
@@ -379,9 +389,6 @@ class _PerfilTelaState extends State<PerfilTela>
                   ],
                 ),
               ),
-
-              // Espaço para a foto sobreposta.
-              const SizedBox(height: 78),
 
               // ======================================================
               // DADOS DO USUÁRIO

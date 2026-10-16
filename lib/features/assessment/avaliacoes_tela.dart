@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:mindful_you/services/firebase_registros_service.dart';
-import 'package:mindful_you/services/avaliacao_service.dart';
+import 'package:mindful_you/features/assessment/services/avaliacao_service.dart';
 import 'package:mindful_you/features/assessment/questionario_rastreio_tela.dart';
 
 /// Entrada do módulo. Aplicação de escalas será liberada após revisão

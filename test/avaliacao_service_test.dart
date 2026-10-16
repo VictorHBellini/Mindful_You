@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mindful_you/services/avaliacao_service.dart';
+import 'package:mindful_you/features/assessment/services/avaliacao_service.dart';
 
 void main() {
   test('GAD7 pontua sete respostas', () {

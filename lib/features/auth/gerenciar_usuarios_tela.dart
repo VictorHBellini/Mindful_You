@@ -5,7 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mindful_you/features/history/historico_global.dart';
 import 'package:mindful_you/services/admin_service.dart';
 import 'package:mindful_you/services/database_service.dart';
-import 'package:mindful_you/services/foto_perfil_service.dart';
+import 'package:mindful_you/features/profile/services/foto_perfil_service.dart';
 import 'package:sqflite/sqflite.dart';
 
 class GerenciarUsuariosTela extends StatefulWidget {
