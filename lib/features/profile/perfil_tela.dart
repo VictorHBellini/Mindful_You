@@ -478,6 +478,15 @@ class _PerfilTelaState extends State<PerfilTela>
                       },
                     ),
 
+                    opcaoPerfil(
+                      icon: Icons.shield_outlined,
+                      titulo: "Consentimentos e autorizações",
+                      descricao: "Gerencie solicitações de acompanhamento",
+                      onTap: () {
+                        Navigator.pushNamed(context, '/consentimentos');
+                      },
+                    ),
+
                     // Espaçamento maior antes da ação destrutiva.
                     const SizedBox(height: 10),
 
