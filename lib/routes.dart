@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'package:mindful_you/services/session_service.dart';
+import 'package:mindful_you/features/auth/services/session_service.dart';
 import 'package:mindful_you/features/auth/firebase_teste_tela.dart';
 import 'package:mindful_you/features/assessment/avaliacoes_tela.dart';
 import 'package:mindful_you/features/patient/consentimentos_tela.dart';

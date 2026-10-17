@@ -1,4 +1,4 @@
-﻿import 'package:mindful_you/services/session_service.dart';
+﻿import 'package:mindful_you/features/auth/services/session_service.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

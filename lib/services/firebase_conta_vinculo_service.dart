@@ -4,7 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 import 'database_service.dart';
-import 'session_service.dart';
+import 'package:mindful_you/features/auth/services/session_service.dart';
 
 /// Fluxo de DEMONSTRAÇÃO: não confirma identidade local no backend nem autoriza sync.
 class FirebaseContaVinculoService {

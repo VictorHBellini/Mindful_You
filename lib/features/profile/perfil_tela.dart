@@ -1,4 +1,4 @@
-import 'package:mindful_you/services/session_service.dart';
+import 'package:mindful_you/features/auth/services/session_service.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mindful_you/services/vinculo_service.dart';
+import 'package:mindful_you/features/therapist/services/vinculo_service.dart';
 
 class ConsentimentosTela extends StatefulWidget {
   const ConsentimentosTela({super.key});

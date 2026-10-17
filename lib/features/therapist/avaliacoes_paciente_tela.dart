@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:mindful_you/services/vinculo_service.dart';
+import 'package:mindful_you/features/therapist/services/vinculo_service.dart';
 
 /// Somente resultados demonstrativos; não são escores clínicos validados.
 class AvaliacoesPacienteTela extends StatefulWidget {

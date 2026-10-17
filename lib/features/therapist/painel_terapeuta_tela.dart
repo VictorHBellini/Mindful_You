@@ -1,8 +1,8 @@
-import 'package:mindful_you/services/session_service.dart';
+import 'package:mindful_you/features/auth/services/session_service.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mindful_you/services/database_service.dart';
-import 'package:mindful_you/services/vinculo_service.dart';
+import 'package:mindful_you/features/therapist/services/vinculo_service.dart';
 import 'package:mindful_you/features/therapist/historico_paciente_tela.dart';
 
 /// Painel demonstrativo: não mostra dados de pacientes até que

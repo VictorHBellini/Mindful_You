@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:mindful_you/services/vinculo_service.dart';
+import 'package:mindful_you/features/therapist/services/vinculo_service.dart';
 import 'package:mindful_you/features/therapist/avaliacoes_paciente_tela.dart';
 
 /// Histórico de check-ins autorizado para demonstração acadêmica.
