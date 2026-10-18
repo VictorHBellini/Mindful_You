@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:mindful_you/features/history/widgets/historico_card_sinal_atencao.dart';
+import 'package:mindful_you/features/history/widgets/historico_card_ultimo_checkin.dart';
+import 'package:mindful_you/features/history/widgets/historico_estado_vazio.dart';
+import 'package:mindful_you/features/history/widgets/historico_card_registro.dart';
 import 'package:mindful_you/features/history/widgets/historico_grafico_evolucao.dart';
 import 'package:mindful_you/features/history/widgets/historico_titulos.dart';
 import 'package:mindful_you/features/history/widgets/historico_card_resumo.dart';
@@ -109,9 +113,9 @@ class _HistoricoTelaState extends State<HistoricoTela>
 
     final totalCheckins = historicos.length;
 
-    final mediaBemEstar = _calcularMediaBemEstar(historicos);
+    final mediaBemEstar = calcularMediaBemEstar(historicos);
 
-    final sequencia = _calcularSequencia(historicos);
+    final sequencia = calcularSequenciaAtual(historicos);
 
     final ultimo = historicos.isNotEmpty ? historicos.first : null;
 
@@ -181,7 +185,7 @@ class _HistoricoTelaState extends State<HistoricoTela>
                         const HistoricoTitulo(),
                         const SizedBox(height: 24),
                         if (historicos.isEmpty)
-                          _estadoVazio(context)
+                          const HistoricoEstadoVazio()
                         else ...[
                           // ======================================
                           // RESUMO
@@ -234,7 +238,7 @@ class _HistoricoTelaState extends State<HistoricoTela>
                           // ======================================
 
                           if (possuiSinalRecente) ...[
-                            _cardSinalAtencao(),
+                            const HistoricoCardSinalAtencao(),
                             const SizedBox(height: 28),
                           ],
 
@@ -249,9 +253,12 @@ class _HistoricoTelaState extends State<HistoricoTela>
 
                           const SizedBox(height: 12),
 
-                          _cardUltimoCheckin(
-                            context,
-                            ultimo!,
+                          HistoricoCardUltimoCheckin(
+                            item: ultimo!,
+                            valor: _getBemEstar(ultimo),
+                            cor: _getCor(ultimo),
+                            possuiSinaisElevados:
+                                contarSinaisElevados(ultimo) > 0,
                           ),
 
                           const SizedBox(height: 28),
@@ -270,10 +277,12 @@ class _HistoricoTelaState extends State<HistoricoTela>
                           ...List.generate(
                             historicos.length,
                             (index) {
-                              return _historicoCard(
-                                context,
-                                historicos[index],
-                                index,
+                              return HistoricoCardRegistro(
+                                item: historicos[index],
+                                index: index,
+                                valor:
+                                    obterBemEstarDoRegistro(historicos[index]),
+                                cor: _getCor(historicos[index]),
                               );
                             },
                           ),
@@ -368,393 +377,6 @@ class _HistoricoTelaState extends State<HistoricoTela>
   }
 
   // ============================================================
-  // TÍTULO
-  // ============================================================
-
-  // ============================================================
-
-  // ============================================================
-
-  // ============================================================
-  // SINAL DE ATENÇÃO (humor e energia)
-  // ============================================================
-  //
-  // Aparece quando `possuiPadraoRecenteDeAtencao` (em
-  // `historico_global.dart`) identifica que, nos últimos check-ins,
-  // sinais de humor ou burnout apareceram com frequência. É um apoio
-  // visual para notar padrões — não é uma pontuação clínica validada
-  // nem substitui a avaliação do terapeuta, e o texto deixa isso
-  // claro.
-
-  Widget _cardSinalAtencao() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(19),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF3E1D8),
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.045),
-            blurRadius: 12,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 46,
-            height: 46,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.65),
-              borderRadius: BorderRadius.circular(15),
-            ),
-            child: const Icon(
-              Icons.health_and_safety_outlined,
-              color: Color(0xFF9A6B4C),
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Um sinal para observar',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: kMarrom,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                const Text(
-                  'Nos seus check-ins mais recentes, sinais de humor '
-                  'ou cansaço emocional apareceram com frequência. '
-                  'Pode ser um bom assunto para trazer para a sua '
-                  'próxima conversa com seu terapeuta.',
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    color: kMarromClaro,
-                    height: 1.45,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ============================================================
-  // GRÁFICO
-  // ============================================================
-
-  // ============================================================
-  // ÚLTIMO CHECK-IN
-  // ============================================================
-
-  Widget _cardUltimoCheckin(
-    BuildContext context,
-    Map<String, dynamic> item,
-  ) {
-    final valor = _getBemEstar(item);
-
-    final cor = _getCor(item);
-
-    return GestureDetector(
-      onTap: () {
-        Navigator.pushNamed(
-          context,
-          '/relatorio',
-          arguments: item,
-        );
-      },
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(19),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              cor.withValues(alpha: 0.90),
-              cor.withValues(alpha: 0.70),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(23),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.07),
-              blurRadius: 12,
-              offset: const Offset(0, 5),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  item['data']?.toString() ?? 'Data não informada',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
-                ),
-                Row(
-                  children: [
-                    if (contarSinaisElevados(item) > 0) ...[
-                      const Icon(
-                        Icons.notifications_active_outlined,
-                        size: 16,
-                        color: Colors.white,
-                      ),
-                      const SizedBox(width: 6),
-                    ],
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.20),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        '$valor%',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              item['status']?.toString() ?? 'Check-in realizado',
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                const Icon(
-                  Icons.description_outlined,
-                  size: 17,
-                  color: Colors.white,
-                ),
-                const SizedBox(width: 7),
-                const Text(
-                  'Ver relatório completo',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const Spacer(),
-                const Icon(
-                  Icons.arrow_forward_rounded,
-                  color: Colors.white,
-                  size: 20,
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ============================================================
-  // CARD HISTÓRICO
-  // ============================================================
-
-  Widget _historicoCard(
-    BuildContext context,
-    Map<String, dynamic> item,
-    int index,
-  ) {
-    final valor = _getBemEstar(item);
-
-    final cor = _getCor(item);
-
-    return TweenAnimationBuilder<double>(
-      tween: Tween(
-        begin: 0,
-        end: 1,
-      ),
-      duration: Duration(
-        milliseconds: 300 + (index * 70),
-      ),
-      curve: Curves.easeOut,
-      builder: (
-        context,
-        animation,
-        child,
-      ) {
-        return Opacity(
-          opacity: animation,
-          child: Transform.translate(
-            offset: Offset(
-              0,
-              10 * (1 - animation),
-            ),
-            child: child,
-          ),
-        );
-      },
-      child: GestureDetector(
-        onTap: () {
-          Navigator.pushNamed(
-            context,
-            '/relatorio',
-            arguments: item,
-          );
-        },
-        child: Container(
-          width: double.infinity,
-          margin: const EdgeInsets.only(
-            bottom: 12,
-          ),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.035),
-                blurRadius: 9,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 5,
-                height: 67,
-                decoration: BoxDecoration(
-                  color: cor,
-                  borderRadius: BorderRadius.circular(
-                    10,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            item['data']?.toString() ?? 'Data não informada',
-                            style: const TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w700,
-                              color: kMarrom,
-                            ),
-                          ),
-                        ),
-                        if (contarSinaisElevados(item) > 0) ...[
-                          const Icon(
-                            Icons.notifications_active_outlined,
-                            size: 14,
-                            color: Color(0xFF9A6B4C),
-                          ),
-                          const SizedBox(width: 5),
-                        ],
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: kRosa.withValues(
-                              alpha: 0.10,
-                            ),
-                            borderRadius: BorderRadius.circular(
-                              9,
-                            ),
-                          ),
-                          child: Text(
-                            '$valor%',
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: kMarromClaro,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      item['status']?.toString() ?? 'Check-in realizado',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 12.5,
-                        color: kCinza,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.visibility_outlined,
-                          size: 13,
-                          color: kMarromClaro.withValues(
-                            alpha: 0.75,
-                          ),
-                        ),
-                        const SizedBox(width: 5),
-                        Text(
-                          'Ver relatório',
-                          style: TextStyle(
-                            fontSize: 10.5,
-                            color: kMarromClaro.withValues(
-                              alpha: 0.80,
-                            ),
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              const Icon(
-                Icons.chevron_right_rounded,
-                size: 27,
-                color: Color(0xFFC8BEB8),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ============================================================
   // INSIGHT
   // ============================================================
 
@@ -829,102 +451,6 @@ class _HistoricoTelaState extends State<HistoricoTela>
   }
 
   // ============================================================
-  // ESTADO VAZIO
-  // ============================================================
-
-  Widget _estadoVazio(
-    BuildContext context,
-  ) {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(top: 30),
-      padding: const EdgeInsets.symmetric(
-        horizontal: 24,
-        vertical: 40,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(26),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Container(
-            width: 82,
-            height: 82,
-            decoration: BoxDecoration(
-              color: kRosa.withValues(alpha: 0.12),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.spa_rounded,
-              size: 42,
-              color: kRosa,
-            ),
-          ),
-          const SizedBox(height: 20),
-          const Text(
-            'Sua jornada começa aqui 🌱',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              color: kMarrom,
-            ),
-          ),
-          const SizedBox(height: 10),
-          const Text(
-            'Faça seu primeiro check-in e comece '
-            'a acompanhar como você está se '
-            'sentindo ao longo do tempo.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              color: kCinza,
-              height: 1.5,
-            ),
-          ),
-          const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton.icon(
-              onPressed: () {
-                Navigator.pushNamed(
-                  context,
-                  '/questionario',
-                );
-              },
-              icon: const Icon(
-                Icons.favorite_outline_rounded,
-              ),
-              label: const Text(
-                'Fazer meu primeiro check-in',
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF8D6E63),
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(
-                    16,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ============================================================
   // LEITURA DO BEM-ESTAR
   // ============================================================
   //
@@ -937,33 +463,6 @@ class _HistoricoTelaState extends State<HistoricoTela>
     Map<String, dynamic> item,
   ) {
     return obterBemEstarDoRegistro(item);
-  }
-
-  // ============================================================
-  // MÉDIA
-  // ============================================================
-
-  int _calcularMediaBemEstar(
-    List<Map<String, dynamic>> historicos,
-  ) {
-    return calcularMediaBemEstar(historicos);
-  }
-
-  // ============================================================
-  // SEQUÊNCIA
-  // ============================================================
-  //
-  // BUG CORRIGIDO: este método lia um campo 'sequencia' que nunca era
-  // gravado em lugar nenhum e, na prática, sempre caía num valor
-  // aproximado (`min(total de check-ins, 7)`), diferente do número
-  // mostrado na tela de Perfil. Agora as duas telas usam a mesma função
-  // `calcularSequenciaAtual`, que calcula dias consecutivos reais a
-  // partir da data de cada check-in.
-
-  int _calcularSequencia(
-    List<Map<String, dynamic>> historicos,
-  ) {
-    return calcularSequenciaAtual(historicos);
   }
 
   // ============================================================
