@@ -16,9 +16,15 @@ void invalidarCacheHistorico() {
 }
 
 
-Future<void> carregarHistorico() async {
+Future<void> carregarHistorico({
+  Future<int?> Function()? obterUsuarioId,
+  Future<List<Map<String, dynamic>>> Function(int)? listarEntradas,
+}) async {
+  // Dependências opcionais permitem simular atrasos nos testes sem acessar SQLite.
+  final consultarUsuario = obterUsuarioId ?? usuarioIdAtualCheckin;
+  final consultarEntradas = listarEntradas ?? listarEntradasCheckin;
   final versao = ++_versaoCarregamentoHistorico;
-  final usuarioId = await usuarioIdAtualCheckin();
+  final usuarioId = await consultarUsuario();
   if (versao != _versaoCarregamentoHistorico) return;
 
   if (usuarioId == null) {
@@ -26,9 +32,9 @@ Future<void> carregarHistorico() async {
     return;
   }
 
-  final entradas = await listarEntradasCheckin(usuarioId);
+  final entradas = await consultarEntradas(usuarioId);
   if (versao != _versaoCarregamentoHistorico) return;
-  if (await usuarioIdAtualCheckin() != usuarioId) {
+  if (await consultarUsuario() != usuarioId) {
     historicoGlobal = [];
     return;
   }
