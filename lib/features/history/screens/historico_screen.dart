@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:mindful_you/features/history/widgets/historico_grafico_evolucao.dart';
+import 'package:mindful_you/features/history/widgets/historico_titulos.dart';
+import 'package:mindful_you/features/history/widgets/historico_card_resumo.dart';
+import 'package:mindful_you/features/history/widgets/historico_card_evolucao.dart';
 import 'package:mindful_you/features/history/historico_global.dart';
 import 'package:mindful_you/core/widgets/menu_lateral_widget.dart';
 import 'package:mindful_you/widgets/avatar_perfil.dart';
@@ -174,7 +178,7 @@ class _HistoricoTelaState extends State<HistoricoTela>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _titulo(),
+                        const HistoricoTitulo(),
                         const SizedBox(height: 24),
                         if (historicos.isEmpty)
                           _estadoVazio(context)
@@ -183,7 +187,7 @@ class _HistoricoTelaState extends State<HistoricoTela>
                           // RESUMO
                           // ======================================
 
-                          _cardResumo(
+                          HistoricoCardResumo(
                             totalCheckins: totalCheckins,
                             sequencia: sequencia,
                             mediaBemEstar: mediaBemEstar,
@@ -196,23 +200,32 @@ class _HistoricoTelaState extends State<HistoricoTela>
                           // ======================================
 
                           if (historicos.length >= 2) ...[
-                            _tituloSecao(
+                            HistoricoTituloSecao(
                               'Como você está ultimamente?',
                               'Uma visão geral da sua evolução',
                             ),
                             const SizedBox(height: 12),
-                            _cardEvolucao(
+                            HistoricoCardEvolucao(
                               evolucao: evolucao,
                             ),
                             const SizedBox(height: 28),
-                            _tituloSecao(
+                            HistoricoTituloSecao(
                               'Sua evolução',
                               'Veja seus últimos registros',
                             ),
                             const SizedBox(height: 12),
-                            _graficoEvolucao(
-                              historicos,
-                            ),
+                            HistoricoGraficoEvolucao(
+                                registros: historicos
+                                    .take(7)
+                                    .toList()
+                                    .reversed
+                                    .toList(),
+                                dados: historicos
+                                    .take(7)
+                                    .toList()
+                                    .reversed
+                                    .map(_getBemEstar)
+                                    .toList()),
                             const SizedBox(height: 28),
                           ],
 
@@ -229,7 +242,7 @@ class _HistoricoTelaState extends State<HistoricoTela>
                           // ÚLTIMO CHECK-IN
                           // ======================================
 
-                          _tituloSecao(
+                          HistoricoTituloSecao(
                             'Seu último check-in',
                             'Seu momento mais recente',
                           ),
@@ -247,7 +260,7 @@ class _HistoricoTelaState extends State<HistoricoTela>
                           // HISTÓRICO
                           // ======================================
 
-                          _tituloSecao(
+                          HistoricoTituloSecao(
                             'Seus check-ins',
                             'Toque em um registro para ver o relatório',
                           ),
@@ -358,333 +371,9 @@ class _HistoricoTelaState extends State<HistoricoTela>
   // TÍTULO
   // ============================================================
 
-  Widget _titulo() {
-    return const Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Histórico',
-          style: TextStyle(
-            fontSize: 31,
-            fontWeight: FontWeight.w700,
-            color: kMarrom,
-            letterSpacing: -0.5,
-          ),
-        ),
-        SizedBox(height: 5),
-        Text(
-          'Acompanhe sua jornada ao longo do tempo',
-          style: TextStyle(
-            fontSize: 15,
-            color: kCinza,
-          ),
-        ),
-      ],
-    );
-  }
-
-  // ============================================================
-  // TÍTULO DE SEÇÃO
   // ============================================================
 
-  Widget _tituloSecao(
-    String titulo,
-    String subtitulo,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          titulo,
-          style: const TextStyle(
-            fontSize: 19,
-            fontWeight: FontWeight.w700,
-            color: kMarrom,
-          ),
-        ),
-        const SizedBox(height: 3),
-        Text(
-          subtitulo,
-          style: const TextStyle(
-            fontSize: 12,
-            color: kCinza,
-          ),
-        ),
-      ],
-    );
-  }
-
   // ============================================================
-  // CARD RESUMO
-  // ============================================================
-
-  Widget _cardResumo({
-    required int totalCheckins,
-    required int sequencia,
-    required int mediaBemEstar,
-  }) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(21),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            kBege,
-            kBegeClaro,
-          ],
-        ),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.75),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: const Icon(
-                  Icons.spa_rounded,
-                  color: kMarromClaro,
-                  size: 23,
-                ),
-              ),
-              const SizedBox(width: 12),
-              const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Sua jornada',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: kMarrom,
-                    ),
-                  ),
-                  SizedBox(height: 2),
-                  Text(
-                    'Um resumo do seu progresso',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: kCinza,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 22),
-          Row(
-            children: [
-              Expanded(
-                child: _indicador(
-                  valor: '$totalCheckins',
-                  titulo: 'Check-ins',
-                  icone: Icons.favorite_rounded,
-                ),
-              ),
-              _divisor(),
-              Expanded(
-                child: _indicador(
-                  valor: '$sequencia',
-                  titulo: 'Dias seguidos',
-                  icone: Icons.local_fire_department_rounded,
-                ),
-              ),
-              _divisor(),
-              Expanded(
-                child: _indicador(
-                  valor: '$mediaBemEstar%',
-                  titulo: 'Bem-estar',
-                  icone: Icons.auto_graph_rounded,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _indicador({
-    required String valor,
-    required String titulo,
-    required IconData icone,
-  }) {
-    return Column(
-      children: [
-        Icon(
-          icone,
-          size: 19,
-          color: kMarromClaro,
-        ),
-        const SizedBox(height: 6),
-        Text(
-          valor,
-          style: const TextStyle(
-            fontSize: 21,
-            fontWeight: FontWeight.w700,
-            color: kMarrom,
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          titulo,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontSize: 10.5,
-            color: kCinza,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _divisor() {
-    return Container(
-      height: 48,
-      width: 1,
-      color: Colors.black.withValues(alpha: 0.08),
-    );
-  }
-
-  // ============================================================
-  // CARD EVOLUÇÃO
-  // ============================================================
-
-  Widget _cardEvolucao({
-    required int evolucao,
-  }) {
-    final positiva = evolucao > 0;
-    final neutra = evolucao == 0;
-
-    String titulo;
-    String descricao;
-    IconData icone;
-
-    if (neutra) {
-      titulo = 'Seu bem-estar está estável';
-
-      descricao = 'Seus registros mostram pouca variação '
-          'entre os períodos analisados.';
-
-      icone = Icons.horizontal_rule_rounded;
-    } else if (positiva) {
-      titulo = 'Seu bem-estar está evoluindo';
-
-      descricao = 'Comparando seus registros, identificamos '
-          'uma diferença positiva entre o primeiro e o último registro.';
-
-      icone = Icons.trending_up_rounded;
-    } else {
-      titulo = 'Seu bem-estar apresentou uma queda';
-
-      descricao = 'Seus últimos registros mostram uma '
-          'diferença negativa entre o primeiro e o último registro. Observe como você '
-          'tem se sentido nos próximos dias.';
-
-      icone = Icons.trending_down_rounded;
-    }
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(19),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.045),
-            blurRadius: 12,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 46,
-            height: 46,
-            decoration: BoxDecoration(
-              color: positiva
-                  ? kVerde.withValues(alpha: 0.12)
-                  : kRosa.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(15),
-            ),
-            child: Icon(
-              icone,
-              color: positiva ? kVerde : kRosa,
-              size: 25,
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  titulo,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: kMarrom,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  descricao,
-                  style: const TextStyle(
-                    fontSize: 12.5,
-                    color: kCinza,
-                    height: 1.45,
-                  ),
-                ),
-                if (!neutra) ...[
-                  const SizedBox(height: 10),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 5,
-                    ),
-                    decoration: BoxDecoration(
-                      color: positiva
-                          ? kVerde.withValues(alpha: 0.10)
-                          : kRosa.withValues(alpha: 0.10),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      positiva
-                          ? '+$evolucao p.p. de variação'
-                          : '$evolucao p.p. de variação',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: positiva ? kVerde : kMarromClaro,
-                      ),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   // ============================================================
   // SINAL DE ATENÇÃO (humor e energia)
@@ -764,121 +453,6 @@ class _HistoricoTelaState extends State<HistoricoTela>
   // ============================================================
   // GRÁFICO
   // ============================================================
-
-  Widget _graficoEvolucao(
-    List<Map<String, dynamic>> historicos,
-  ) {
-    final registros = historicos.take(7).toList().reversed.toList();
-    final dados = registros.map(_getBemEstar).toList();
-
-    String rotuloData(Map<String, dynamic> registro) {
-      final data = DateTime.tryParse(registro['dataIso']?.toString() ?? '');
-      if (data == null) return 'Sem data';
-      return '${data.day.toString().padLeft(2, '0')}/${data.month.toString().padLeft(2, '0')}';
-    }
-
-    return Container(
-      width: double.infinity,
-      height: 260,
-      padding: const EdgeInsets.fromLTRB(
-        16,
-        18,
-        16,
-        12,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(23),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.045),
-            blurRadius: 12,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Bem-estar',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: kMarrom,
-                ),
-              ),
-              Row(
-                children: [
-                  Container(
-                    width: 8,
-                    height: 8,
-                    decoration: const BoxDecoration(
-                      color: kRosa,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: 5),
-                  const Text(
-                    'últimos registros',
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: kCinza,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Expanded(
-            child: Row(
-              children: [
-                const SizedBox(
-                  width: 32,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('100',
-                          style: TextStyle(fontSize: 10, color: kCinza)),
-                      Text('50', style: TextStyle(fontSize: 10, color: kCinza)),
-                      Text('0', style: TextStyle(fontSize: 10, color: kCinza)),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
-                    child: CustomPaint(
-                      painter: _GraficoHistoricoPainter(dados: dados),
-                      child: const SizedBox.expand(),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 6),
-          Padding(
-            padding: const EdgeInsets.only(left: 38, right: 6),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(rotuloData(registros.first),
-                    style: const TextStyle(fontSize: 10, color: kCinza)),
-                Text(rotuloData(registros.last),
-                    style: const TextStyle(fontSize: 10, color: kCinza)),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   // ============================================================
   // ÚLTIMO CHECK-IN
@@ -1432,132 +1006,5 @@ class _HistoricoTelaState extends State<HistoricoTela>
     }
 
     return kRosa;
-  }
-}
-
-// ============================================================
-// PAINTER DO GRÁFICO
-// ============================================================
-
-class _GraficoHistoricoPainter extends CustomPainter {
-  final List<int> dados;
-
-  _GraficoHistoricoPainter({
-    required this.dados,
-  });
-
-  @override
-  void paint(
-    Canvas canvas,
-    Size size,
-  ) {
-    if (dados.isEmpty) {
-      return;
-    }
-
-    final double largura = size.width;
-    final double altura = size.height;
-
-    // ==========================================================
-    // LINHA
-    // ==========================================================
-
-    final paintLinha = Paint()
-      ..color = kRosa
-      ..strokeWidth = 3
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-
-    // ==========================================================
-    // PONTOS
-    // ==========================================================
-
-    final paintPonto = Paint()
-      ..color = kRosa
-      ..style = PaintingStyle.fill;
-
-    // ==========================================================
-    // GRADE
-    // ==========================================================
-
-    final paintGrade = Paint()
-      ..color = Colors.black.withValues(alpha: 0.06)
-      ..strokeWidth = 1;
-
-    for (int i = 0; i < 4; i++) {
-      final double y = altura * (i / 3);
-
-      canvas.drawLine(
-        Offset(0, y),
-        Offset(largura, y),
-        paintGrade,
-      );
-    }
-
-    // ==========================================================
-    // CAMINHO DO GRÁFICO
-    // ==========================================================
-
-    final path = Path();
-
-    final double espacamento =
-        dados.length == 1 ? 0 : largura / (dados.length - 1);
-
-    for (int i = 0; i < dados.length; i++) {
-      final double x = dados.length == 1 ? largura / 2 : espacamento * i;
-
-      // CORREÇÃO DO ERRO:
-      // clamp() retorna num, então
-      // convertemos explicitamente para double.
-      final double valor = dados[i].clamp(0, 100).toDouble();
-
-      final double y = altura - ((valor / 100.0) * altura);
-
-      if (i == 0) {
-        path.moveTo(x, y);
-      } else {
-        path.lineTo(x, y);
-      }
-    }
-
-    canvas.drawPath(
-      path,
-      paintLinha,
-    );
-
-    // ==========================================================
-    // DESENHA OS PONTOS
-    // ==========================================================
-
-    for (int i = 0; i < dados.length; i++) {
-      final double x = dados.length == 1 ? largura / 2 : espacamento * i;
-
-      // CORREÇÃO DO ERRO:
-      final double valor = dados[i].clamp(0, 100).toDouble();
-
-      final double y = altura - ((valor / 100.0) * altura);
-
-      canvas.drawCircle(
-        Offset(x, y),
-        5,
-        paintPonto,
-      );
-
-      final paintCentro = Paint()..color = Colors.white;
-
-      canvas.drawCircle(
-        Offset(x, y),
-        2,
-        paintCentro,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(
-    covariant _GraficoHistoricoPainter oldDelegate,
-  ) {
-    return oldDelegate.dados != dados;
   }
 }

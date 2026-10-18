@@ -15,7 +15,6 @@ void invalidarCacheHistorico() {
   historicoGlobal = [];
 }
 
-
 Future<void> carregarHistorico({
   Future<int?> Function()? obterUsuarioId,
   Future<List<Map<String, dynamic>>> Function(int)? listarEntradas,
