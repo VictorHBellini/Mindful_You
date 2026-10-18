@@ -8,6 +8,14 @@ List<Map<String, dynamic>> historicoGlobal = [];
 // Descarta carregamentos antigos quando o usuário muda ou outro load começa.
 int _versaoCarregamentoHistorico = 0;
 
+/// Invalida leituras pendentes e remove os dados da sessão anterior.
+/// Deve ser chamada quando a identidade local é encerrada ou trocada.
+void invalidarCacheHistorico() {
+  ++_versaoCarregamentoHistorico;
+  historicoGlobal = [];
+}
+
+
 Future<void> carregarHistorico() async {
   final versao = ++_versaoCarregamentoHistorico;
   final usuarioId = await usuarioIdAtualCheckin();

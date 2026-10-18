@@ -50,7 +50,7 @@ class SessionService {
     final prefs = await SharedPreferences.getInstance();
     // Invalida primeiro a identidade para impedir leituras concorrentes.
     await prefs.remove('usuarioId');
-    historicoGlobal.clear();
+    invalidarCacheHistorico();
     for (final chave in _chavesSessao) {
       if (chave != 'usuarioId') await prefs.remove(chave);
     }
