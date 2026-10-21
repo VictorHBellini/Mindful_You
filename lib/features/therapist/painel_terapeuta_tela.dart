@@ -1,5 +1,6 @@
 import 'package:mindful_you/features/auth/services/session_service.dart';
 import 'package:flutter/material.dart';
+import 'package:mindful_you/services/theme_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mindful_you/services/database_service.dart';
 import 'package:mindful_you/features/therapist/services/vinculo_service.dart';
@@ -94,10 +95,28 @@ class _PainelTerapeutaTelaState extends State<PainelTerapeutaTela> {
         ),
       );
     }
+    final theme = Theme.of(context);
+    final dark = theme.brightness == Brightness.dark;
+    final cardBackground = dark ? const Color(0xFF292324) : Colors.white;
+    final accent = dark ? const Color(0xFFD9AAA9) : const Color(0xFF965052);
+    final secondaryText = theme.colorScheme.onSurface.withValues(alpha: 0.72);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Mindful You • Terapeuta'),
         actions: [
+          ValueListenableBuilder<ThemeMode>(
+            valueListenable: ThemeService.mode,
+            builder: (context, mode, child) {
+              final isDark = mode == ThemeMode.dark;
+              return IconButton(
+                tooltip: isDark ? 'Ativar tema claro' : 'Ativar tema escuro',
+                onPressed: () => ThemeService.setDark(!isDark),
+                icon: Icon(
+                  isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+                ),
+              );
+            },
+          ),
           IconButton(
             tooltip: 'Sair',
             onPressed: _sair,
@@ -114,7 +133,8 @@ class _PainelTerapeutaTelaState extends State<PainelTerapeutaTela> {
               Text('Olá, $_nome',
                   style: Theme.of(context).textTheme.headlineMedium),
               const SizedBox(height: 8),
-              const Text('Painel demonstrativo para o TCC.'),
+              Text('Painel demonstrativo para o TCC.',
+                  style: TextStyle(color: secondaryText)),
               const SizedBox(height: 24),
               TextField(
                   controller: _emailController,
@@ -153,8 +173,15 @@ class _PainelTerapeutaTelaState extends State<PainelTerapeutaTela> {
                       );
                     }
                   }),
-              const SizedBox(height: 12),
-              Text('Vínculos', style: Theme.of(context).textTheme.titleLarge),
+              const SizedBox(height: 24),
+              Row(children: [
+                Expanded(
+                    child: Text('Vínculos',
+                        style: theme.textTheme.titleLarge
+                            ?.copyWith(fontWeight: FontWeight.bold))),
+                Icon(Icons.people_outline, color: accent),
+              ]),
+              const SizedBox(height: 8),
               FutureBuilder<List<Map<String, dynamic>>>(
                   future: _vinculos,
                   builder: (context, snapshot) {
@@ -170,56 +197,163 @@ class _PainelTerapeutaTelaState extends State<PainelTerapeutaTela> {
                     }
                     return Column(children: [
                       for (final item in lista)
-                        Card(
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Card(
+                            color: cardBackground,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(18),
+                              side: BorderSide(
+                                  color: theme.dividerColor
+                                      .withValues(alpha: 0.25)),
+                            ),
                             child: ListTile(
-                          leading: const Icon(Icons.person_outline),
-                          title: Text(item['nome'].toString()),
-                          subtitle:
-                              Text('${item['email']} • ${item['status']}'),
-                          trailing: item['status'] == 'aceito'
-                              ? const Icon(Icons.chevron_right)
-                              : const Icon(Icons.lock_outline),
-                          onTap: item['status'] == 'aceito'
-                              ? () async {
-                                  final pacienteId = item['paciente_id'] as int;
-                                  await Navigator.of(context)
-                                      .push(MaterialPageRoute<void>(
-                                    builder: (_) => HistoricoPacienteTela(
-                                      pacienteId: pacienteId,
-                                      nomePaciente: item['nome']?.toString() ??
-                                          'Paciente',
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 8),
+                              leading: CircleAvatar(
+                                backgroundColor: accent.withValues(alpha: 0.14),
+                                child:
+                                    Icon(Icons.person_outline, color: accent),
+                              ),
+                              title: Text(
+                                  item['nome']?.toString() ?? 'Paciente',
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w600)),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const SizedBox(height: 4),
+                                  Text(item['email']?.toString() ?? '',
+                                      style: TextStyle(color: secondaryText)),
+                                  const SizedBox(height: 5),
+                                  Text(
+                                    item['status'] == 'aceito'
+                                        ? 'Vínculo aceito'
+                                        : 'Status: ${item['status']}',
+                                    style: TextStyle(
+                                      color: item['status'] == 'aceito'
+                                          ? accent
+                                          : secondaryText,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
                                     ),
-                                  ));
-                                  if (!mounted) return;
-                                  setState(_recarregar);
-                                }
-                              : null,
-                        ))
+                                  ),
+                                ],
+                              ),
+                              trailing: Icon(
+                                item['status'] == 'aceito'
+                                    ? Icons.chevron_right
+                                    : Icons.lock_outline,
+                                color: secondaryText,
+                              ),
+                              onTap: item['status'] == 'aceito'
+                                  ? () async {
+                                      final pacienteId =
+                                          item['paciente_id'] as int;
+                                      await Navigator.of(context)
+                                          .push(MaterialPageRoute<void>(
+                                        builder: (_) => HistoricoPacienteTela(
+                                          pacienteId: pacienteId,
+                                          nomePaciente:
+                                              item['nome']?.toString() ??
+                                                  'Paciente',
+                                        ),
+                                      ));
+                                      if (!mounted) return;
+                                      setState(_recarregar);
+                                    }
+                                  : null,
+                            ),
+                          ),
+                        ),
                     ]);
                   }),
-              const Card(
-                child: ListTile(
-                  leading: Icon(Icons.show_chart),
-                  title: Text('Evolução emocional'),
-                  subtitle: Text(
-                      'Toque em um paciente com vínculo aceito para visualizar seus registros.'),
-                ),
+              const SizedBox(height: 12),
+              _PainelInfoCard(
+                icon: Icons.show_chart,
+                title: 'Evolução emocional',
+                description:
+                    'Toque em um paciente com vínculo aceito para visualizar seus registros.',
+                background: cardBackground,
+                accent: accent,
+                secondaryText: secondaryText,
               ),
-              const Card(
-                child: ListTile(
-                  leading: Icon(Icons.assignment_outlined),
-                  title: Text('Questionários'),
-                  subtitle: Text(
-                      'Avaliações demonstrativas de ansiedade e humor disponíveis no histórico de pacientes autorizados. Burnout ainda não integrado.'),
-                ),
+              const SizedBox(height: 8),
+              _PainelInfoCard(
+                icon: Icons.assignment_outlined,
+                title: 'Questionários',
+                description:
+                    'Avaliações demonstrativas de ansiedade e humor disponíveis no histórico de pacientes autorizados. Burnout ainda não integrado.',
+                background: cardBackground,
+                accent: accent,
+                secondaryText: secondaryText,
               ),
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 'Protótipo acadêmico. Não oferece diagnóstico, atendimento emergencial ou monitoramento clínico em tempo real.',
                 textAlign: TextAlign.center,
+                style: TextStyle(color: secondaryText, fontSize: 12),
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PainelInfoCard extends StatelessWidget {
+  const _PainelInfoCard({
+    required this.icon,
+    required this.title,
+    required this.description,
+    required this.background,
+    required this.accent,
+    required this.secondaryText,
+  });
+
+  final IconData icon;
+  final String title;
+  final String description;
+  final Color background;
+  final Color accent;
+  final Color secondaryText;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: background,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(
+            color: Theme.of(context).dividerColor.withValues(alpha: 0.25)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            CircleAvatar(
+              backgroundColor: accent.withValues(alpha: 0.14),
+              child: Icon(icon, color: accent),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w700, fontSize: 16)),
+                  const SizedBox(height: 5),
+                  Text(description,
+                      style: TextStyle(color: secondaryText, height: 1.4)),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );

@@ -11,12 +11,28 @@ class QuestionarioTela extends StatefulWidget {
 }
 
 class _QuestionarioTelaState extends State<QuestionarioTela> {
-  static const _fundo = Color(0xFFF8F5F2);
-  static const _texto = Color(0xFF40352F);
-  static const _secundario = Color(0xFF80675C);
-  static const _destaque = Color(0xFFC89494);
-  static const _botao = Color(0xFF8D6E63);
-  static const _borda = Color(0xFFEDE5E0);
+  bool get _escuro => Theme.of(context).brightness == Brightness.dark;
+  Color get _fundo =>
+      _escuro ? const Color(0xFF151414) : const Color(0xFFF8F5F2);
+  Color get _texto =>
+      _escuro ? const Color(0xFFF1E9E6) : const Color(0xFF40352F);
+  Color get _secundario =>
+      _escuro ? const Color(0xFFBDAFAB) : const Color(0xFF80675C);
+  Color get _destaque =>
+      _escuro ? const Color(0xFFD5A0A4) : const Color(0xFFC89494);
+  Color get _botao =>
+      _escuro ? const Color(0xFFAD8587) : const Color(0xFF8D6E63);
+  Color get _borda =>
+      _escuro ? const Color(0xFF423738) : const Color(0xFFEDE5E0);
+  Color get _superficie => _escuro ? const Color(0xFF251F20) : Colors.white;
+  Color get _selecionado =>
+      _escuro ? const Color(0xFF403035) : const Color(0xFFEFE2DF);
+  Color get _trilha =>
+      _escuro ? const Color(0xFF403637) : const Color(0xFFE7DED9);
+  Color get _iconeFundo =>
+      _escuro ? const Color(0xFF382D30) : const Color(0xFFEFE2DF);
+  Color get _iconeInativo =>
+      _escuro ? const Color(0xFF9B8987) : const Color(0xFFCCBEB7);
   static const _total = 7;
 
   final _controller = PageController();
@@ -154,17 +170,16 @@ class _QuestionarioTelaState extends State<QuestionarioTela> {
       Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         CircleAvatar(
           radius: 25,
-          backgroundColor: const Color(0xFFEFE2DF),
+          backgroundColor: _iconeFundo,
           child: Icon(icone, color: _botao),
         ),
         const SizedBox(height: 20),
         Text(titulo,
-            style: const TextStyle(
+            style: TextStyle(
                 fontSize: 25, fontWeight: FontWeight.bold, color: _texto)),
         const SizedBox(height: 10),
         Text(descricao,
-            style:
-                const TextStyle(fontSize: 14, height: 1.5, color: _secundario)),
+            style: TextStyle(fontSize: 14, height: 1.5, color: _secundario)),
         const SizedBox(height: 26),
       ]);
 
@@ -173,7 +188,7 @@ class _QuestionarioTelaState extends State<QuestionarioTela> {
       Padding(
         padding: const EdgeInsets.only(bottom: 10),
         child: Material(
-          color: selecionado ? const Color(0xFFEFE2DF) : Colors.white,
+          color: selecionado ? _selecionado : _superficie,
           borderRadius: BorderRadius.circular(18),
           child: InkWell(
             onTap: onTap,
@@ -186,15 +201,15 @@ class _QuestionarioTelaState extends State<QuestionarioTela> {
               ),
               child: Row(children: [
                 if (emoji != null) ...[
-                  Text(emoji, style: const TextStyle(fontSize: 27)),
+                  Text(emoji, style: TextStyle(fontSize: 27)),
                   const SizedBox(width: 14),
                 ],
                 Expanded(
                     child: Text(titulo,
-                        style: const TextStyle(
+                        style: TextStyle(
                             color: _texto, fontWeight: FontWeight.w600))),
                 Icon(selecionado ? Icons.check_circle : Icons.circle_outlined,
-                    color: selecionado ? _botao : const Color(0xFFCCBEB7)),
+                    color: selecionado ? _destaque : _iconeInativo),
               ]),
             ),
           ),
@@ -208,14 +223,14 @@ class _QuestionarioTelaState extends State<QuestionarioTela> {
       _cabecalho(titulo, descricao, icone),
       Center(
           child: Text('${valor.round()}',
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 48, fontWeight: FontWeight.bold, color: _botao))),
       const SizedBox(height: 18),
       SliderTheme(
         data: SliderThemeData(
           activeTrackColor: _destaque,
           thumbColor: _botao,
-          inactiveTrackColor: const Color(0xFFE7DED9),
+          inactiveTrackColor: _trilha,
           trackHeight: 6,
         ),
         child: Slider(
@@ -231,19 +246,18 @@ class _QuestionarioTelaState extends State<QuestionarioTela> {
         ),
       ),
       Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-        Flexible(
-            child: Text(minimo, style: const TextStyle(color: _secundario))),
+        Flexible(child: Text(minimo, style: TextStyle(color: _secundario))),
         const SizedBox(width: 16),
         Flexible(
             child: Text(maximo,
                 textAlign: TextAlign.end,
-                style: const TextStyle(color: _secundario))),
+                style: TextStyle(color: _secundario))),
       ]),
       const SizedBox(height: 28),
       Text(
           orientacao ??
               'Não existe resposta certa ou errada. Considere como foi seu dia.',
-          style: const TextStyle(color: _secundario, height: 1.5)),
+          style: TextStyle(color: _secundario, height: 1.5)),
     ]);
   }
 
@@ -342,17 +356,17 @@ class _QuestionarioTelaState extends State<QuestionarioTela> {
             decoration: InputDecoration(
               hintText: 'Como foi seu dia? O que gostaria de lembrar?',
               filled: true,
-              fillColor: Colors.white,
+              fillColor: _superficie,
               border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(18),
-                  borderSide: const BorderSide(color: _borda)),
+                  borderSide: BorderSide(color: _borda)),
               enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(18),
-                  borderSide: const BorderSide(color: _borda)),
+                  borderSide: BorderSide(color: _borda)),
             ),
           ),
           const SizedBox(height: 18),
-          const Text(
+          Text(
               'Este check-in registra percepções pessoais. Não é uma escala psicológica validada nem substitui avaliação profissional.',
               style: TextStyle(color: _secundario, height: 1.5)),
         ]);
@@ -383,17 +397,16 @@ class _QuestionarioTelaState extends State<QuestionarioTela> {
                 child: LinearProgressIndicator(
                   value: (_pagina + 1) / _total,
                   minHeight: 7,
-                  backgroundColor: const Color(0xFFE7DED9),
-                  valueColor: const AlwaysStoppedAnimation(_destaque),
+                  backgroundColor: _trilha,
+                  valueColor: AlwaysStoppedAnimation(_destaque),
                 ),
               ),
               const SizedBox(height: 10),
               Row(children: [
                 Text('${_pagina + 1} de $_total',
-                    style: const TextStyle(color: _secundario)),
-                const Spacer(),
-                const Text('Check-in rápido',
                     style: TextStyle(color: _secundario)),
+                const Spacer(),
+                Text('Check-in rápido', style: TextStyle(color: _secundario)),
               ]),
             ]),
           ),
@@ -419,13 +432,14 @@ class _QuestionarioTelaState extends State<QuestionarioTela> {
                 onPressed: _enviando ? null : _continuar,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _botao,
-                  foregroundColor: Colors.white,
+                  foregroundColor:
+                      _escuro ? const Color(0xFF191516) : Colors.white,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(18)),
                 ),
                 child: Text(
                     _pagina == _total - 1 ? 'Ver meu resultado' : 'Continuar',
-                    style: const TextStyle(fontWeight: FontWeight.w600)),
+                    style: TextStyle(fontWeight: FontWeight.w600)),
               ),
             ),
           ),

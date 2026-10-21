@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mindful_you/core/theme/mindful_cores.dart';
 import 'package:mindful_you/features/settings/vincular_firebase_demo_tela.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -122,14 +123,16 @@ class _ConfiguracaoTelaState extends State<ConfiguracaoTela> {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
-          color: const Color(0xFFE8DFDA),
+          color: Theme.of(context).dividerColor,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.black.withValues(alpha: 0.18)
+                : Colors.black.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -142,7 +145,7 @@ class _ConfiguracaoTelaState extends State<ConfiguracaoTela> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F1ED),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(18),
@@ -152,9 +155,9 @@ class _ConfiguracaoTelaState extends State<ConfiguracaoTela> {
                 alignment: Alignment.centerLeft,
                 child: IconButton(
                   onPressed: () => Navigator.pop(context),
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.arrow_back_ios_new_rounded,
-                    color: Color(0xFF8A7B73),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
               ),
@@ -164,7 +167,7 @@ class _ConfiguracaoTelaState extends State<ConfiguracaoTela> {
                 height: 106,
                 padding: const EdgeInsets.all(3),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Theme.of(context).cardColor,
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
@@ -179,10 +182,10 @@ class _ConfiguracaoTelaState extends State<ConfiguracaoTela> {
               Text(
                 nomeUsuario,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF40352F),
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 4),
@@ -191,8 +194,8 @@ class _ConfiguracaoTelaState extends State<ConfiguracaoTela> {
                     ? "Nenhum e-mail cadastrado"
                     : emailUsuario,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Color(0xFF8A7B73),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                   fontSize: 15,
                 ),
               ),
@@ -200,11 +203,11 @@ class _ConfiguracaoTelaState extends State<ConfiguracaoTela> {
               _sectionCard(
                 child: Column(
                   children: [
-                    const Row(
+                    Row(
                       children: [
                         Icon(
                           Icons.person_outline_rounded,
-                          color: Color(0xFF8D6E63),
+                          color: Theme.of(context).colorScheme.primary,
                         ),
                         SizedBox(width: 10),
                         Text(
@@ -233,8 +236,14 @@ class _ConfiguracaoTelaState extends State<ConfiguracaoTela> {
                           "Editar Perfil",
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF8D6E63),
-                          foregroundColor: Colors.white,
+                          backgroundColor:
+                              Theme.of(context).brightness == Brightness.dark
+                                  ? MindfulCores.rosaPrimarioEscuro
+                                  : const Color(0xFF8D6E63),
+                          foregroundColor:
+                              Theme.of(context).brightness == Brightness.dark
+                                  ? MindfulCores.contrasteRosaEscuro
+                                  : Colors.white,
                           minimumSize: const Size(double.infinity, 52),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
@@ -249,11 +258,11 @@ class _ConfiguracaoTelaState extends State<ConfiguracaoTela> {
               _sectionCard(
                 child: Column(
                   children: [
-                    const Row(
+                    Row(
                       children: [
                         Icon(
                           Icons.tune_rounded,
-                          color: Color(0xFF8D6E63),
+                          color: Theme.of(context).colorScheme.primary,
                         ),
                         SizedBox(width: 10),
                         Text(

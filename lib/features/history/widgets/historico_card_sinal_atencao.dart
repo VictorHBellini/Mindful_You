@@ -1,3 +1,4 @@
+import 'package:mindful_you/features/history/widgets/historico_tema.dart';
 import 'package:flutter/material.dart';
 
 /// Aviso visual de padrões recentes; a decisão de exibi-lo fica na tela.
@@ -13,7 +14,9 @@ class HistoricoCardSinalAtencao extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(19),
       decoration: BoxDecoration(
-        color: const Color(0xFFF3E1D8),
+        color: HistoricoTema.escuro(context)
+            ? const Color(0xFF382927)
+            : const Color(0xFFF3E1D8),
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
@@ -30,37 +33,37 @@ class HistoricoCardSinalAtencao extends StatelessWidget {
             width: 46,
             height: 46,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.65),
+              color: HistoricoTema.iconeFundo(context),
               borderRadius: BorderRadius.circular(15),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.health_and_safety_outlined,
-              color: Color(0xFF9A6B4C),
+              color: HistoricoTema.destaque(context),
               size: 24,
             ),
           ),
-          const SizedBox(width: 14),
+          SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Um sinal para observar',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: kMarrom,
+                    color: HistoricoTema.texto(context),
                   ),
                 ),
-                const SizedBox(height: 6),
-                const Text(
+                SizedBox(height: 6),
+                Text(
                   'Nos seus check-ins mais recentes, sinais de humor '
                   'ou cansaço emocional apareceram com frequência. '
                   'Pode ser um bom assunto para trazer para a sua '
                   'próxima conversa com seu terapeuta.',
                   style: TextStyle(
                     fontSize: 12.5,
-                    color: kMarromClaro,
+                    color: HistoricoTema.destaque(context),
                     height: 1.45,
                   ),
                 ),

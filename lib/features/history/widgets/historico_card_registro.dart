@@ -1,3 +1,4 @@
+import 'package:mindful_you/features/history/widgets/historico_tema.dart';
 import 'package:flutter/material.dart';
 import 'package:mindful_you/features/history/historico_global.dart';
 
@@ -63,7 +64,7 @@ class HistoricoCardRegistro extends StatelessWidget {
           ),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: HistoricoTema.cartao(context),
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
@@ -85,7 +86,7 @@ class HistoricoCardRegistro extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 14),
+              SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -95,20 +96,20 @@ class HistoricoCardRegistro extends StatelessWidget {
                         Expanded(
                           child: Text(
                             item['data']?.toString() ?? 'Data não informada',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.w700,
-                              color: kMarrom,
+                              color: HistoricoTema.texto(context),
                             ),
                           ),
                         ),
                         if (contarSinaisElevados(item) > 0) ...[
-                          const Icon(
+                          Icon(
                             Icons.notifications_active_outlined,
                             size: 14,
-                            color: Color(0xFF9A6B4C),
+                            color: HistoricoTema.destaque(context),
                           ),
-                          const SizedBox(width: 5),
+                          SizedBox(width: 5),
                         ],
                         Container(
                           padding: const EdgeInsets.symmetric(
@@ -125,41 +126,41 @@ class HistoricoCardRegistro extends StatelessWidget {
                           ),
                           child: Text(
                             '$valor%',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
-                              color: kMarromClaro,
+                              color: HistoricoTema.destaque(context),
                             ),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 6),
+                    SizedBox(height: 6),
                     Text(
                       item['status']?.toString() ?? 'Check-in realizado',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12.5,
-                        color: kCinza,
+                        color: HistoricoTema.secundario(context),
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8),
                     Row(
                       children: [
                         Icon(
                           Icons.visibility_outlined,
                           size: 13,
-                          color: kMarromClaro.withValues(
+                          color: HistoricoTema.destaque(context).withValues(
                             alpha: 0.75,
                           ),
                         ),
-                        const SizedBox(width: 5),
+                        SizedBox(width: 5),
                         Text(
                           'Ver relatório',
                           style: TextStyle(
                             fontSize: 10.5,
-                            color: kMarromClaro.withValues(
+                            color: HistoricoTema.destaque(context).withValues(
                               alpha: 0.80,
                             ),
                             fontWeight: FontWeight.w500,
@@ -170,11 +171,11 @@ class HistoricoCardRegistro extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
-              const Icon(
+              SizedBox(width: 8),
+              Icon(
                 Icons.chevron_right_rounded,
                 size: 27,
-                color: Color(0xFFC8BEB8),
+                color: HistoricoTema.secundario(context),
               ),
             ],
           ),

@@ -112,8 +112,19 @@ class _CadastroTelaState extends State<CadastroTela> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final titleColor =
+        isDark ? const Color(0xFFF4EDEA) : const Color(0xFF4F4039);
+    final secondaryColor =
+        isDark ? const Color(0xFFCDBDB8) : const Color(0xFF7A6C65);
+    final accentColor =
+        isDark ? const Color(0xFFD6A6A7) : const Color(0xFF8D6E63);
+    final fieldColor =
+        isDark ? const Color(0xFF342B2C) : const Color(0xFFF7F5F3);
+    final cardColor = isDark ? const Color(0xFF251F20) : Colors.white;
     return Scaffold(
-      backgroundColor: const Color(0xFFE3DDD6),
+      backgroundColor:
+          isDark ? const Color(0xFF171516) : const Color(0xFFE3DDD6),
       body: Stack(
         children: [
           // Imagem topo
@@ -141,7 +152,7 @@ class _CadastroTelaState extends State<CadastroTela> {
           Align(
             alignment: Alignment.bottomCenter,
             child: Container(
-              height: MediaQuery.of(context).size.height * 0.75,
+              height: MediaQuery.sizeOf(context).height * 0.75,
               padding: const EdgeInsets.fromLTRB(
                 28,
                 32,
@@ -149,7 +160,7 @@ class _CadastroTelaState extends State<CadastroTela> {
                 20,
               ),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: cardColor,
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(35),
                 ),
@@ -164,28 +175,30 @@ class _CadastroTelaState extends State<CadastroTela> {
               child: Form(
                 key: _formKey,
                 child: SingleChildScrollView(
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
                   child: Column(
                     children: [
                       // Título
-                      const Text(
+                      Text(
                         "Cadastre-se",
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 30,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF4F4039),
+                          color: titleColor,
                         ),
                       ),
 
                       const SizedBox(height: 12),
 
-                      const Text(
+                      Text(
                         "Crie sua conta e comece sua jornada",
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 14,
                           height: 1.6,
-                          color: Color(0xFF7A6C65),
+                          color: secondaryColor,
                         ),
                       ),
 
@@ -194,6 +207,7 @@ class _CadastroTelaState extends State<CadastroTela> {
                       // Nome
                       TextFormField(
                         controller: _nomeController,
+                        style: TextStyle(color: titleColor),
                         textCapitalization: TextCapitalization.words,
                         textInputAction: TextInputAction.next,
                         validator: (value) {
@@ -204,23 +218,24 @@ class _CadastroTelaState extends State<CadastroTela> {
                         },
                         decoration: InputDecoration(
                           hintText: "Nome completo",
-                          prefixIcon: const Icon(
+                          hintStyle: TextStyle(color: secondaryColor),
+                          prefixIcon: Icon(
                             Icons.person_outline,
-                            color: Color(0xFF8D6E63),
+                            color: accentColor,
                           ),
                           contentPadding: const EdgeInsets.symmetric(
                             vertical: 20,
                           ),
                           filled: true,
-                          fillColor: const Color(0xFFF7F5F3),
+                          fillColor: fieldColor,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(18),
                             borderSide: BorderSide.none,
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(18),
-                            borderSide: const BorderSide(
-                              color: Color(0xFF8D6E63),
+                            borderSide: BorderSide(
+                              color: accentColor,
                               width: 1.5,
                             ),
                           ),
@@ -232,6 +247,7 @@ class _CadastroTelaState extends State<CadastroTela> {
                       // Email
                       TextFormField(
                         controller: _emailController,
+                        style: TextStyle(color: titleColor),
                         keyboardType: TextInputType.emailAddress,
                         textInputAction: TextInputAction.next,
                         autocorrect: false,
@@ -245,23 +261,24 @@ class _CadastroTelaState extends State<CadastroTela> {
                         },
                         decoration: InputDecoration(
                           hintText: "E-mail",
-                          prefixIcon: const Icon(
+                          hintStyle: TextStyle(color: secondaryColor),
+                          prefixIcon: Icon(
                             Icons.email_outlined,
-                            color: Color(0xFF8D6E63),
+                            color: accentColor,
                           ),
                           contentPadding: const EdgeInsets.symmetric(
                             vertical: 20,
                           ),
                           filled: true,
-                          fillColor: const Color(0xFFF7F5F3),
+                          fillColor: fieldColor,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(18),
                             borderSide: BorderSide.none,
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(18),
-                            borderSide: const BorderSide(
-                              color: Color(0xFF8D6E63),
+                            borderSide: BorderSide(
+                              color: accentColor,
                               width: 1.5,
                             ),
                           ),
@@ -273,6 +290,7 @@ class _CadastroTelaState extends State<CadastroTela> {
                       // Senha
                       TextFormField(
                         controller: _senhaController,
+                        style: TextStyle(color: titleColor),
                         obscureText: _obscurePassword,
                         textInputAction: TextInputAction.next,
                         validator: (value) {
@@ -283,16 +301,17 @@ class _CadastroTelaState extends State<CadastroTela> {
                         },
                         decoration: InputDecoration(
                           hintText: "Senha",
-                          prefixIcon: const Icon(
+                          hintStyle: TextStyle(color: secondaryColor),
+                          prefixIcon: Icon(
                             Icons.lock_outline,
-                            color: Color(0xFF8D6E63),
+                            color: accentColor,
                           ),
                           suffixIcon: IconButton(
                             icon: Icon(
                               _obscurePassword
                                   ? Icons.visibility_off_outlined
                                   : Icons.visibility_outlined,
-                              color: const Color(0xFF8D6E63),
+                              color: accentColor,
                             ),
                             onPressed: () {
                               setState(() {
@@ -304,15 +323,15 @@ class _CadastroTelaState extends State<CadastroTela> {
                             vertical: 20,
                           ),
                           filled: true,
-                          fillColor: const Color(0xFFF7F5F3),
+                          fillColor: fieldColor,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(18),
                             borderSide: BorderSide.none,
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(18),
-                            borderSide: const BorderSide(
-                              color: Color(0xFF8D6E63),
+                            borderSide: BorderSide(
+                              color: accentColor,
                               width: 1.5,
                             ),
                           ),
@@ -324,6 +343,7 @@ class _CadastroTelaState extends State<CadastroTela> {
                       // Confirmar senha
                       TextFormField(
                         controller: _confirmarSenhaController,
+                        style: TextStyle(color: titleColor),
                         obscureText: _obscureConfirmPassword,
                         textInputAction: TextInputAction.done,
                         onFieldSubmitted: (_) => _criarConta(),
@@ -335,16 +355,17 @@ class _CadastroTelaState extends State<CadastroTela> {
                         },
                         decoration: InputDecoration(
                           hintText: "Confirmar senha",
-                          prefixIcon: const Icon(
+                          hintStyle: TextStyle(color: secondaryColor),
+                          prefixIcon: Icon(
                             Icons.lock_reset_outlined,
-                            color: Color(0xFF8D6E63),
+                            color: accentColor,
                           ),
                           suffixIcon: IconButton(
                             icon: Icon(
                               _obscureConfirmPassword
                                   ? Icons.visibility_off_outlined
                                   : Icons.visibility_outlined,
-                              color: const Color(0xFF8D6E63),
+                              color: accentColor,
                             ),
                             onPressed: () {
                               setState(() {
@@ -357,15 +378,15 @@ class _CadastroTelaState extends State<CadastroTela> {
                             vertical: 20,
                           ),
                           filled: true,
-                          fillColor: const Color(0xFFF7F5F3),
+                          fillColor: fieldColor,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(18),
                             borderSide: BorderSide.none,
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(18),
-                            borderSide: const BorderSide(
-                              color: Color(0xFF8D6E63),
+                            borderSide: BorderSide(
+                              color: accentColor,
                               width: 1.5,
                             ),
                           ),
@@ -377,10 +398,13 @@ class _CadastroTelaState extends State<CadastroTela> {
                       // Perfil da conta (apenas demonstração acadêmica).
                       DropdownButtonFormField<String>(
                         initialValue: _tipoUsuario,
+                        dropdownColor: cardColor,
+                        style: TextStyle(color: titleColor, fontSize: 16),
                         decoration: InputDecoration(
                           labelText: 'Tipo de conta',
+                          labelStyle: TextStyle(color: secondaryColor),
                           filled: true,
-                          fillColor: const Color(0xFFF7F5F3),
+                          fillColor: fieldColor,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(18),
                             borderSide: BorderSide.none,
@@ -400,22 +424,25 @@ class _CadastroTelaState extends State<CadastroTela> {
                               },
                       ),
                       const SizedBox(height: 12),
-                      const Text(
+                      Text(
                         'O perfil de terapeuta é apenas demonstrativo e não verifica registro profissional.',
-                        style: TextStyle(fontSize: 12),
+                        style: TextStyle(fontSize: 12, color: secondaryColor),
                       ),
                       const SizedBox(height: 20),
 
                       // Termos de uso
                       CheckboxListTile(
                         value: aceitarTermos,
-                        activeColor: const Color(0xFF8D6E63),
+                        activeColor: accentColor,
+                        checkColor:
+                            isDark ? const Color(0xFF281E20) : Colors.white,
                         contentPadding: EdgeInsets.zero,
                         controlAffinity: ListTileControlAffinity.leading,
-                        title: const Text(
+                        title: Text(
                           "Aceito os Termos de Uso e Política de Privacidade",
                           style: TextStyle(
                             fontSize: 13,
+                            color: titleColor,
                           ),
                         ),
                         onChanged: (value) {
@@ -434,20 +461,25 @@ class _CadastroTelaState extends State<CadastroTela> {
                         child: ElevatedButton(
                           onPressed: _enviando ? null : _criarConta,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF8D6E63),
-                            foregroundColor: Colors.white,
+                            backgroundColor: isDark
+                                ? const Color(0xFFD6A6A7)
+                                : const Color(0xFF8D6E63),
+                            foregroundColor:
+                                isDark ? const Color(0xFF281E20) : Colors.white,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(18),
                             ),
                           ),
                           child: _enviando
-                              ? const SizedBox(
+                              ? SizedBox(
                                   width: 22,
                                   height: 22,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2.5,
-                                    color: Colors.white,
+                                    color: isDark
+                                        ? const Color(0xFF281E20)
+                                        : Colors.white,
                                   ),
                                 )
                               : const Text(
@@ -467,20 +499,20 @@ class _CadastroTelaState extends State<CadastroTela> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Text(
+                          Text(
                             "Já possui uma conta?",
                             style: TextStyle(
-                              color: Colors.black87,
+                              color: secondaryColor,
                             ),
                           ),
                           TextButton(
                             onPressed: () {
                               Navigator.pop(context);
                             },
-                            child: const Text(
+                            child: Text(
                               "Entrar",
                               style: TextStyle(
-                                color: Color(0xFF8D6E63),
+                                color: accentColor,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),

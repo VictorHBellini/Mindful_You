@@ -10,6 +10,9 @@ class HistoricoEstadoVazio extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final escuro = Theme.of(context).brightness == Brightness.dark;
+    final tituloCor = escuro ? const Color(0xFFF1E8E4) : _kMarrom;
+    final textoCor = escuro ? const Color(0xFFC9B7B2) : _kCinza;
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(top: 30),
@@ -18,7 +21,7 @@ class HistoricoEstadoVazio extends StatelessWidget {
         vertical: 40,
       ),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: escuro ? const Color(0xFF241F1F) : Colors.white,
         borderRadius: BorderRadius.circular(26),
         boxShadow: [
           BoxShadow(
@@ -44,24 +47,24 @@ class HistoricoEstadoVazio extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 20),
-          const Text(
+          Text(
             'Sua jornada começa aqui 🌱',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w700,
-              color: _kMarrom,
+              color: tituloCor,
             ),
           ),
           const SizedBox(height: 10),
-          const Text(
+          Text(
             'Faça seu primeiro check-in e comece '
             'a acompanhar como você está se '
             'sentindo ao longo do tempo.',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 14,
-              color: _kCinza,
+              color: textoCor,
               height: 1.5,
             ),
           ),
@@ -83,8 +86,10 @@ class HistoricoEstadoVazio extends StatelessWidget {
                 'Fazer meu primeiro check-in',
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF8D6E63),
-                foregroundColor: Colors.white,
+                backgroundColor:
+                    escuro ? const Color(0xFFD9ABA9) : const Color(0xFF8D6E63),
+                foregroundColor:
+                    escuro ? const Color(0xFF241F1F) : Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(

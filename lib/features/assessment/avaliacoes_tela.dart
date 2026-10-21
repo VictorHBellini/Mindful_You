@@ -37,6 +37,26 @@ class _AvaliacoesTelaState extends State<AvaliacoesTela> {
         : AvaliacaoService.instance.listarMinhasAvaliacoes();
   }
 
+  String _dataFormatada(Object? valor) {
+    final data = DateTime.tryParse(valor?.toString() ?? '');
+    if (data == null) return 'Data indisponível';
+    final local = data.toLocal();
+    String dois(int n) => n.toString().padLeft(2, '0');
+    return '${dois(local.day)}/${dois(local.month)}/${local.year} '
+        'às ${dois(local.hour)}:${dois(local.minute)}';
+  }
+
+  String _tituloInstrumento(Object? valor) {
+    switch (valor?.toString()) {
+      case 'GAD7':
+        return 'Ansiedade • 7 itens';
+      case 'PHQ9':
+        return 'Humor • 9 itens';
+      default:
+        return 'Avaliação demonstrativa';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -98,16 +118,88 @@ class _AvaliacoesTelaState extends State<AvaliacoesTela> {
                   subtitle: Text(
                       'Use os botões acima para registrar respostas fictícias.'));
             }
-            return Column(children: [
-              for (final item in itens)
-                ListTile(
-                  leading: const Icon(Icons.assignment_turned_in_outlined),
-                  title: Text(
-                      '${item['instrumento']} • ${item['pontuacao']} pontos demonstrativos'),
-                  subtitle:
-                      Text('Versão ${item['versao']} • ${item['criado_em']}'),
-                ),
-            ]);
+            final cores = Theme.of(context).colorScheme;
+            return Column(
+              children: [
+                for (final item in itens)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Card(
+                      margin: EdgeInsets.zero,
+                      child: Padding(
+                        padding: const EdgeInsets.all(14),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: cores.primaryContainer,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Icon(
+                                Icons.assignment_turned_in_outlined,
+                                color: cores.onPrimaryContainer,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    _tituloInstrumento(item['instrumento']),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.copyWith(fontWeight: FontWeight.w600),
+                                  ),
+                                  const SizedBox(height: 5),
+                                  Text(
+                                    _dataFormatada(item['criado_em']),
+                                    style:
+                                        Theme.of(context).textTheme.bodySmall,
+                                  ),
+                                  const SizedBox(height: 5),
+                                  Text(
+                                    'Versão: ${item['versao'] ?? 'indisponível'}',
+                                    style:
+                                        Theme.of(context).textTheme.bodySmall,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 7),
+                              decoration: BoxDecoration(
+                                color: cores.surfaceContainerHighest,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Column(
+                                children: [
+                                  Text(
+                                    '${item['pontuacao'] ?? '—'}',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.copyWith(fontWeight: FontWeight.bold),
+                                  ),
+                                  Text('pontos',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelSmall),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            );
           },
         ),
       ]),

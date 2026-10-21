@@ -59,6 +59,9 @@ class DicasTela extends StatelessWidget {
     final colors = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
 
+    final cardColor =
+        isDark ? const Color(0xFF302526) : const Color(0xFFFFF5F3);
+
     return Scaffold(
       backgroundColor: colors.surface,
 
@@ -99,7 +102,7 @@ class DicasTela extends StatelessWidget {
             maxWidth: 760,
             padding: const EdgeInsets.symmetric(
               horizontal: 20,
-              vertical: 16,
+              vertical: 20,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -132,7 +135,7 @@ class DicasTela extends StatelessWidget {
                   ),
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 28),
 
                 // ==================================================
                 // LISTA DE DICAS
@@ -146,11 +149,11 @@ class DicasTela extends StatelessWidget {
 
                     return Container(
                       margin: const EdgeInsets.only(
-                        bottom: 16,
+                        bottom: 18,
                       ),
-                      padding: const EdgeInsets.all(18),
+                      padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: colors.surfaceContainerLow,
+                        color: cardColor,
                         borderRadius: BorderRadius.circular(22),
                         border: Border.all(
                           color: colors.outlineVariant.withValues(
@@ -160,7 +163,7 @@ class DicasTela extends StatelessWidget {
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withValues(
-                              alpha: isDark ? 0.18 : 0.04,
+                              alpha: isDark ? 0.22 : 0.05,
                             ),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
@@ -179,7 +182,7 @@ class DicasTela extends StatelessWidget {
                             height: 48,
                             decoration: BoxDecoration(
                               color: cor.withValues(
-                                alpha: isDark ? 0.20 : 0.14,
+                                alpha: isDark ? 0.25 : 0.14,
                               ),
                               borderRadius: BorderRadius.circular(16),
                             ),

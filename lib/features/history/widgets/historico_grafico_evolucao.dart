@@ -1,3 +1,4 @@
+import 'package:mindful_you/features/history/widgets/historico_tema.dart';
 import 'package:flutter/material.dart';
 
 // Apenas apresentação: os valores de bem-estar são calculados pela tela.
@@ -33,7 +34,7 @@ class HistoricoGraficoEvolucao extends StatelessWidget {
         12,
       ),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: HistoricoTema.cartao(context),
         borderRadius: BorderRadius.circular(23),
         boxShadow: [
           BoxShadow(
@@ -48,12 +49,12 @@ class HistoricoGraficoEvolucao extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'Bem-estar',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
-                  color: kMarrom,
+                  color: HistoricoTema.texto(context),
                 ),
               ),
               Row(
@@ -61,28 +62,28 @@ class HistoricoGraficoEvolucao extends StatelessWidget {
                   Container(
                     width: 8,
                     height: 8,
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       color: kRosa,
                       shape: BoxShape.circle,
                     ),
                   ),
-                  const SizedBox(width: 5),
-                  const Text(
+                  SizedBox(width: 5),
+                  Text(
                     'últimos registros',
                     style: TextStyle(
                       fontSize: 10,
-                      color: kCinza,
+                      color: HistoricoTema.secundario(context),
                     ),
                   ),
                 ],
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Expanded(
             child: Row(
               children: [
-                const SizedBox(
+                SizedBox(
                   width: 32,
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -100,7 +101,8 @@ class HistoricoGraficoEvolucao extends StatelessWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
                     child: CustomPaint(
-                      painter: _GraficoHistoricoPainter(dados: dados),
+                      painter: _GraficoHistoricoPainter(
+                          dados: dados, escuro: HistoricoTema.escuro(context)),
                       child: const SizedBox.expand(),
                     ),
                   ),
@@ -108,16 +110,16 @@ class HistoricoGraficoEvolucao extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: 6),
           Padding(
             padding: const EdgeInsets.only(left: 38, right: 6),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(rotuloData(registros.first),
-                    style: const TextStyle(fontSize: 10, color: kCinza)),
+                    style: TextStyle(fontSize: 10, color: kCinza)),
                 Text(rotuloData(registros.last),
-                    style: const TextStyle(fontSize: 10, color: kCinza)),
+                    style: TextStyle(fontSize: 10, color: kCinza)),
               ],
             ),
           ),
@@ -129,9 +131,11 @@ class HistoricoGraficoEvolucao extends StatelessWidget {
 
 class _GraficoHistoricoPainter extends CustomPainter {
   final List<int> dados;
+  final bool escuro;
 
   _GraficoHistoricoPainter({
     required this.dados,
+    required this.escuro,
   });
 
   @override
@@ -170,7 +174,7 @@ class _GraficoHistoricoPainter extends CustomPainter {
     // ==========================================================
 
     final paintGrade = Paint()
-      ..color = Colors.black.withValues(alpha: 0.06)
+      ..color = (escuro ? Colors.white : Colors.black).withValues(alpha: 0.06)
       ..strokeWidth = 1;
 
     for (int i = 0; i < 4; i++) {
@@ -232,7 +236,8 @@ class _GraficoHistoricoPainter extends CustomPainter {
         paintPonto,
       );
 
-      final paintCentro = Paint()..color = Colors.white;
+      final paintCentro = Paint()
+        ..color = escuro ? const Color(0xFF241F1F) : Colors.white;
 
       canvas.drawCircle(
         Offset(x, y),
@@ -246,6 +251,6 @@ class _GraficoHistoricoPainter extends CustomPainter {
   bool shouldRepaint(
     covariant _GraficoHistoricoPainter oldDelegate,
   ) {
-    return oldDelegate.dados != dados;
+    return oldDelegate.dados != dados || oldDelegate.escuro != escuro;
   }
 }

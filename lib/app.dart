@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 
 import 'routes.dart';
+import 'core/theme/mindful_cores.dart';
 import 'services/theme_service.dart';
 
 class MindfulYouApp extends StatelessWidget {
   const MindfulYouApp({super.key});
 
-  static const Color _primaryLight = Color(0xFFC89494);
-  static const Color _primaryDark = Color(0xFFD5A6A6);
+  static const Color _primaryLight = MindfulCores.rosaPrimarioClaro;
+  static const Color _primaryDark = MindfulCores.rosaPrimarioEscuro;
 
   @override
   Widget build(BuildContext context) {
@@ -25,11 +26,11 @@ class MindfulYouApp extends StatelessWidget {
           theme: ThemeData(
             brightness: Brightness.light,
             useMaterial3: true,
-            scaffoldBackgroundColor: const Color(0xFFF4F1ED),
+            scaffoldBackgroundColor: MindfulCores.fundoClaro,
             colorScheme: ColorScheme.fromSeed(
               seedColor: _primaryLight,
               brightness: Brightness.light,
-              surface: const Color(0xFFF7F4F1),
+              surface: MindfulCores.superficieClara,
             ),
             cardTheme: CardThemeData(
               color: Colors.white,
@@ -39,8 +40,8 @@ class MindfulYouApp extends StatelessWidget {
               ),
             ),
             appBarTheme: const AppBarTheme(
-              backgroundColor: Color(0xFFF4F1ED),
-              foregroundColor: Color(0xFF40352F),
+              backgroundColor: MindfulCores.fundoClaro,
+              foregroundColor: MindfulCores.marromTexto,
               elevation: 0,
               centerTitle: false,
             ),
@@ -50,13 +51,13 @@ class MindfulYouApp extends StatelessWidget {
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
                 borderSide: const BorderSide(
-                  color: Color(0xFFE8DFDA),
+                  color: MindfulCores.bordaClara,
                 ),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
                 borderSide: const BorderSide(
-                  color: Color(0xFFE8DFDA),
+                  color: MindfulCores.bordaClara,
                 ),
               ),
               focusedBorder: OutlineInputBorder(
@@ -67,10 +68,10 @@ class MindfulYouApp extends StatelessWidget {
                 ),
               ),
               labelStyle: const TextStyle(
-                color: Color(0xFF80675C),
+                color: MindfulCores.marromSecundario,
               ),
               hintStyle: const TextStyle(
-                color: Color(0xFF9B8D85),
+                color: MindfulCores.cinzaCampo,
               ),
             ),
             switchTheme: SwitchThemeData(
@@ -79,7 +80,7 @@ class MindfulYouApp extends StatelessWidget {
                   if (states.contains(WidgetState.selected)) {
                     return Colors.white;
                   }
-                  return const Color(0xFF9B8D85);
+                  return MindfulCores.cinzaCampo;
                 },
               ),
               trackColor: WidgetStateProperty.resolveWith<Color?>(
@@ -87,29 +88,29 @@ class MindfulYouApp extends StatelessWidget {
                   if (states.contains(WidgetState.selected)) {
                     return _primaryLight;
                   }
-                  return const Color(0xFFE2D9D4);
+                  return MindfulCores.trilhaSwitch;
                 },
               ),
             ),
             dividerTheme: const DividerThemeData(
-              color: Color(0xFFE8DFDA),
+              color: MindfulCores.bordaClara,
             ),
             textTheme: const TextTheme(
               bodyLarge: TextStyle(
-                color: Color(0xFF40352F),
+                color: MindfulCores.marromTexto,
               ),
               bodyMedium: TextStyle(
-                color: Color(0xFF5E514A),
+                color: MindfulCores.textoSecundario,
               ),
               bodySmall: TextStyle(
-                color: Color(0xFF80675C),
+                color: MindfulCores.marromSecundario,
               ),
               titleLarge: TextStyle(
-                color: Color(0xFF40352F),
+                color: MindfulCores.marromTexto,
                 fontWeight: FontWeight.bold,
               ),
               titleMedium: TextStyle(
-                color: Color(0xFF40352F),
+                color: MindfulCores.marromTexto,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -121,35 +122,35 @@ class MindfulYouApp extends StatelessWidget {
           darkTheme: ThemeData(
             brightness: Brightness.dark,
             useMaterial3: true,
-            scaffoldBackgroundColor: const Color(0xFF191716),
+            scaffoldBackgroundColor: MindfulCores.fundoEscuro,
             colorScheme: ColorScheme.fromSeed(
               seedColor: _primaryDark,
               brightness: Brightness.dark,
-              surface: const Color(0xFF201D1C),
+              surface: MindfulCores.superficieEscura,
             ).copyWith(
               primary: _primaryDark,
-              onPrimary: const Color(0xFF2A2221),
-              secondary: const Color(0xFFB99494),
-              surface: const Color(0xFF201D1C),
-              onSurface: const Color(0xFFF3ECE8),
-              surfaceContainerHighest: const Color(0xFF2A2624),
+              onPrimary: MindfulCores.contrasteRosaEscuro,
+              secondary: MindfulCores.rosaSecundarioEscuro,
+              surface: MindfulCores.superficieEscura,
+              onSurface: MindfulCores.textoClaroEscuro,
+              surfaceContainerHighest: MindfulCores.superficieAltaEscura,
             ),
             cardTheme: CardThemeData(
-              color: const Color(0xFF252120),
+              color: MindfulCores.cartaoEscuro,
               elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(22),
               ),
             ),
             appBarTheme: const AppBarTheme(
-              backgroundColor: Color(0xFF191716),
-              foregroundColor: Color(0xFFF3ECE8),
+              backgroundColor: MindfulCores.fundoEscuro,
+              foregroundColor: MindfulCores.textoClaroEscuro,
               elevation: 0,
               centerTitle: false,
             ),
             inputDecorationTheme: InputDecorationTheme(
               filled: true,
-              fillColor: const Color(0xFF252120),
+              fillColor: MindfulCores.cartaoEscuro,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
                 borderSide: const BorderSide(
@@ -199,7 +200,7 @@ class MindfulYouApp extends StatelessWidget {
             ),
             textTheme: const TextTheme(
               bodyLarge: TextStyle(
-                color: Color(0xFFF3ECE8),
+                color: MindfulCores.textoClaroEscuro,
               ),
               bodyMedium: TextStyle(
                 color: Color(0xFFD2C5BE),
@@ -208,11 +209,11 @@ class MindfulYouApp extends StatelessWidget {
                 color: Color(0xFFB0A19A),
               ),
               titleLarge: TextStyle(
-                color: Color(0xFFF3ECE8),
+                color: MindfulCores.textoClaroEscuro,
                 fontWeight: FontWeight.bold,
               ),
               titleMedium: TextStyle(
-                color: Color(0xFFF3ECE8),
+                color: MindfulCores.textoClaroEscuro,
                 fontWeight: FontWeight.w600,
               ),
             ),

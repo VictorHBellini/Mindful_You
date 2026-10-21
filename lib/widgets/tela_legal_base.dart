@@ -229,8 +229,8 @@ class TelaLegalBase extends StatelessWidget {
                     child: Text(
                       introducao,
                       style: TextStyle(
-                        fontSize: 13.5,
-                        height: 1.5,
+                        fontSize: 14,
+                        height: 1.6,
                         color: isDark
                             ? const Color(0xFFD6CCC7)
                             : const Color(0xFF5A4D46),
@@ -247,7 +247,7 @@ class TelaLegalBase extends StatelessWidget {
                   ...secoes.map(
                     (secao) => Padding(
                       padding: const EdgeInsets.only(
-                        bottom: 20,
+                        bottom: 24,
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -260,12 +260,12 @@ class TelaLegalBase extends StatelessWidget {
                               color: sectionTitleColor,
                             ),
                           ),
-                          const SizedBox(height: 6),
+                          const SizedBox(height: 8),
                           Text(
                             secao.corpo,
                             style: TextStyle(
-                              fontSize: 13.5,
-                              height: 1.55,
+                              fontSize: 14,
+                              height: 1.65,
                               color: bodyTextColor,
                             ),
                           ),

@@ -41,6 +41,23 @@ class GraficoTela extends StatefulWidget {
 }
 
 class _GraficoTelaState extends State<GraficoTela> {
+  // Paleta local de apresentação: não altera os cálculos nem os dados.
+  bool get _escuro => Theme.of(context).brightness == Brightness.dark;
+  Color get _fundo =>
+      _escuro ? const Color(0xFF151414) : const Color(0xFFF9F7F4);
+  Color get _superficie => _escuro ? const Color(0xFF251F20) : Colors.white;
+  Color get _painel =>
+      _escuro ? const Color(0xFF332A2A) : const Color(0xFFF7F1EC);
+  Color get _texto =>
+      _escuro ? const Color(0xFFF3ECE8) : const Color(0xFF393532);
+  Color get _textoSecundario =>
+      _escuro ? const Color(0xFFC8B9B4) : const Color(0xFF817A74);
+  Color get _trilha =>
+      _escuro ? const Color(0xFF443A3B) : const Color(0xFFF0EDE9);
+  Color get _botaoFundo =>
+      _escuro ? const Color(0xFF574347) : const Color(0xFFE4D9C9);
+  Color get _sombra => Colors.black;
+
   String nomeUsuario = "Usuário";
   bool _historicoSalvo = false;
 
@@ -348,7 +365,7 @@ class _GraficoTelaState extends State<GraficoTela> {
 
     return Scaffold(
       drawer: const MenuLateral(),
-      backgroundColor: const Color(0xFFF9F7F4),
+      backgroundColor: _fundo,
       body: SafeArea(
         child: Stack(
           children: [
@@ -360,7 +377,7 @@ class _GraficoTelaState extends State<GraficoTela> {
               top: -100,
               right: -120,
               child: Opacity(
-                opacity: 0.42,
+                opacity: _escuro ? 0.10 : 0.42,
                 child: Image.asset(
                   'assets/img/6.png',
                   width: 330,
@@ -401,14 +418,13 @@ class _GraficoTelaState extends State<GraficoTela> {
                                 width: 48,
                                 height: 48,
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: _superficie,
                                   borderRadius: BorderRadius.circular(
                                     15,
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color:
-                                          Colors.black.withValues(alpha: 0.06),
+                                      color: _sombra.withValues(alpha: 0.06),
                                       blurRadius: 12,
                                       offset: const Offset(
                                         0,
@@ -417,10 +433,10 @@ class _GraficoTelaState extends State<GraficoTela> {
                                     ),
                                   ],
                                 ),
-                                child: const Icon(
+                                child: Icon(
                                   Icons.menu,
                                   size: 27,
-                                  color: Color(0xFF8D837A),
+                                  color: _textoSecundario,
                                 ),
                               ),
                             );
@@ -437,12 +453,12 @@ class _GraficoTelaState extends State<GraficoTela> {
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: Colors.white,
+                                color: _superficie,
                                 width: 3,
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.12),
+                                  color: _sombra.withValues(alpha: 0.12),
                                   blurRadius: 10,
                                   offset: const Offset(
                                     0,
@@ -465,22 +481,22 @@ class _GraficoTelaState extends State<GraficoTela> {
                     // TÍTULO
                     // ==================================================
 
-                    const Text(
+                    Text(
                       "Seu resultado",
                       style: TextStyle(
                         fontSize: 25,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF292724),
+                        color: _texto,
                       ),
                     ),
 
                     const SizedBox(height: 6),
 
-                    const Text(
+                    Text(
                       "Uma visão geral dos seus indicadores.",
                       style: TextStyle(
                         fontSize: 14,
-                        color: Color(0xFF8A847E),
+                        color: _textoSecundario,
                       ),
                     ),
 
@@ -499,11 +515,11 @@ class _GraficoTelaState extends State<GraficoTela> {
                         10,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: _superficie,
                         borderRadius: BorderRadius.circular(25),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.055),
+                            color: _sombra.withValues(alpha: 0.055),
                             blurRadius: 18,
                             offset: const Offset(0, 7),
                           ),
@@ -518,43 +534,43 @@ class _GraficoTelaState extends State<GraficoTela> {
                             width: double.infinity,
                             padding: const EdgeInsets.all(18),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF7F1EC),
+                              color: _painel,
                               borderRadius: BorderRadius.circular(18),
                             ),
                             child: Column(
                               children: [
-                                const Icon(
+                                Icon(
                                   Icons.self_improvement_outlined,
                                   size: 30,
-                                  color: Color(0xFF8D837A),
+                                  color: _textoSecundario,
                                 ),
                                 const SizedBox(height: 10),
-                                const Text(
+                                Text(
                                   'Principal ponto de atenção',
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
                                     fontSize: 13,
-                                    color: Color(0xFF85807A),
+                                    color: _textoSecundario,
                                   ),
                                 ),
                                 const SizedBox(height: 6),
                                 Text(
                                   principalPonto,
                                   textAlign: TextAlign.center,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 19,
                                     fontWeight: FontWeight.bold,
-                                    color: Color(0xFF393532),
+                                    color: _texto,
                                   ),
                                 ),
                                 const SizedBox(height: 8),
-                                const Text(
+                                Text(
                                   'Este resultado é informativo e não representa um diagnóstico.',
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
                                     fontSize: 12,
                                     height: 1.4,
-                                    color: Color(0xFF918A84),
+                                    color: _textoSecundario,
                                   ),
                                 ),
                               ],
@@ -566,28 +582,30 @@ class _GraficoTelaState extends State<GraficoTela> {
                             alignment: Alignment.centerLeft,
                             child: Text(
                                 'Bem-estar informado: ${bemEstar == null ? 'Não informado' : '$bemEstar%'}',
-                                style: const TextStyle(
-                                    fontSize: 16, fontWeight: FontWeight.w600)),
+                                style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: _texto)),
                           ),
                           const SizedBox(height: 14),
                           // ==========================================
                           // INDICADORES
                           // ==========================================
 
-                          const Align(
+                          Align(
                             alignment: Alignment.centerLeft,
                             child: Text(
                               "Seus indicadores",
                               style: TextStyle(
                                 fontSize: 19,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF302D2A),
+                                color: _texto,
                               ),
                             ),
                           ),
 
                           const SizedBox(height: 8),
-                          const Align(
+                          Align(
                             alignment: Alignment.centerLeft,
                             child: Text(
                               'Cada barra tem sua própria escala de 0% a 100%. '
@@ -595,7 +613,7 @@ class _GraficoTelaState extends State<GraficoTela> {
                               style: TextStyle(
                                 fontSize: 12,
                                 height: 1.4,
-                                color: Color(0xFF817A74),
+                                color: _textoSecundario,
                               ),
                             ),
                           ),
@@ -631,11 +649,10 @@ class _GraficoTelaState extends State<GraficoTela> {
                           Padding(
                             padding: const EdgeInsets.only(bottom: 16),
                             child: Row(children: [
-                              const Icon(Icons.task_alt_outlined,
+                              Icon(Icons.task_alt_outlined,
                                   color: Color(0xFFE8D45B)),
                               const SizedBox(width: 12),
-                              const Expanded(
-                                  child: Text('Atividade significativa')),
+                              Expanded(child: Text('Atividade significativa')),
                               Text(_atividadeExibida(atividade)),
                             ]),
                           ),
@@ -646,14 +663,14 @@ class _GraficoTelaState extends State<GraficoTela> {
                           // LEGENDA DE STATUS
                           // ==========================================
 
-                          const Align(
+                          Align(
                             alignment: Alignment.centerLeft,
                             child: Text(
                               "Nível dos indicadores",
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
-                                color: Color(0xFF77716B),
+                                color: _textoSecundario,
                               ),
                             ),
                           ),
@@ -714,7 +731,7 @@ class _GraficoTelaState extends State<GraficoTela> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(18),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEDE7DE),
+                        color: _trilha,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Row(
@@ -724,12 +741,12 @@ class _GraficoTelaState extends State<GraficoTela> {
                             width: 44,
                             height: 44,
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.75),
+                              color: _superficie.withValues(alpha: 0.75),
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.lightbulb_outline,
-                              color: Color(0xFF7F7469),
+                              color: _textoSecundario,
                             ),
                           ),
                           const SizedBox(
@@ -739,14 +756,12 @@ class _GraficoTelaState extends State<GraficoTela> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
+                                Text(
                                   "Ponto de atenção",
                                   style: TextStyle(
                                     fontSize: 17,
                                     fontWeight: FontWeight.bold,
-                                    color: Color(
-                                      0xFF302D2A,
-                                    ),
+                                    color: _texto,
                                   ),
                                 ),
                                 const SizedBox(
@@ -760,12 +775,10 @@ class _GraficoTelaState extends State<GraficoTela> {
                                   "de atenção neste momento. "
                                   "Confira as recomendações "
                                   "abaixo.",
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 14,
                                     height: 1.5,
-                                    color: Color(
-                                      0xFF625C56,
-                                    ),
+                                    color: _textoSecundario,
                                   ),
                                 ),
                               ],
@@ -826,23 +839,23 @@ class _GraficoTelaState extends State<GraficoTela> {
                     // RECOMENDAÇÕES
                     // ==================================================
 
-                    const Text(
+                    Text(
                       "Recomendações para você",
                       style: TextStyle(
                         fontSize: 23,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF292724),
+                        color: _texto,
                       ),
                     ),
 
                     const SizedBox(height: 7),
 
-                    const Text(
+                    Text(
                       "Selecionamos algumas sugestões "
                       "com base nos seus indicadores.",
                       style: TextStyle(
                         fontSize: 14,
-                        color: Color(0xFF817A74),
+                        color: _textoSecundario,
                       ),
                     ),
 
@@ -875,7 +888,7 @@ class _GraficoTelaState extends State<GraficoTela> {
                           style: TextStyle(
                             fontSize: 12,
                             height: 1.5,
-                            color: Colors.grey.shade600,
+                            color: _textoSecundario,
                           ),
                         ),
                       ),
@@ -986,10 +999,10 @@ class _GraficoTelaState extends State<GraficoTela> {
               Expanded(
                 child: Text(
                   nome,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF393532),
+                    color: _texto,
                   ),
                 ),
               ),
@@ -1008,19 +1021,19 @@ class _GraficoTelaState extends State<GraficoTela> {
                   ),
                   child: Text(
                     status,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF9A7556),
+                      color: const Color(0xFF654B4B),
                     ),
                   ),
                 ),
               Text(
                 _percentual(valor),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF55504B),
+                  color: _texto,
                 ),
               ),
             ],
@@ -1031,7 +1044,7 @@ class _GraficoTelaState extends State<GraficoTela> {
             child: LinearProgressIndicator(
               value: ((valor ?? 0) / 100).clamp(0.0, 1.0),
               minHeight: 6,
-              backgroundColor: const Color(0xFFF0EDE9),
+              backgroundColor: _trilha,
               valueColor: AlwaysStoppedAnimation<Color>(
                 cor,
               ),
@@ -1066,9 +1079,9 @@ class _GraficoTelaState extends State<GraficoTela> {
             child: Text(
               texto,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 11,
-                color: Color(0xFF77716B),
+                color: _textoSecundario,
               ),
             ),
           ),
@@ -1096,14 +1109,14 @@ class _GraficoTelaState extends State<GraficoTela> {
         ),
         label: Text(
           texto,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
           ),
         ),
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFFE4D9C9),
-          foregroundColor: const Color(0xFF393532),
+          backgroundColor: _botaoFundo,
+          foregroundColor: _texto,
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(15),
@@ -1134,7 +1147,7 @@ class _GraficoTelaState extends State<GraficoTela> {
         borderRadius: BorderRadius.circular(19),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.035),
+            color: _sombra.withValues(alpha: 0.035),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -1147,12 +1160,12 @@ class _GraficoTelaState extends State<GraficoTela> {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.65),
+              color: const Color(0xFF65575B).withValues(alpha: 0.88),
               borderRadius: BorderRadius.circular(13),
             ),
             child: Icon(
               icone,
-              color: const Color(0xFF6D625A),
+              color: Colors.white,
               size: 23,
             ),
           ),
@@ -1163,19 +1176,19 @@ class _GraficoTelaState extends State<GraficoTela> {
               children: [
                 Text(
                   titulo,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF403A35),
+                    color: const Color(0xFF3D3035),
                   ),
                 ),
                 const SizedBox(height: 6),
                 Text(
                   desc,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     height: 1.45,
-                    color: Color(0xFF5D5650),
+                    color: const Color(0xFF59484D),
                   ),
                 ),
               ],
@@ -1218,11 +1231,11 @@ class _GraficoTelaState extends State<GraficoTela> {
       width: double.infinity,
       padding: const EdgeInsets.all(19),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _superficie,
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.045),
+            color: _sombra.withValues(alpha: 0.045),
             blurRadius: 12,
             offset: const Offset(0, 5),
           ),
@@ -1240,20 +1253,20 @@ class _GraficoTelaState extends State<GraficoTela> {
                   color: const Color(0xFF7C6BA6).withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(13),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.filter_drama_outlined,
                   color: Color(0xFF7C6BA6),
                   size: 21,
                 ),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Text(
                   "Sinais de humor e energia",
                   style: TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF302D2A),
+                    color: _texto,
                   ),
                 ),
               ),
@@ -1268,10 +1281,10 @@ class _GraficoTelaState extends State<GraficoTela> {
                   Expanded(
                     child: Text(
                       item['titulo'] ?? '',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF393532),
+                        color: _texto,
                       ),
                     ),
                   ),
@@ -1286,10 +1299,10 @@ class _GraficoTelaState extends State<GraficoTela> {
                     ),
                     child: Text(
                       item['frequencia'] ?? '',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF6D5B45),
+                        color: _textoSecundario,
                       ),
                     ),
                   ),
@@ -1305,26 +1318,26 @@ class _GraficoTelaState extends State<GraficoTela> {
                 color: const Color(0xFFE8C7C9).withValues(alpha: 0.35),
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: const Text(
+              child: Text(
                 "Alguns desses sinais têm aparecido com frequência. "
                 "Pode ser um bom assunto para trazer para sua próxima "
                 "conversa com seu terapeuta.",
                 style: TextStyle(
                   fontSize: 12.5,
                   height: 1.45,
-                  color: Color(0xFF6D5B45),
+                  color: _textoSecundario,
                 ),
               ),
             ),
           ] else ...[
             const SizedBox(height: 4),
-            const Text(
+            Text(
               "Isso não representa um diagnóstico, apenas um "
               "acompanhamento ao longo do tempo.",
               style: TextStyle(
                 fontSize: 12,
                 height: 1.4,
-                color: Color(0xFF918A84),
+                color: _textoSecundario,
               ),
             ),
           ],

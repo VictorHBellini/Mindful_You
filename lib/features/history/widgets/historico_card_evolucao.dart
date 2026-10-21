@@ -1,3 +1,4 @@
+import 'package:mindful_you/features/history/widgets/historico_tema.dart';
 import 'package:flutter/material.dart';
 
 /// Cartão de evolução do bem-estar; cálculo realizado pela tela.
@@ -49,7 +50,7 @@ class HistoricoCardEvolucao extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(19),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: HistoricoTema.cartao(context),
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
@@ -77,30 +78,30 @@ class HistoricoCardEvolucao extends StatelessWidget {
               size: 25,
             ),
           ),
-          const SizedBox(width: 14),
+          SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   titulo,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: kMarrom,
+                    color: HistoricoTema.texto(context),
                   ),
                 ),
-                const SizedBox(height: 6),
+                SizedBox(height: 6),
                 Text(
                   descricao,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12.5,
-                    color: kCinza,
+                    color: HistoricoTema.secundario(context),
                     height: 1.45,
                   ),
                 ),
                 if (!neutra) ...[
-                  const SizedBox(height: 10),
+                  SizedBox(height: 10),
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 10,

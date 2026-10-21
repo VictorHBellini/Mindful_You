@@ -109,9 +109,16 @@ class _LoginTelaState extends State<LoginTela> {
 
   @override
   Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final titleColor = dark ? const Color(0xFFF4EDEA) : const Color(0xFF4F4039);
+    final secondaryColor =
+        dark ? const Color(0xFFCDBDB8) : const Color(0xFF7A6C65);
+    final accentColor =
+        dark ? const Color(0xFFD6A6A7) : const Color(0xFF8D6E63);
+    final fieldColor = dark ? const Color(0xFF342B2C) : const Color(0xFFF7F5F3);
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      backgroundColor: const Color(0xFFE3DDD6),
+      backgroundColor: dark ? const Color(0xFF171516) : const Color(0xFFE3DDD6),
       body: Stack(
         children: [
           // Imagem superior
@@ -134,7 +141,7 @@ class _LoginTelaState extends State<LoginTela> {
                 vertical: 24,
               ),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: dark ? const Color(0xFF251F20) : Colors.white,
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(35),
                 ),
@@ -154,7 +161,7 @@ class _LoginTelaState extends State<LoginTela> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       // Título
-                      const Center(
+                      Center(
                         child: Column(
                           children: [
                             Text(
@@ -163,18 +170,18 @@ class _LoginTelaState extends State<LoginTela> {
                               style: TextStyle(
                                 fontSize: 32,
                                 fontWeight: FontWeight.w700,
-                                color: Color(0xFF4F4039),
+                                color: titleColor,
                                 letterSpacing: 0.5,
                               ),
                             ),
-                            SizedBox(height: 8),
+                            const SizedBox(height: 8),
                             Text(
                               "Faça login para continuar!",
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontSize: 14,
                                 height: 1.5,
-                                color: Color(0xFF7A6C65),
+                                color: secondaryColor,
                               ),
                             ),
                           ],
@@ -186,6 +193,7 @@ class _LoginTelaState extends State<LoginTela> {
                       // Email
                       TextFormField(
                         controller: _emailController,
+                        style: TextStyle(color: titleColor),
                         keyboardType: TextInputType.emailAddress,
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
@@ -206,15 +214,13 @@ class _LoginTelaState extends State<LoginTela> {
                         },
                         decoration: InputDecoration(
                           hintText: "E-mail",
-                          hintStyle: const TextStyle(
-                            color: Colors.grey,
-                          ),
-                          prefixIcon: const Icon(
+                          hintStyle: TextStyle(color: secondaryColor),
+                          prefixIcon: Icon(
                             Icons.email_outlined,
-                            color: Color(0xFF8D6E63),
+                            color: accentColor,
                           ),
                           filled: true,
-                          fillColor: const Color(0xFFF7F5F3),
+                          fillColor: fieldColor,
                           contentPadding: const EdgeInsets.symmetric(
                             vertical: 18,
                           ),
@@ -224,8 +230,8 @@ class _LoginTelaState extends State<LoginTela> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(18),
-                            borderSide: const BorderSide(
-                              color: Color(0xFF8D6E63),
+                            borderSide: BorderSide(
+                              color: accentColor,
                               width: 1.5,
                             ),
                           ),
@@ -237,6 +243,7 @@ class _LoginTelaState extends State<LoginTela> {
                       // Senha
                       TextFormField(
                         controller: _senhaController,
+                        style: TextStyle(color: titleColor),
                         obscureText: _obscurePassword,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -251,19 +258,17 @@ class _LoginTelaState extends State<LoginTela> {
                         },
                         decoration: InputDecoration(
                           hintText: "Senha",
-                          hintStyle: const TextStyle(
-                            color: Colors.grey,
-                          ),
-                          prefixIcon: const Icon(
+                          hintStyle: TextStyle(color: secondaryColor),
+                          prefixIcon: Icon(
                             Icons.lock_outline,
-                            color: Color(0xFF8D6E63),
+                            color: accentColor,
                           ),
                           suffixIcon: IconButton(
                             icon: Icon(
                               _obscurePassword
                                   ? Icons.visibility_off_outlined
                                   : Icons.visibility_outlined,
-                              color: const Color(0xFF8D6E63),
+                              color: accentColor,
                             ),
                             onPressed: () {
                               setState(() {
@@ -272,7 +277,7 @@ class _LoginTelaState extends State<LoginTela> {
                             },
                           ),
                           filled: true,
-                          fillColor: const Color(0xFFF7F5F3),
+                          fillColor: fieldColor,
                           contentPadding: const EdgeInsets.symmetric(
                             vertical: 18,
                           ),
@@ -282,8 +287,8 @@ class _LoginTelaState extends State<LoginTela> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(18),
-                            borderSide: const BorderSide(
-                              color: Color(0xFF8D6E63),
+                            borderSide: BorderSide(
+                              color: accentColor,
                               width: 1.5,
                             ),
                           ),
@@ -304,10 +309,10 @@ class _LoginTelaState extends State<LoginTela> {
                               ),
                             );
                           },
-                          child: const Text(
+                          child: Text(
                             "Esqueceu sua senha?",
                             style: TextStyle(
-                              color: Color(0xFF8D6E63),
+                              color: accentColor,
                             ),
                           ),
                         ),
@@ -324,7 +329,9 @@ class _LoginTelaState extends State<LoginTela> {
                               vertical: 10,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFFFEBEB),
+                              color: dark
+                                  ? const Color(0xFF442A2D)
+                                  : const Color(0xFFFFEBEB),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
                                   color: const Color(0xFFC0392B)
@@ -356,8 +363,11 @@ class _LoginTelaState extends State<LoginTela> {
                         child: ElevatedButton(
                           onPressed: _carregando ? null : _entrar,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF8D6E63),
-                            foregroundColor: Colors.white,
+                            backgroundColor: dark
+                                ? const Color(0xFFD6A6A7)
+                                : const Color(0xFF8D6E63),
+                            foregroundColor:
+                                dark ? const Color(0xFF281E20) : Colors.white,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(18),
@@ -388,8 +398,9 @@ class _LoginTelaState extends State<LoginTela> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Text(
+                          Text(
                             "Não possui uma conta?",
+                            style: TextStyle(color: secondaryColor),
                           ),
                           TextButton(
                             onPressed: () {
@@ -398,10 +409,10 @@ class _LoginTelaState extends State<LoginTela> {
                                 '/cadastro',
                               );
                             },
-                            child: const Text(
+                            child: Text(
                               "Cadastrar",
                               style: TextStyle(
-                                color: Color(0xFF8D6E63),
+                                color: accentColor,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),

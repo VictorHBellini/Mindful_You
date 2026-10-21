@@ -1,3 +1,4 @@
+import 'package:mindful_you/features/history/widgets/historico_tema.dart';
 import 'package:flutter/material.dart';
 import 'package:mindful_you/features/history/widgets/historico_card_sinal_atencao.dart';
 import 'package:mindful_you/features/history/widgets/historico_card_ultimo_checkin.dart';
@@ -126,7 +127,7 @@ class _HistoricoTelaState extends State<HistoricoTela>
     return Scaffold(
       key: scaffoldKey,
       drawer: const MenuLateral(),
-      backgroundColor: kFundo,
+      backgroundColor: HistoricoTema.fundo(context),
       body: SafeArea(
         child: Stack(
           children: [
@@ -152,7 +153,7 @@ class _HistoricoTelaState extends State<HistoricoTela>
                   );
                 },
                 child: Opacity(
-                  opacity: 0.65,
+                  opacity: HistoricoTema.escuro(context) ? 0.12 : 0.65,
                   child: Image.asset(
                     'assets/img/6.png',
                     width: 460,
@@ -325,10 +326,10 @@ class _HistoricoTelaState extends State<HistoricoTela>
                 onPressed: () {
                   scaffoldKey.currentState?.openDrawer();
                 },
-                icon: const Icon(
+                icon: Icon(
                   Icons.menu_rounded,
                   size: 31,
-                  color: Color(0xFFB5ACA4),
+                  color: HistoricoTema.secundario(context),
                 ),
               ),
               IconButton(
@@ -338,10 +339,10 @@ class _HistoricoTelaState extends State<HistoricoTela>
                     '/inicial',
                   );
                 },
-                icon: const Icon(
+                icon: Icon(
                   Icons.arrow_back_ios_new_rounded,
                   size: 21,
-                  color: Color(0xFFB5ACA4),
+                  color: HistoricoTema.secundario(context),
                 ),
               ),
             ],
@@ -356,7 +357,7 @@ class _HistoricoTelaState extends State<HistoricoTela>
             child: Container(
               padding: const EdgeInsets.all(2),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: HistoricoTema.cartao(context),
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
@@ -397,7 +398,9 @@ class _HistoricoTelaState extends State<HistoricoTela>
       width: double.infinity,
       padding: const EdgeInsets.all(19),
       decoration: BoxDecoration(
-        color: kBegeClaro,
+        color: HistoricoTema.escuro(context)
+            ? const Color(0xFF2B2424)
+            : kBegeClaro,
         borderRadius: BorderRadius.circular(22),
       ),
       child: Row(
@@ -407,12 +410,12 @@ class _HistoricoTelaState extends State<HistoricoTela>
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.75),
+              color: HistoricoTema.iconeFundo(context),
               borderRadius: BorderRadius.circular(14),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.lightbulb_outline_rounded,
-              color: kMarromClaro,
+              color: HistoricoTema.destaque(context),
               size: 22,
             ),
           ),
@@ -421,12 +424,12 @@ class _HistoricoTelaState extends State<HistoricoTela>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Um pequeno insight',
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
-                    color: kMarrom,
+                    color: HistoricoTema.texto(context),
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -436,9 +439,9 @@ class _HistoricoTelaState extends State<HistoricoTela>
                   '$mediaRecente%. Continue observando '
                   'como pequenos momentos do seu '
                   'dia podem influenciar você.',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12.5,
-                    color: kCinza,
+                    color: HistoricoTema.secundario(context),
                     height: 1.45,
                   ),
                 ),

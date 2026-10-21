@@ -54,7 +54,7 @@ class HistoricoCardUltimoCheckin extends StatelessWidget {
               children: [
                 Text(
                   item['data']?.toString() ?? 'Data não informada',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
                     color: Colors.white,
@@ -63,12 +63,12 @@ class HistoricoCardUltimoCheckin extends StatelessWidget {
                 Row(
                   children: [
                     if (possuiSinaisElevados) ...[
-                      const Icon(
+                      Icon(
                         Icons.notifications_active_outlined,
                         size: 16,
                         color: Colors.white,
                       ),
-                      const SizedBox(width: 6),
+                      SizedBox(width: 6),
                     ],
                     Container(
                       padding: const EdgeInsets.symmetric(
@@ -81,7 +81,7 @@ class HistoricoCardUltimoCheckin extends StatelessWidget {
                       ),
                       child: Text(
                         '$valor%',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
                           color: Colors.white,
@@ -92,25 +92,25 @@ class HistoricoCardUltimoCheckin extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Text(
               item['status']?.toString() ?? 'Check-in realizado',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
                 color: Colors.white,
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.description_outlined,
                   size: 17,
                   color: Colors.white,
                 ),
-                const SizedBox(width: 7),
-                const Text(
+                SizedBox(width: 7),
+                Text(
                   'Ver relatório completo',
                   style: TextStyle(
                     fontSize: 12,
@@ -119,7 +119,7 @@ class HistoricoCardUltimoCheckin extends StatelessWidget {
                   ),
                 ),
                 const Spacer(),
-                const Icon(
+                Icon(
                   Icons.arrow_forward_rounded,
                   color: Colors.white,
                   size: 20,
