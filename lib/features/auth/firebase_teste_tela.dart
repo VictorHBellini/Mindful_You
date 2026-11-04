@@ -26,6 +26,7 @@ class _FirebaseTesteTelaState extends State<FirebaseTesteTela> {
   Map<String, dynamic>? _perfil;
   bool _ocupado = false;
   bool _consultandoPerfil = false;
+  bool _emailVerificado = false;
   String? _mensagem;
   String? _uidExibido;
 
@@ -37,6 +38,7 @@ class _FirebaseTesteTelaState extends State<FirebaseTesteTela> {
       setState(() {
         _perfil = null;
         _uidExibido = usuario?.uid;
+        _emailVerificado = usuario?.emailVerified ?? false;
         _mensagem = null;
         _consultandoPerfil = usuario != null;
       });
@@ -101,7 +103,7 @@ class _FirebaseTesteTelaState extends State<FirebaseTesteTela> {
             'wrong-password' ||
             'user-not-found' =>
               'Não foi possível entrar. Verifique o e-mail e a senha.',
-            _ => 'Não foi possível concluir a operação. Tente novamente.',
+            _ => 'Falha Firebase (${e.code}). Verifique a configuração.',
           });
     } catch (_) {
       if (!mounted) return;
@@ -165,6 +167,7 @@ class _FirebaseTesteTelaState extends State<FirebaseTesteTela> {
       setState(() {
         _perfil = null;
         _uidExibido = null;
+        _emailVerificado = false;
         _consultandoPerfil = false;
       });
       await FirebaseAuth.instance.signOut();
@@ -184,6 +187,83 @@ class _FirebaseTesteTelaState extends State<FirebaseTesteTela> {
           'você receberá um e-mail com as instruções. '
           'Verifique também a caixa de spam.',
     );
+  }
+
+  Future<void> _enviarVerificacaoEmail() async {
+    final usuario = FirebaseAuth.instance.currentUser;
+    if (usuario == null) {
+      setState(() => _mensagem = 'Entre no Firebase antes de continuar.');
+      return;
+    }
+    if (_ocupado) return;
+    setState(() {
+      _ocupado = true;
+      _mensagem = null;
+    });
+    try {
+      await usuario.reload();
+      final atual = FirebaseAuth.instance.currentUser;
+      if (atual == null || atual.uid != usuario.uid) {
+        throw FirebaseAuthException(code: 'user-changed');
+      }
+      if (atual.emailVerified) {
+        if (mounted) {
+          setState(() {
+            _emailVerificado = true;
+            _mensagem =
+                'Este e-mail já está verificado; nenhum link foi enviado.';
+          });
+        }
+        return;
+      }
+      final destino = atual.email;
+      if (destino == null || destino.isEmpty) {
+        throw FirebaseAuthException(code: 'missing-email');
+      }
+      await atual.sendEmailVerification();
+      if (!mounted) return;
+      setState(
+          () => _mensagem = 'Solicitação aceita pelo Firebase para $destino. '
+              'A entrega ainda não está confirmada. Confira entrada e spam.');
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      final orientacao = switch (e.code) {
+        'too-many-requests' => 'Aguarde antes de solicitar novamente.',
+        'requires-recent-login' => 'Saia e entre novamente no Firebase.',
+        'network-request-failed' => 'Verifique a internet do emulador.',
+        'user-changed' ||
+        'user-token-expired' ||
+        'invalid-user-token' =>
+          'Sessão expirada ou alterada. Entre novamente.',
+        'missing-email' => 'Conta sem endereço de e-mail.',
+        _ => 'Verifique a configuração do Firebase Authentication.',
+      };
+      setState(() =>
+          _mensagem = 'Falha no envio (Firebase: ${e.code}). $orientacao');
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _mensagem =
+          'Falha inesperada (${e.runtimeType}) ao solicitar o e-mail.');
+    } finally {
+      if (mounted) setState(() => _ocupado = false);
+    }
+  }
+
+  Future<void> _atualizarVerificacaoEmail() async {
+    final usuario = FirebaseAuth.instance.currentUser;
+    if (usuario == null) {
+      setState(() => _mensagem = 'Entre no Firebase antes de continuar.');
+      return;
+    }
+    await _executar(() async {
+      await usuario.reload();
+      final atual = FirebaseAuth.instance.currentUser;
+      if (atual == null || atual.uid != usuario.uid) {
+        throw FirebaseAuthException(code: 'user-changed');
+      }
+      if (!mounted) return;
+      setState(() => _emailVerificado = atual.emailVerified);
+    }, sucesso: 'Status do e-mail atualizado.');
   }
 
   @override
@@ -220,6 +300,25 @@ class _FirebaseTesteTelaState extends State<FirebaseTesteTela> {
                   );
                 },
               ),
+              if (_uidExibido != null) ...[
+                Text(
+                  _emailVerificado
+                      ? 'E-mail Firebase: verificado'
+                      : 'E-mail Firebase: não verificado',
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton(
+                  onPressed: _ocupado || _emailVerificado
+                      ? null
+                      : _enviarVerificacaoEmail,
+                  child: const Text('Enviar e-mail de verificação'),
+                ),
+                OutlinedButton(
+                  onPressed: _ocupado ? null : _atualizarVerificacaoEmail,
+                  child: const Text('Atualizar status do e-mail'),
+                ),
+                const SizedBox(height: 8),
+              ],
               const SizedBox(height: 20),
               TextField(
                 controller: _email,

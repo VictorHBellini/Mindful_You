@@ -1,12 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-import 'package:mindful_you/features/history/historico_global.dart';
 import 'package:mindful_you/services/admin_service.dart';
 import 'package:mindful_you/services/database_service.dart';
 import 'package:mindful_you/features/profile/services/foto_perfil_service.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:mindful_you/features/auth/services/session_service.dart';
 
 class GerenciarUsuariosTela extends StatefulWidget {
   const GerenciarUsuariosTela({super.key});
@@ -604,15 +603,14 @@ class _GerenciarUsuariosTelaState extends State<GerenciarUsuariosTela> {
     final excluiuAPropriaConta = prefs.getInt('usuarioId') == id;
 
     if (excluiuAPropriaConta) {
-      await prefs.remove('nomeUsuario');
-      await prefs.remove('emailUsuario');
-      await prefs.remove('isAdmin');
-      await prefs.remove('usuarioId');
-      await prefs.remove('fotoPerfil');
-      historicoGlobal.clear();
+      await SessionService.encerrar();
 
       if (!mounted) return;
-      Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        '/login',
+        (route) => false,
+      );
       return;
     }
 

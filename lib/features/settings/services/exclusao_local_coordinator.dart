@@ -1,0 +1,77 @@
+abstract class ExclusaoLocalSessao {
+  Future<int?> usuarioAtualId();
+}
+
+abstract class ExclusaoLocalSenha {
+  Future<bool> verificar(int usuarioId, String senha);
+}
+
+abstract class ExclusaoLocalRepositorio {
+  Future<int> excluirSemVinculo(int usuarioId);
+}
+
+enum ResultadoExclusaoLocal {
+  excluido,
+  sessaoInvalida,
+  sessaoAlterada,
+  senhaIncorreta,
+  contaNaoEncontrada,
+  vinculoOuOperacaoBloqueada,
+}
+
+class ExclusaoLocalCoordinator {
+  const ExclusaoLocalCoordinator({
+    required this.sessao,
+    required this.senha,
+    required this.repositorio,
+  });
+
+  final ExclusaoLocalSessao sessao;
+  final ExclusaoLocalSenha senha;
+  final ExclusaoLocalRepositorio repositorio;
+
+  Future<ResultadoExclusaoLocal> executar({
+    required String senhaDigitada,
+    int? usuarioEsperadoId,
+  }) async {
+    final idInicial = await sessao.usuarioAtualId();
+
+    if (idInicial == null || idInicial <= 0) {
+      return ResultadoExclusaoLocal.sessaoInvalida;
+    }
+
+    if (usuarioEsperadoId != null && idInicial != usuarioEsperadoId) {
+      return ResultadoExclusaoLocal.sessaoAlterada;
+    }
+
+    if (senhaDigitada.isEmpty ||
+        !await senha.verificar(idInicial, senhaDigitada)) {
+      return ResultadoExclusaoLocal.senhaIncorreta;
+    }
+
+    final idAtual = await sessao.usuarioAtualId();
+
+    if (idAtual != idInicial) {
+      return ResultadoExclusaoLocal.sessaoAlterada;
+    }
+
+    // Terceira validação antes da exclusão.
+    final idFinal = await sessao.usuarioAtualId();
+
+    if (idFinal != idInicial) {
+      return ResultadoExclusaoLocal.sessaoAlterada;
+    }
+
+    try {
+      final excluidos = await repositorio.excluirSemVinculo(idInicial);
+
+      if (excluidos == 1) {
+        return ResultadoExclusaoLocal.excluido;
+      }
+
+      return ResultadoExclusaoLocal.contaNaoEncontrada;
+    } on StateError {
+      return ResultadoExclusaoLocal.vinculoOuOperacaoBloqueada;
+    }
+  }
+}

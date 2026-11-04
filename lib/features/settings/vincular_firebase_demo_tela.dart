@@ -55,6 +55,10 @@ class _VincularFirebaseDemoTelaState extends State<VincularFirebaseDemoTela> {
         case 'already-exists':
           return 'Esta conta Firebase já possui uma solicitação em outra instalação.';
 
+        case 'permission-denied':
+          return 'Esta solicitação pertence a outra instalação. Nada foi alterado.';
+        case 'failed-precondition':
+          return 'A solicitação não está pendente ou o ambiente não permite cancelamento.';
         case 'not-found':
           return 'A função de vinculação não foi encontrada. Verifique a configuração do Firebase Emulator.';
       }
@@ -67,6 +71,19 @@ class _VincularFirebaseDemoTelaState extends State<VincularFirebaseDemoTela> {
     if (erro is StateError) {
       final texto = erro.message.toString();
 
+      if (texto.contains('vínculo revogado')) {
+        return 'A conta local possui um vínculo revogado. '
+            'Uma nova solicitação exige autorização específica. '
+            'Nenhum novo vínculo local foi criado.';
+      }
+      if (texto.contains('vínculo confirmado')) {
+        return 'A conta local já possui um vínculo confirmado. '
+            'Nenhuma nova solicitação foi realizada.';
+      }
+      if (texto.contains('solicitação pendente para outra')) {
+        return 'Já existe uma solicitação local pendente para outra '
+            'identidade Firebase. Nenhuma alteração foi realizada.';
+      }
       if (texto.contains('outra conta local')) {
         return 'Esta conta Firebase já possui uma solicitação de vínculo em outra conta local deste dispositivo.';
       }
@@ -154,6 +171,48 @@ class _VincularFirebaseDemoTelaState extends State<VincularFirebaseDemoTela> {
     }
   }
 
+  Future<void> cancelarRemoto() async {
+    if (carregando) return;
+    if (email.text.trim().isEmpty || senha.text.isEmpty) {
+      setState(() => mensagem = 'Informe e-mail e senha Firebase de teste.');
+      return;
+    }
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Cancelar solicitação no Emulator?'),
+        content: const Text(
+            'Esta ação altera somente a solicitação pendente do Firestore Emulator '
+            'e registra auditoria. Não altera SQLite, não cria vínculo e não '
+            'autoriza sincronização. Confirma o cancelamento?'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Voltar')),
+          FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Confirmar cancelamento')),
+        ],
+      ),
+    );
+    if (confirmar != true || !mounted) return;
+    setState(() {
+      carregando = true;
+      mensagem = null;
+    });
+    try {
+      final resultado =
+          await FirebaseContaVinculoService.cancelarPendenteNoEmulator(
+              email: email.text.trim(), senha: senha.text);
+      if (mounted) setState(() => mensagem = resultado);
+    } catch (erro) {
+      if (mounted) setState(() => mensagem = mensagemAmigavel(erro));
+    } finally {
+      senha.clear();
+      if (mounted) setState(() => carregando = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) => Scaffold(
         appBar: AppBar(title: const Text('Vinculação Firebase — Demo')),
@@ -183,6 +242,11 @@ class _VincularFirebaseDemoTelaState extends State<VincularFirebaseDemoTela> {
               OutlinedButton(
                 onPressed: carregando ? null : consultarVinculoLocal,
                 child: const Text('Consultar vínculo local'),
+              ),
+              const SizedBox(height: 12),
+              OutlinedButton(
+                onPressed: carregando ? null : cancelarRemoto,
+                child: const Text('Cancelar solicitação pendente no Emulator'),
               ),
               if (mensagem != null)
                 Padding(

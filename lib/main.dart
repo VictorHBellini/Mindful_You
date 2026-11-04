@@ -29,7 +29,7 @@ void main() async {
     defaultValue: false,
   );
 
-  if (usarEmuladores) {
+  if (kDebugMode && usarEmuladores) {
     if (!kIsWeb && Platform.isAndroid) {
       const host = '10.0.2.2';
 

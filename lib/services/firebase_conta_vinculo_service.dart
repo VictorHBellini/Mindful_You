@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 import 'database_service.dart';
 import 'package:mindful_you/features/auth/services/session_service.dart';
+import 'package:flutter/foundation.dart';
 
 /// Fluxo de DEMONSTRAÇÃO: não confirma identidade local no backend nem autoriza sync.
 class FirebaseContaVinculoService {
@@ -76,6 +77,51 @@ class FirebaseContaVinculoService {
     }
   }
 
+  /// Cancela apenas a solicitação demonstrativa remota, exclusivamente no Emulator.
+  /// Não altera SQLite nem autoriza nova solicitação local.
+  static Future<String> cancelarPendenteNoEmulator({
+    required String email,
+    required String senha,
+  }) async {
+    const habilitado =
+        bool.fromEnvironment('MINDFUL_FIREBASE_EMULATORS', defaultValue: false);
+    if (!kDebugMode || !habilitado) {
+      throw StateError('Cancelamento disponível somente no Firebase Emulator.');
+    }
+    final sessao = await SessionService.validar();
+    if (sessao == null) throw StateError('Entre na conta local primeiro.');
+    final auth = FirebaseAuth.instance;
+    try {
+      await auth.signOut();
+      final cred = await auth.signInWithEmailAndPassword(
+          email: email.trim(), password: senha);
+      final usuario = cred.user;
+      if (usuario == null || !usuario.emailVerified) {
+        throw StateError('A conta Firebase precisa ter e-mail verificado.');
+      }
+      final atual = await SessionService.validar();
+      if (atual?.id != sessao.id) {
+        throw StateError('A sessão local mudou. Operação cancelada.');
+      }
+      final idInstalacao = await _instalacao();
+      final result = await FirebaseFunctions.instanceFor(
+        region: 'southamerica-east1',
+      )
+          .httpsCallable('cancelarSolicitacaoVinculoDemo')
+          .call<Map<String, dynamic>>({
+        'installationId': idInstalacao,
+      });
+      if (result.data['estado'] != 'cancelado') {
+        throw StateError('Resposta inesperada do servidor.');
+      }
+      return result.data['alterado'] == true
+          ? 'Solicitação cancelada no Firestore Emulator e auditoria registrada. SQLite não foi alterado.'
+          : 'Solicitação já estava cancelada no Firestore Emulator. SQLite não foi alterado.';
+    } finally {
+      await auth.signOut();
+    }
+  }
+
   static Future<String> solicitarPendente(
       {required String email, required String senha}) async {
     const habilitado =
@@ -100,9 +146,41 @@ class FirebaseContaVinculoService {
       if (antes == null || antes.id != inicial.id) {
         throw StateError('A sessão local mudou. Solicitação cancelada.');
       }
+      // Pré-checagem local: nunca criar uma solicitação remota quando a
+      // tabela SQLite já impede uma nova solicitação. Um registro revogado
+      // precisa de um fluxo explícito e auditável de nova solicitação.
+      final dbPre = await DatabaseService.instance.database;
+      final registroLocal = await dbPre.query(
+        'vinculos_contas_firebase',
+        columns: ['firebase_uid', 'estado'],
+        where: 'usuario_id = ?',
+        whereArgs: [inicial.id],
+        limit: 1,
+      );
+      if (registroLocal.isNotEmpty) {
+        final anterior = registroLocal.single;
+        if (anterior['estado'] == 'revogado') {
+          throw StateError(
+            'Esta conta local possui um vínculo revogado. '
+            'Uma nova solicitação exige procedimento específico; '
+            'nenhuma chamada ao servidor foi realizada.',
+          );
+        }
+        if (anterior['estado'] == 'confirmado') {
+          throw StateError(
+            'Esta conta local possui um vínculo confirmado. '
+            'Nenhuma chamada ao servidor foi realizada.',
+          );
+        }
+        if (anterior['firebase_uid'] != uid) {
+          throw StateError(
+            'Esta conta local já possui solicitação pendente para outra '
+            'identidade Firebase. Nenhuma chamada ao servidor foi realizada.',
+          );
+        }
+      }
       // Evita chamar o backend quando este UID já pertence a outra conta local.
       // A checagem dentro da transação, abaixo, continua sendo obrigatória.
-      final dbPre = await DatabaseService.instance.database;
       final donoPre = await dbPre.query(
         'vinculos_contas_firebase',
         columns: ['usuario_id'],

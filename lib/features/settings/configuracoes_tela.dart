@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:mindful_you/features/auth/screens/account_link_preflight_screen.dart';
+import 'package:mindful_you/features/auth/firebase_teste_tela.dart';
 import 'package:mindful_you/core/theme/mindful_cores.dart';
 import 'package:mindful_you/features/settings/vincular_firebase_demo_tela.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-import 'package:mindful_you/features/history/historico_global.dart';
+import 'package:mindful_you/features/settings/services/exclusao_local_adapters.dart';
+import 'package:mindful_you/features/settings/services/exclusao_local_coordinator.dart';
+import 'package:mindful_you/features/auth/services/session_service.dart';
 import 'package:mindful_you/services/database_service.dart';
 import 'package:mindful_you/features/profile/services/foto_perfil_service.dart';
 import 'package:mindful_you/services/theme_service.dart';
@@ -19,6 +23,7 @@ class ConfiguracaoTela extends StatefulWidget {
 class _ConfiguracaoTelaState extends State<ConfiguracaoTela> {
   bool notificacao = false;
   bool temaEscuro = false;
+  bool _exclusaoEmAndamento = false;
 
   String nomeUsuario = "Usuário";
   String emailUsuario = "";
@@ -56,64 +61,204 @@ class _ConfiguracaoTelaState extends State<ConfiguracaoTela> {
     );
   }
 
-  Future<void> _excluirDadosLocais() async {
-    final confirmar = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Excluir dados locais?'),
-        content: const Text(
-          'Seu perfil e histórico salvos neste dispositivo serão removidos. Esta ação não pode ser desfeita.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
+  Future<String?> _solicitarSenhaExclusao() async {
+    final controlador = TextEditingController();
+
+    try {
+      return await showDialog<String>(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Confirmar identidade'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Digite sua senha local para confirmar '
+                'a exclusão dos dados deste dispositivo.',
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: controlador,
+                obscureText: true,
+                autofocus: true,
+                decoration: const InputDecoration(
+                  labelText: 'Senha',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.red,
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancelar'),
             ),
-            child: const Text('Excluir'),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext, controlador.text);
+              },
+              child: const Text('Confirmar'),
+            ),
+          ],
+        ),
+      );
+    } finally {
+      controlador.dispose();
+    }
+  }
+
+  Future<void> _excluirDadosLocais() async {
+    if (_exclusaoEmAndamento || !mounted) return;
+
+    setState(() => _exclusaoEmAndamento = true);
+    var contaExcluida = false;
+
+    try {
+      final confirmar = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Excluir dados locais?'),
+          content: const Text(
+            'Sua conta e seus históricos salvos neste dispositivo '
+            'serão excluídos permanentemente. '
+            'Esta ação não exclui contas ou dados do Firebase.',
           ),
-        ],
-      ),
-    );
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text('Continuar'),
+            ),
+          ],
+        ),
+      );
 
-    if (confirmar != true) return;
+      if (confirmar != true || !mounted) return;
 
-    final prefs = await SharedPreferences.getInstance();
+      final sessao = await SessionService.validar();
+      if (sessao == null || !mounted) return;
 
-    // Exclui o usuário do banco SQLite pelo e-mail salvo
-    final email = prefs.getString('emailUsuario');
-    if (email != null && email.isNotEmpty) {
-      final usuario = await DatabaseService.instance.buscarPorEmail(email);
-      if (usuario != null) {
-        await DatabaseService.instance.deletarUsuario(usuario['id'] as int);
+      final senha = await _solicitarSenhaExclusao();
+      if (senha == null || senha.isEmpty || !mounted) return;
+
+      final db = await DatabaseService.instance.database;
+
+      final usuario = await db.query(
+        'usuarios',
+        columns: ['foto_path'],
+        where: 'id = ?',
+        whereArgs: [sessao.id],
+        limit: 1,
+      );
+
+      if (!mounted || usuario.length != 1) return;
+
+      final coordinator = ExclusaoLocalCoordinator(
+        sessao: SessaoLocalAdapter(),
+        senha: SenhaLocalAdapter(),
+        repositorio: RepositorioExclusaoLocalAdapter(),
+      );
+
+      final resultado = await coordinator.executar(
+        senhaDigitada: senha,
+        usuarioEsperadoId: sessao.id,
+      );
+
+      if (!mounted) return;
+
+      switch (resultado) {
+        case ResultadoExclusaoLocal.excluido:
+          contaExcluida = true;
+          break;
+
+        case ResultadoExclusaoLocal.senhaIncorreta:
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Senha incorreta. Nenhum dado foi excluído.'),
+            ),
+          );
+          return;
+
+        case ResultadoExclusaoLocal.sessaoInvalida:
+        case ResultadoExclusaoLocal.sessaoAlterada:
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'A sessão mudou ou expirou. Nenhum dado foi excluído.',
+              ),
+            ),
+          );
+          return;
+
+        case ResultadoExclusaoLocal.contaNaoEncontrada:
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('A conta local não foi encontrada.'),
+            ),
+          );
+          return;
+
+        case ResultadoExclusaoLocal.vinculoOuOperacaoBloqueada:
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Exclusão bloqueada: existe um vínculo Firebase registrado.',
+              ),
+            ),
+          );
+          return;
+      }
+
+      // Uma falha na limpeza da foto não deve manter uma sessão de conta excluída.
+      try {
         await FotoPerfilService.removerFotoAntiga(
-          usuario['foto_path'] as String?,
+          usuario.single['foto_path'] as String?,
         );
+      } catch (_) {
+        // Limpeza de arquivo secundária; a conta já foi excluída do SQLite.
+      }
+
+      await SessionService.encerrar();
+      if (!mounted) return;
+
+      Navigator.pushNamedAndRemoveUntil(context, '/login', (_) => false);
+    } on StateError {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            contaExcluida
+                ? 'Os dados locais foram excluídos, mas não foi possível '
+                    'finalizar a sessão. Reinicie o aplicativo.'
+                : 'Exclusão bloqueada: há um vínculo Firebase registrado '
+                    'ou a operação não pôde ser concluída.',
+          ),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            contaExcluida
+                ? 'Os dados locais foram excluídos, mas ocorreu uma falha '
+                    'ao encerrar a sessão. Reinicie o aplicativo.'
+                : 'Não foi possível concluir a exclusão. '
+                    'Verifique os dados e tente novamente.',
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _exclusaoEmAndamento = false);
       }
     }
-
-    await limparHistorico();
-
-    // BUG CORRIGIDO: antes só removíamos 3 chaves (nomeUsuario,
-    // emailUsuario, ultimoQuestionario), deixando pra trás outros
-    // dados reais do usuário salvos no aparelho — foto de perfil,
-    // último check-in, contadores de humor, preferências de tema e
-    // notificação. Se outra pessoa criasse uma conta nova no mesmo
-    // aparelho depois, esses dados antigos apareciam na conta nova.
-    // Agora limpamos tudo de uma vez.
-    await prefs.clear();
-
-    if (!mounted) return;
-
-    Navigator.pushNamedAndRemoveUntil(
-      context,
-      '/login',
-      (_) => false,
-    );
   }
 
   Widget _sectionCard({
@@ -313,8 +458,39 @@ class _ConfiguracaoTelaState extends State<ConfiguracaoTela> {
                 ),
               ),
               const SizedBox(height: 18),
-              if (const bool.fromEnvironment('MINDFUL_FIREBASE_EMULATORS',
-                  defaultValue: false))
+              if (kDebugMode && !kIsWeb)
+                _sectionCard(
+                    child: ListTile(
+                  leading: const Icon(Icons.verified_user_outlined),
+                  title: const Text('Pré-verificação Firebase (laboratório)'),
+                  subtitle: const Text('Somente testes; sem criar vínculos'),
+                  onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute<void>(
+                        builder: (_) => const AccountLinkPreflightScreen(),
+                      )),
+                )),
+              if (kDebugMode && !kIsWeb) const SizedBox(height: 18),
+              if (kDebugMode && !kIsWeb)
+                _sectionCard(
+                  child: ListTile(
+                    leading: const Icon(Icons.science_outlined),
+                    title: const Text('Laboratório Firebase F2.3'),
+                    subtitle: const Text('Entrar na conta Firebase de teste'),
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute<void>(
+                        builder: (_) => const FirebaseTesteTela(),
+                      ),
+                    ),
+                  ),
+                ),
+              if (kDebugMode && !kIsWeb) const SizedBox(height: 18),
+              if (kDebugMode &&
+                  const bool.fromEnvironment(
+                    'MINDFUL_FIREBASE_EMULATORS',
+                    defaultValue: false,
+                  ))
                 _sectionCard(
                     child: ListTile(
                   leading: const Icon(Icons.link),
@@ -360,13 +536,14 @@ class _ConfiguracaoTelaState extends State<ConfiguracaoTela> {
                     ),
                     const SizedBox(height: 14),
                     TextButton.icon(
-                      onPressed: _excluirDadosLocais,
+                      onPressed:
+                          _exclusaoEmAndamento ? null : _excluirDadosLocais,
                       icon: const Icon(
                         Icons.delete_outline_rounded,
                         color: Colors.red,
                       ),
                       label: const Text(
-                        "Excluir conta permanentemente",
+                        "Excluir dados locais",
                         style: TextStyle(
                           color: Colors.red,
                         ),

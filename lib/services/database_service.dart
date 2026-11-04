@@ -8,6 +8,11 @@ import 'package:mindful_you/core/utils/crypto_utils.dart';
 /// Serviço singleton para gerenciar o banco de dados SQLite local.
 class DatabaseService {
   DatabaseService._internal();
+
+  /// Permite utilizar um banco isolado nos testes automatizados.
+  /// Não modifica o banco utilizado pelo aplicativo.
+  DatabaseService.paraTeste(Database banco) : _db = banco;
+
   static final DatabaseService instance = DatabaseService._internal();
 
   Database? _db;
@@ -507,6 +512,70 @@ class DatabaseService {
         whereArgs: [id, id],
       );
       return txn.delete('usuarios', where: 'id = ?', whereArgs: [id]);
+    });
+  }
+
+  /// Exclui uma conta local somente quando não existe vínculo Firebase.
+  /// A consulta do vínculo e a exclusão ocorrem na mesma transação.
+  ///
+  /// Não substitui a confirmação de senha nem a validação da sessão.
+  Future<int> deletarUsuarioLocalSemVinculo(int id) async {
+    if (id <= 0) {
+      throw ArgumentError.value(id, 'id', 'ID de usuário inválido');
+    }
+
+    final db = await database;
+
+    return db.transaction((txn) async {
+      final vinculos = await txn.query(
+        'vinculos_contas_firebase',
+        columns: ['usuario_id'],
+        where: 'usuario_id = ?',
+        whereArgs: [id],
+        limit: 1,
+      );
+
+      if (vinculos.isNotEmpty) {
+        throw StateError(
+          'Exclusão bloqueada: existe um registro de vínculo Firebase.',
+        );
+      }
+
+      final usuarios = await txn.query(
+        'usuarios',
+        columns: ['id'],
+        where: 'id = ?',
+        whereArgs: [id],
+        limit: 1,
+      );
+
+      if (usuarios.isEmpty) {
+        return 0;
+      }
+
+      await txn.delete(
+        'checkins',
+        where: 'usuario_id = ?',
+        whereArgs: [id],
+      );
+
+      await txn.delete(
+        'avaliacoes',
+        where: 'usuario_id = ?',
+        whereArgs: [id],
+      );
+
+      await txn.delete(
+        'vinculos_terapeuticos',
+        where: 'terapeuta_id = ? OR paciente_id = ?',
+        whereArgs: [id, id],
+      );
+
+      return txn.delete(
+        'usuarios',
+        where: 'id = ?',
+        whereArgs: [id],
+      );
     });
   }
 

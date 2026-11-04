@@ -41,7 +41,7 @@ class AppRoutes {
   static const privacidade = '/privacidade';
 
   static final Map<String, WidgetBuilder> _destinos = {
-    firebaseTeste: (context) => const FirebaseTesteTela(),
+    if (kDebugMode) firebaseTeste: (context) => const FirebaseTesteTela(),
     splash: (context) => const SplashScreenTela(),
     login: (context) => const LoginTela(),
     cadastro: (context) => const CadastroTela(),
@@ -76,7 +76,7 @@ class AppRoutes {
   };
 
   static const _publicas = {
-    firebaseTeste,
+    if (kDebugMode) firebaseTeste,
     splash,
     login,
     cadastro,
@@ -108,7 +108,8 @@ class _RotaLocalProtegidaState extends State<_RotaLocalProtegida> {
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
           return const Scaffold(
-              body: Center(child: CircularProgressIndicator()));
+            body: Center(child: CircularProgressIndicator()),
+          );
         }
         final sessao = snapshot.data;
         if (snapshot.hasError ||
@@ -118,9 +119,13 @@ class _RotaLocalProtegidaState extends State<_RotaLocalProtegida> {
             body: Center(
               child: TextButton(
                 onPressed: () => Navigator.pushNamedAndRemoveUntil(
-                    context, '/login', (route) => false),
+                  context,
+                  '/login',
+                  (route) => false,
+                ),
                 child: const Text(
-                    'Sessão inválida ou acesso não permitido. Voltar ao login'),
+                  'Sessão inválida ou acesso não permitido. Voltar ao login',
+                ),
               ),
             ),
           );
