@@ -1,0 +1,132 @@
+﻿
+  test('bloqueia exclusao de avaliacao identificada', () async {
+    await expectLater(
+      banco.delete(
+        'avaliacoes',
+        where: 'id = ?',
+        whereArgs: [avaliacaoA],
+      ),
+      throwsA(isA<DatabaseException>()),
+    );
+  });
+
+  test('bloqueia alteracao de identidade existente', () async {
+    await expectLater(
+      banco.update(
+        'identidades_registros',
+        {'usuario_id': usuarioB},
+        where: 'id = ?',
+        whereArgs: [identidadeCheckin],
+      ),
+      throwsA(isA<DatabaseException>()),
+    );
+  });
+
+  test('bloqueia exclusao de identidade', () async {
+    await expectLater(
+      banco.delete(
+        'identidades_registros',
+        where: 'id = ?',
+        whereArgs: [identidadeAvaliacao],
+      ),
+      throwsA(isA<DatabaseException>()),
+    );
+  });
+
+  test('rejeita item associado a usuario diferente', () async {
+    await expectLater(
+      banco.insert('itens_migracao', {
+        'lote_id': 'lote-usuario-b',
+        'identidade_id': identidadeAvaliacao,
+        'estado': 'pendente',
+        'atualizado_em': data,
+      }),
+      throwsA(isA<DatabaseException>()),
+    );
+  });
+
+  test('bloqueia troca de proprietario do lote', () async {
+    await expectLater(
+      banco.update(
+        'lotes_migracao',
+        {'usuario_id': usuarioB},
+        where: 'id = ?',
+        whereArgs: ['lote-usuario-a'],
+      ),
+      throwsA(isA<DatabaseException>()),
+    );
+  });
+
+  test('bloqueia exclusao de lote com itens', () async {
+    await expectLater(
+      banco.delete(
+        'lotes_migracao',
+        where: 'id = ?',
+        whereArgs: ['lote-usuario-a'],
+      ),
+      throwsA(isA<DatabaseException>()),
+    );
+  });
+
+  test('bloqueia alteracao da associacao do item', () async {
+    await expectLater(
+      banco.update(
+        'itens_migracao',
+        {'lote_id': 'lote-usuario-b'},
+        where: 'lote_id = ? AND identidade_id = ?',
+        whereArgs: ['lote-usuario-a', identidadeCheckin],
+      ),
+      throwsA(isA<DatabaseException>()),
+    );
+  });
+
+  test('bloqueia exclusao de item protegido', () async {
+    await expectLater(
+      banco.delete(
+        'itens_migracao',
+        where: 'lote_id = ? AND identidade_id = ?',
+        whereArgs: ['lote-usuario-a', identidadeCheckin],
+      ),
+      throwsA(isA<DatabaseException>()),
+    );
+  });
+
+  test('bloqueia exclusao de usuario com migracao', () async {
+    await expectLater(
+      banco.delete(
+        'usuarios',
+        where: 'id = ?',
+        whereArgs: [usuarioA],
+      ),
+      throwsA(isA<DatabaseException>()),
+    );
+  });
+
+  test('mantem integridade das chaves estrangeiras', () async {
+    final problemas = await banco.rawQuery(
+      'PRAGMA foreign_key_check',
+    );
+
+    expect(problemas, isEmpty);
+  });
+
+  test('preserva registros apos operacoes bloqueadas', () async {
+    expect(
+      await banco.query(
+        'identidades_registros',
+        where: 'usuario_id = ?',
+        whereArgs: [usuarioA],
+      ),
+      hasLength(2),
+    );
+
+    expect(
+      await banco.query(
+        'itens_migracao',
+        where: 'lote_id = ?',
+        whereArgs: ['lote-usuario-a'],
+      ),
+      hasLength(1),
+    );
+  });
+}

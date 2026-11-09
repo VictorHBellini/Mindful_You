@@ -52,12 +52,11 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyDBctPgNEGBUuSjmBoXRWjFM4z_ivkLEvg',
-    appId: '1:483603504230:android:ffbc4ed1e02b45d57a21a7',
+    appId: '1:483603504230:android:483b75f23429440f7a21a7',
     messagingSenderId: '483603504230',
     projectId: 'mindful-tcc',
     storageBucket: 'mindful-tcc.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyBQh2Z50KIxKHu4EzHX_T0qqXfK1_fJnHA',
     appId: '1:483603504230:ios:8ec27d762daba24d7a21a7',

@@ -1,0 +1,9 @@
+﻿
+Name          Length
+----          ------
+.firebaserc       53
+firebase.json   1209
+pubspec.yaml     951
+
+
+firebase_options.dart: ENCONTRADO

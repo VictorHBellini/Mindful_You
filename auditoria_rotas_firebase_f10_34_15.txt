@@ -1,0 +1,16 @@
+﻿C:\dev\TCC\lib\main.dart:12: import 'features/auth/firebase_teste_tela.dart';
+C:\dev\TCC\lib\main.dart:56: home: const FirebaseTesteTela(),
+C:\dev\TCC\lib\routes.dart:5: import 'package:mindful_you/features/auth/firebase_teste_tela.dart';
+C:\dev\TCC\lib\routes.dart:46: if (kDebugMode) firebaseTeste: (context) => const FirebaseTesteTela(),
+C:\dev\TCC\lib\features\auth\firebase_teste_tela.dart:8: import 'package:mindful_you/features/history/firebase_historico_tela.dart';
+C:\dev\TCC\lib\features\auth\firebase_teste_tela.dart:13: class FirebaseTesteTela extends StatefulWidget {
+C:\dev\TCC\lib\features\auth\firebase_teste_tela.dart:14: const FirebaseTesteTela({super.key});
+C:\dev\TCC\lib\features\auth\firebase_teste_tela.dart:17: State<FirebaseTesteTela> createState() => _FirebaseTesteTelaState();
+C:\dev\TCC\lib\features\auth\firebase_teste_tela.dart:20: class _FirebaseTesteTelaState extends State<FirebaseTesteTela> {
+C:\dev\TCC\lib\features\auth\firebase_teste_tela.dart:443: builder: (_) => const FirebaseHistoricoTela())),
+C:\dev\TCC\lib\features\history\firebase_historico_tela.dart:6: class FirebaseHistoricoTela extends StatefulWidget {
+C:\dev\TCC\lib\features\history\firebase_historico_tela.dart:7: const FirebaseHistoricoTela({super.key});
+C:\dev\TCC\lib\features\history\firebase_historico_tela.dart:9: State<FirebaseHistoricoTela> createState() => _FirebaseHistoricoTelaState();
+C:\dev\TCC\lib\features\history\firebase_historico_tela.dart:12: class _FirebaseHistoricoTelaState extends State<FirebaseHistoricoTela> {
+C:\dev\TCC\lib\features\settings\configuracoes_tela.dart:4: import 'package:mindful_you/features/auth/firebase_teste_tela.dart';
+C:\dev\TCC\lib\features\settings\configuracoes_tela.dart:483: builder: (_) => const FirebaseTesteTela(),

@@ -1,0 +1,31 @@
+﻿
+  lib\services\database_service.dart:689:        'vinculos_contas_firebase',
+  lib\services\database_service.dart:690:        where: 'usuario_id = ?',
+  lib\services\database_service.dart:691:        whereArgs: [id],
+  lib\services\database_service.dart:692:      );
+  lib\services\database_service.dart:693:      await txn.delete('checkins', where: 'usuario_id = ?', whereArgs: [id]);
+> lib\services\database_service.dart:694:      await txn.delete('avaliacoes', where: 'usuario_id = ?', whereArgs: [id]);
+  lib\services\database_service.dart:695:      await txn.delete(
+  lib\services\database_service.dart:696:        'vinculos_terapeuticos',
+  lib\services\database_service.dart:697:        where: 'terapeuta_id = ? OR paciente_id = ?',
+  lib\services\database_service.dart:698:        whereArgs: [id, id],
+  lib\services\database_service.dart:699:      );
+  lib\services\database_service.dart:700:      return txn.delete('usuarios', where: 'id = ?', whereArgs: [id]);
+  lib\services\database_service.dart:701:    });
+  lib\services\database_service.dart:702:  }
+  lib\services\database_service.dart:731:      if (usuarios.isEmpty) return 0;
+  lib\services\database_service.dart:732:
+  lib\services\database_service.dart:733:      await _validarExclusaoUsuario(txn, id);
+  lib\services\database_service.dart:734:
+  lib\services\database_service.dart:735:      await txn.delete('checkins', where: 'usuario_id = ?', whereArgs: [id]);
+> lib\services\database_service.dart:736:      await txn.delete('avaliacoes', where: 'usuario_id = ?', whereArgs: [id]);
+  lib\services\database_service.dart:737:      await txn.delete(
+  lib\services\database_service.dart:738:        'vinculos_terapeuticos',
+  lib\services\database_service.dart:739:        where: 'terapeuta_id = ? OR paciente_id = ?',
+  lib\services\database_service.dart:740:        whereArgs: [id, id],
+  lib\services\database_service.dart:741:      );
+  lib\services\database_service.dart:742:      return txn.delete('usuarios', where: 'id = ?', whereArgs: [id]);
+  lib\services\database_service.dart:743:    });
+  lib\services\database_service.dart:744:  }
+
+

@@ -1,0 +1,68 @@
+﻿
+  lib\routes.dart:9:import 'package:mindful_you/features/assessment/registros_tela.dart';
+  lib\routes.dart:10:import 'package:mindful_you/features/auth/screens/cadastro_screen.dart';
+  lib\routes.dart:11:import 'package:mindful_you/features/auth/screens/login_screen.dart';
+  lib\routes.dart:12:import 'package:mindful_you/features/auth/screens/splash_screen.dart';
+> lib\routes.dart:13:import 'package:mindful_you/features/auth/gerenciar_usuarios_tela.dart';
+  lib\routes.dart:14:import 'package:mindful_you/features/history/screens/historico_screen.dart';
+  lib\routes.dart:15:import 'package:mindful_you/features/home/inicial_tela.dart';
+  lib\routes.dart:16:import 'package:mindful_you/features/profile/perfil_tela.dart';
+  lib\routes.dart:17:import 'package:mindful_you/features/checkin/screens/questionario_screen.dart';
+  lib\routes.dart:18:import 'package:mindful_you/features/settings/configuracoes_tela.dart';
+  lib\routes.dart:19:import 'package:mindful_you/features/legal/termos_uso_tela.dart';
+  lib\routes.dart:20:import 'package:mindful_you/features/legal/politica_privacidade_tela.dart';
+  lib\routes.dart:21:import 'package:mindful_you/features/tips/screens/dicas_screen.dart';
+  lib\routes.dart:55:    registros: (context) => const RegistrosTela(),
+  lib\routes.dart:56:    perfil: (context) => PerfilTela(),
+  lib\routes.dart:57:    configuracao: (context) => const ConfiguracaoTela(),
+  lib\routes.dart:58:    dicas: (context) => const DicasTela(),
+> lib\routes.dart:59:    usuarios: (context) => const GerenciarUsuariosTela(),
+  lib\routes.dart:60:    termos: (context) => const TermosUsoTela(),
+  lib\routes.dart:61:    privacidade: (context) => const PoliticaPrivacidadeTela(),
+  lib\routes.dart:62:  };
+  lib\routes.dart:63:
+  lib\routes.dart:64:  static final Map<String, WidgetBuilder> routes = {
+  lib\routes.dart:65:    for (final entrada in _destinos.entries)
+  lib\routes.dart:66:      entrada.key: (context) {
+  lib\routes.dart:67:        // Web mantém autenticação Firebase própria; não misturar com SQLite.
+  lib\features\auth\gerenciar_usuarios_tela.dart:6:import 'package:mindful_you/features/profile/services/foto_perfil_service.dart';
+  lib\features\auth\gerenciar_usuarios_tela.dart:7:import 'package:sqflite/sqflite.dart';
+  lib\features\auth\gerenciar_usuarios_tela.dart:8:import 'package:mindful_you/features/auth/services/session_service.dart';
+  lib\features\auth\gerenciar_usuarios_tela.dart:9:
+> lib\features\auth\gerenciar_usuarios_tela.dart:10:class GerenciarUsuariosTela extends StatefulWidget {
+> lib\features\auth\gerenciar_usuarios_tela.dart:11:  const GerenciarUsuariosTela({super.key});
+  lib\features\auth\gerenciar_usuarios_tela.dart:12:
+  lib\features\auth\gerenciar_usuarios_tela.dart:13:  @override
+> lib\features\auth\gerenciar_usuarios_tela.dart:14:  State<GerenciarUsuariosTela> createState() => _GerenciarUsuariosTelaState();
+  lib\features\auth\gerenciar_usuarios_tela.dart:15:}
+  lib\features\auth\gerenciar_usuarios_tela.dart:16:
+> lib\features\auth\gerenciar_usuarios_tela.dart:17:class _GerenciarUsuariosTelaState extends State<GerenciarUsuariosTela> {
+  lib\features\auth\gerenciar_usuarios_tela.dart:18:  late Future<List<Map<String, dynamic>>> _futureUsuarios;
+  lib\features\auth\gerenciar_usuarios_tela.dart:19:
+  lib\features\auth\gerenciar_usuarios_tela.dart:20:  bool _verificando = true;
+  lib\features\auth\gerenciar_usuarios_tela.dart:21:  bool _autorizado = false;
+  lib\features\auth\gerenciar_usuarios_tela.dart:22:
+  lib\features\auth\gerenciar_usuarios_tela.dart:23:  @override
+  lib\features\auth\gerenciar_usuarios_tela.dart:24:  void initState() {
+  lib\features\auth\gerenciar_usuarios_tela.dart:25:    super.initState();
+  lib\features\checkin\data\checkin_repository.dart:124:  );
+  lib\features\checkin\data\checkin_repository.dart:125:}
+  lib\features\checkin\data\checkin_repository.dart:126:
+  lib\features\checkin\data\checkin_repository.dart:127:Future<void> limparEntradasCheckin(int usuarioId) async {
+> lib\features\checkin\data\checkin_repository.dart:128:  await DatabaseService.instance.limparCheckins(usuarioId);
+  lib\features\checkin\data\checkin_repository.dart:129:}
+  lib\services\database_service.dart:809:      orderBy: 'id ASC',
+  lib\services\database_service.dart:810:    );
+  lib\services\database_service.dart:811:  }
+  lib\services\database_service.dart:812:
+> lib\services\database_service.dart:813:  Future<int> limparCheckins(int usuarioId) async {
+  lib\services\database_service.dart:814:    if (usuarioId <= 0) {
+  lib\services\database_service.dart:815:      throw ArgumentError.value(
+  lib\services\database_service.dart:816:        usuarioId,
+  lib\services\database_service.dart:817:        'usuarioId',
+  lib\services\database_service.dart:818:        'ID de usuário inválido',
+  lib\services\database_service.dart:819:      );
+  lib\services\database_service.dart:820:    }
+  lib\services\database_service.dart:821:
+
+

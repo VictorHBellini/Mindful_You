@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+
 import 'package:mindful_you/features/auth/services/session_service.dart';
 import 'package:mindful_you/features/auth/firebase_teste_tela.dart';
 import 'package:mindful_you/features/assessment/avaliacoes_tela.dart';
@@ -41,10 +42,13 @@ class AppRoutes {
   static const privacidade = '/privacidade';
 
   static final Map<String, WidgetBuilder> _destinos = {
+    // Funcionalidades de laboratório disponíveis apenas em debug.
     if (kDebugMode) firebaseTeste: (context) => const FirebaseTesteTela(),
+
     splash: (context) => const SplashScreenTela(),
     login: (context) => const LoginTela(),
     cadastro: (context) => const CadastroTela(),
+
     home: (context) => const InicialTela(),
     painelTerapeuta: (context) => const PainelTerapeutaTela(),
     consentimentos: (context) => const ConsentimentosTela(),
@@ -56,7 +60,11 @@ class AppRoutes {
     perfil: (context) => PerfilTela(),
     configuracao: (context) => const ConfiguracaoTela(),
     dicas: (context) => const DicasTela(),
-    usuarios: (context) => const GerenciarUsuariosTela(),
+
+    // Painel administrativo desativado em profile e release.
+    // A tela também mantém sua própria verificação pelo AdminService.
+    if (kDebugMode) usuarios: (context) => const GerenciarUsuariosTela(),
+
     termos: (context) => const TermosUsoTela(),
     privacidade: (context) => const PoliticaPrivacidadeTela(),
   };
@@ -64,10 +72,13 @@ class AppRoutes {
   static final Map<String, WidgetBuilder> routes = {
     for (final entrada in _destinos.entries)
       entrada.key: (context) {
-        // Web mantém autenticação Firebase própria; não misturar com SQLite.
+        // Web mantém autenticação Firebase própria.
+        // Não misturar autenticação Web com sessão SQLite.
         if (kIsWeb || _publicas.contains(entrada.key)) {
           return entrada.value(context);
         }
+
+        // Proteção das rotas locais no Android.
         return _RotaLocalProtegida(
           destino: entrada.value,
           somenteTerapeuta: entrada.key == painelTerapeuta,
@@ -108,10 +119,14 @@ class _RotaLocalProtegidaState extends State<_RotaLocalProtegida> {
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
           return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+            body: Center(
+              child: CircularProgressIndicator(),
+            ),
           );
         }
+
         final sessao = snapshot.data;
+
         if (snapshot.hasError ||
             sessao == null ||
             (widget.somenteTerapeuta && sessao.tipoUsuario != 'terapeuta')) {
@@ -120,16 +135,18 @@ class _RotaLocalProtegidaState extends State<_RotaLocalProtegida> {
               child: TextButton(
                 onPressed: () => Navigator.pushNamedAndRemoveUntil(
                   context,
-                  '/login',
+                  AppRoutes.login,
                   (route) => false,
                 ),
                 child: const Text(
-                  'Sessão inválida ou acesso não permitido. Voltar ao login',
+                  'Sessão inválida ou acesso não permitido. '
+                  'Voltar ao login',
                 ),
               ),
             ),
           );
         }
+
         return widget.destino(context);
       },
     );

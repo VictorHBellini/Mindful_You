@@ -589,8 +589,53 @@ class _GerenciarUsuariosTelaState extends State<GerenciarUsuariosTela> {
     if (confirmou != true) return;
 
     final id = usuario['id'] as int;
-    await DatabaseService.instance.deletarUsuario(id);
-    await FotoPerfilService.removerFotoAntiga(usuario['foto_path'] as String?);
+    int excluidos;
+
+    try {
+      excluidos = await DatabaseService.instance.deletarUsuario(id);
+    } on StateError {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Não foi possível excluir o usuário. Existem históricos '
+            'identificados ou registros de migração protegidos.',
+          ),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    } catch (erro) {
+      debugPrint('Falha ao excluir usuário: $erro');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Ocorreu um erro ao excluir o usuário.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    if (excluidos != 1) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Usuário não encontrado ou exclusão não concluída.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    // A exclusão no banco foi confirmada. Falhas na foto não a revertem.
+    try {
+      await FotoPerfilService.removerFotoAntiga(
+        usuario['foto_path'] as String?,
+      );
+    } catch (erro) {
+      debugPrint('Falha ao remover foto de usuário excluído: $erro');
+    }
 
     // BUG CORRIGIDO: nada impedia um admin de excluir a própria conta
     // por esta tela (diferente da exclusão em Configurações, que já

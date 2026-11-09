@@ -1,0 +1,7 @@
+﻿
+
+ProjectId    : mindful-tcc
+PackageNames : com.example.mindful_you
+
+
+

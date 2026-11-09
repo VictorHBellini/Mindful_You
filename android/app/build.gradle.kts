@@ -1,3 +1,6 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     // START: FlutterFire Configuration
@@ -8,8 +11,18 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+val releaseProperties = Properties()
+val releasePropertiesFile =
+    file("C:/MindfulYou-Seguranca/key.properties")
+
+if (releasePropertiesFile.exists()) {
+    FileInputStream(releasePropertiesFile).use {
+        releaseProperties.load(it)
+    }
+}
+
 android {
-    namespace = "com.example.mindful_you"
+    namespace = "com.mindfulyou.app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -24,7 +37,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.mindful_you"
+        applicationId = "com.mindfulyou.app"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
@@ -33,13 +46,33 @@ android {
         versionName = flutter.versionName
     }
 
-    buildTypes {
-        release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+    signingConfigs {
+    create("release") {
+        val requiredKeys = listOf(
+            "storeFile",
+            "storePassword",
+            "keyAlias",
+            "keyPassword"
+        )
+
+        requiredKeys.forEach { key ->
+            require(!releaseProperties.getProperty(key).isNullOrBlank()) {
+                "Configuracao de assinatura ausente: $key"
+            }
         }
+
+        storeFile = file(releaseProperties.getProperty("storeFile"))
+        storePassword = releaseProperties.getProperty("storePassword")
+        keyAlias = releaseProperties.getProperty("keyAlias")
+        keyPassword = releaseProperties.getProperty("keyPassword")
     }
+}
+
+buildTypes {
+    release {
+        signingConfig = signingConfigs.getByName("release")
+    }
+}
 }
 
 flutter {

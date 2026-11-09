@@ -1,0 +1,6 @@
+﻿
+android\app\build.gradle.kts:12:    namespace = "com.example.mindful_you"
+android\app\build.gradle.kts:27:        applicationId = "com.example.mindful_you"
+android\app\src\main\kotlin\com\example\mindful_you\MainActivity.kt:1:package com.example.mindful_you
+
+

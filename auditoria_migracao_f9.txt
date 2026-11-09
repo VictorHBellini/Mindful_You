@@ -1,0 +1,189 @@
+﻿
+  lib\services\database_service.dart:46:        await _criarTabelaCheckins(db);
+  lib\services\database_service.dart:47:        await _criarTabelaVinculos(db);
+> lib\services\database_service.dart:48:        await _criarTabelaAvaliacoes(db);
+  lib\services\database_service.dart:49:        await _criarIndicesOperacao(db);
+  lib\services\database_service.dart:50:        await _criarTabelaVinculosFirebase(db);
+  lib\services\database_service.dart:51:        await _criarTabelasMigracaoV13(db);
+  lib\services\database_service.dart:90:        }
+  lib\services\database_service.dart:91:        if (oldVersion < 8) {
+> lib\services\database_service.dart:92:          await _criarTabelaAvaliacoes(db);
+  lib\services\database_service.dart:93:        }
+  lib\services\database_service.dart:94:        if (oldVersion < 9) {
+  lib\services\database_service.dart:95:          await db.execute('ALTER TABLE checkins ADD COLUMN operacao_id TEXT');
+  lib\services\database_service.dart:96:          await db
+> lib\services\database_service.dart:97:              .execute('ALTER TABLE avaliacoes ADD COLUMN operacao_id TEXT');
+  lib\services\database_service.dart:98:          await _criarIndicesOperacao(db);
+  lib\services\database_service.dart:99:        }
+  lib\services\database_service.dart:100:        if (oldVersion < 10) {
+  lib\services\database_service.dart:101:          await db.execute('''
+> lib\services\database_service.dart:102:            CREATE TABLE avaliacoes_minimizadas (
+  lib\services\database_service.dart:103:              id INTEGER PRIMARY KEY AUTOINCREMENT,
+  lib\services\database_service.dart:104:              usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
+  lib\services\database_service.dart:105:              instrumento TEXT NOT NULL CHECK(instrumento IN ('GAD7', 'PHQ9')),
+  lib\services\database_service.dart:111:          ''');
+  lib\services\database_service.dart:112:          await db.execute('''
+> lib\services\database_service.dart:113:            INSERT INTO avaliacoes_minimizadas
+  lib\services\database_service.dart:114:              (id, usuario_id, instrumento, versao, pontuacao,
+  lib\services\database_service.dart:115:               criado_em, operacao_id)
+  lib\services\database_service.dart:116:            SELECT id, usuario_id, instrumento, versao, pontuacao,
+> lib\services\database_service.dart:117:                   criado_em, operacao_id FROM avaliacoes
+  lib\services\database_service.dart:118:          ''');
+> lib\services\database_service.dart:119:          await db.execute('DROP TABLE avaliacoes');
+  lib\services\database_service.dart:120:          await db.execute(
+> lib\services\database_service.dart:121:              'ALTER TABLE avaliacoes_minimizadas RENAME TO avaliacoes');
+> lib\services\database_service.dart:122:          await db.execute('CREATE INDEX idx_avaliacoes_usuario_data '
+> lib\services\database_service.dart:123:              'ON avaliacoes(usuario_id, criado_em DESC)');
+> lib\services\database_service.dart:124:          await db.execute('CREATE UNIQUE INDEX idx_avaliacoes_operacao '
+> lib\services\database_service.dart:125:              'ON avaliacoes(usuario_id, operacao_id) '
+  lib\services\database_service.dart:126:              'WHERE operacao_id IS NOT NULL');
+  lib\services\database_service.dart:127:        }
+  lib\services\database_service.dart:128:        if (oldVersion < 11) {
+  lib\services\database_service.dart:182:      LEFT JOIN checkins c ON i.tipo = 'checkin'
+  lib\services\database_service.dart:183:        AND c.id = i.registro_local_id AND c.usuario_id = i.usuario_id
+> lib\services\database_service.dart:184:      LEFT JOIN avaliacoes a ON i.tipo = 'avaliacao'
+  lib\services\database_service.dart:185:        AND a.id = i.registro_local_id AND a.usuario_id = i.usuario_id
+  lib\services\database_service.dart:186:      WHERE u.id IS NULL OR (i.tipo = 'checkin' AND c.id IS NULL)
+  lib\services\database_service.dart:187:        OR (i.tipo = 'avaliacao' AND a.id IS NULL)
+  lib\services\database_service.dart:188:    ''', 'identidade órfã ou com proprietário divergente');
+  lib\services\database_service.dart:189:    await exigirVazio('''
+> lib\services\database_service.dart:190:      SELECT it.lote_id FROM itens_migracao it
+> lib\services\database_service.dart:191:      LEFT JOIN lotes_migracao l ON l.id = it.lote_id
+  lib\services\database_service.dart:192:      LEFT JOIN identidades_registros i ON i.id = it.identidade_id
+  lib\services\database_service.dart:193:      WHERE l.id IS NULL OR i.id IS NULL OR l.usuario_id != i.usuario_id
+  lib\services\database_service.dart:194:    ''', 'item de migração órfão ou vinculado a outro usuário');
+  lib\services\database_service.dart:195:    await exigirVazio('''
+> lib\services\database_service.dart:196:      SELECT l.id FROM lotes_migracao l
+  lib\services\database_service.dart:197:      LEFT JOIN usuarios u ON u.id = l.usuario_id
+  lib\services\database_service.dart:198:      WHERE u.id IS NULL
+  lib\services\database_service.dart:199:    ''', 'lote de migração sem usuário');
+  lib\services\database_service.dart:202:      WHERE u.id IS NULL
+  lib\services\database_service.dart:203:      UNION ALL
+> lib\services\database_service.dart:204:      SELECT a.id FROM avaliacoes a LEFT JOIN usuarios u ON u.id = a.usuario_id
+  lib\services\database_service.dart:205:      WHERE u.id IS NULL
+  lib\services\database_service.dart:206:    ''', 'histórico sem usuário');
+  lib\services\database_service.dart:207:    await exigirVazio('PRAGMA foreign_key_check',
+  lib\services\database_service.dart:217:            AND c.id = NEW.registro_local_id AND c.usuario_id = NEW.usuario_id
+  lib\services\database_service.dart:218:          UNION ALL
+> lib\services\database_service.dart:219:          SELECT 1 FROM avaliacoes a WHERE NEW.tipo = 'avaliacao'
+  lib\services\database_service.dart:220:            AND a.id = NEW.registro_local_id AND a.usuario_id = NEW.usuario_id
+  lib\services\database_service.dart:221:        );
+  lib\services\database_service.dart:222:      END''',
+  lib\services\database_service.dart:233:        WHERE i.tipo = 'checkin' AND i.registro_local_id = OLD.id)
+  lib\services\database_service.dart:234:      BEGIN SELECT RAISE(ABORT, 'v14: checkin com identidade protegida'); END''',
+> lib\services\database_service.dart:235:      '''CREATE TRIGGER v14_avaliacao_owner BEFORE UPDATE OF usuario_id, id ON avaliacoes
+  lib\services\database_service.dart:236:      WHEN EXISTS (SELECT 1 FROM identidades_registros i
+  lib\services\database_service.dart:237:        WHERE i.tipo = 'avaliacao' AND i.registro_local_id = OLD.id)
+  lib\services\database_service.dart:238:      BEGIN SELECT RAISE(ABORT, 'v14: proprietario de avaliacao protegido'); END''',
+> lib\services\database_service.dart:239:      '''CREATE TRIGGER v14_avaliacao_delete BEFORE DELETE ON avaliacoes
+  lib\services\database_service.dart:240:      WHEN EXISTS (SELECT 1 FROM identidades_registros i
+  lib\services\database_service.dart:241:        WHERE i.tipo = 'avaliacao' AND i.registro_local_id = OLD.id)
+  lib\services\database_service.dart:242:      BEGIN SELECT RAISE(ABORT, 'v14: avaliacao com identidade protegida'); END''',
+> lib\services\database_service.dart:243:      '''CREATE TRIGGER v14_lote_owner BEFORE UPDATE OF usuario_id, id ON lotes_migracao
+  lib\services\database_service.dart:244:      BEGIN SELECT RAISE(ABORT, 'v14: proprietario ou id de lote imutavel'); END''',
+> lib\services\database_service.dart:245:      '''CREATE TRIGGER v14_lote_delete BEFORE DELETE ON lotes_migracao
+> lib\services\database_service.dart:246:      WHEN EXISTS (SELECT 1 FROM itens_migracao WHERE lote_id = OLD.id)
+  lib\services\database_service.dart:247:      BEGIN SELECT RAISE(ABORT, 'v14: lote com itens protegido'); END''',
+> lib\services\database_service.dart:248:      '''CREATE TRIGGER v14_item_insert BEFORE INSERT ON itens_migracao
+  lib\services\database_service.dart:249:      BEGIN
+  lib\services\database_service.dart:250:        SELECT RAISE(ABORT, 'v14: item de outro proprietario')
+  lib\services\database_service.dart:251:        WHERE NOT EXISTS (
+> lib\services\database_service.dart:252:          SELECT 1 FROM lotes_migracao l JOIN identidades_registros i
+  lib\services\database_service.dart:253:            ON i.usuario_id = l.usuario_id
+  lib\services\database_service.dart:254:          WHERE l.id = NEW.lote_id AND i.id = NEW.identidade_id
+  lib\services\database_service.dart:255:        );
+  lib\services\database_service.dart:256:      END''',
+> lib\services\database_service.dart:257:      '''CREATE TRIGGER v14_item_update BEFORE UPDATE OF lote_id, identidade_id ON itens_migracao
+  lib\services\database_service.dart:258:      BEGIN SELECT RAISE(ABORT, 'v14: associacao de item imutavel'); END''',
+> lib\services\database_service.dart:259:      '''CREATE TRIGGER v14_item_delete BEFORE DELETE ON itens_migracao
+  lib\services\database_service.dart:260:      BEGIN SELECT RAISE(ABORT, 'v14: associacao de item protegida'); END''',
+  lib\services\database_service.dart:261:      '''CREATE TRIGGER v14_usuario_delete BEFORE DELETE ON usuarios
+  lib\services\database_service.dart:262:      WHEN EXISTS (SELECT 1 FROM identidades_registros WHERE usuario_id = OLD.id)
+> lib\services\database_service.dart:263:        OR EXISTS (SELECT 1 FROM lotes_migracao WHERE usuario_id = OLD.id)
+  lib\services\database_service.dart:264:      BEGIN SELECT RAISE(ABORT, 'v14: usuario com migracao protegida'); END''',
+  lib\services\database_service.dart:265:    ];
+  lib\services\database_service.dart:266:    for (final gatilho in gatilhos) {
+  lib\services\database_service.dart:300:    await db.execute('''
+  lib\services\database_service.dart:301:      CREATE TRIGGER v15_avaliacao_immutable
+> lib\services\database_service.dart:302:      BEFORE UPDATE ON avaliacoes
+  lib\services\database_service.dart:303:      WHEN EXISTS (
+  lib\services\database_service.dart:304:        SELECT 1 FROM identidades_registros i
+  lib\services\database_service.dart:305:        WHERE i.tipo = 'avaliacao'
+  lib\services\database_service.dart:327:
+  lib\services\database_service.dart:328:    await db.execute('''
+> lib\services\database_service.dart:329:      CREATE TABLE lotes_migracao (
+  lib\services\database_service.dart:330:        id TEXT PRIMARY KEY,
+  lib\services\database_service.dart:331:        usuario_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+  lib\services\database_service.dart:332:        estado TEXT NOT NULL DEFAULT 'preparacao'
+  lib\services\database_service.dart:343:
+  lib\services\database_service.dart:344:    await db.execute('''
+> lib\services\database_service.dart:345:      CREATE TABLE itens_migracao (
+> lib\services\database_service.dart:346:        lote_id TEXT NOT NULL REFERENCES lotes_migracao(id) ON DELETE CASCADE,
+  lib\services\database_service.dart:347:        identidade_id INTEGER NOT NULL
+  lib\services\database_service.dart:348:          REFERENCES identidades_registros(id) ON DELETE CASCADE,
+  lib\services\database_service.dart:349:        estado TEXT NOT NULL DEFAULT 'pendente'
+  lib\services\database_service.dart:360:    await db.execute('''
+  lib\services\database_service.dart:361:      CREATE INDEX idx_lotes_usuario_estado
+> lib\services\database_service.dart:362:      ON lotes_migracao(usuario_id, estado)
+  lib\services\database_service.dart:363:    ''');
+  lib\services\database_service.dart:364:    await db.execute('''
+> lib\services\database_service.dart:365:      CREATE INDEX idx_itens_estado ON itens_migracao(estado)
+  lib\services\database_service.dart:366:    ''');
+  lib\services\database_service.dart:367:  }
+  lib\services\database_service.dart:368:
+  lib\services\database_service.dart:395:        'ON checkins(usuario_id, operacao_id) WHERE operacao_id IS NOT NULL');
+  lib\services\database_service.dart:396:    await db.execute(
+> lib\services\database_service.dart:397:        'CREATE UNIQUE INDEX IF NOT EXISTS idx_avaliacoes_operacao '
+> lib\services\database_service.dart:398:        'ON avaliacoes(usuario_id, operacao_id) WHERE operacao_id IS NOT NULL');
+  lib\services\database_service.dart:399:  }
+  lib\services\database_service.dart:400:
+> lib\services\database_service.dart:401:  Future<void> _criarTabelaAvaliacoes(Database db) async {
+  lib\services\database_service.dart:402:    await db.execute('''
+> lib\services\database_service.dart:403:      CREATE TABLE IF NOT EXISTS avaliacoes (
+  lib\services\database_service.dart:404:        id INTEGER PRIMARY KEY AUTOINCREMENT,
+  lib\services\database_service.dart:405:        usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
+  lib\services\database_service.dart:406:        instrumento TEXT NOT NULL CHECK(instrumento IN ('GAD7', 'PHQ9')),
+  lib\services\database_service.dart:412:    ''');
+  lib\services\database_service.dart:413:    await db.execute(
+> lib\services\database_service.dart:414:      'CREATE INDEX IF NOT EXISTS idx_avaliacoes_usuario_data '
+> lib\services\database_service.dart:415:      'ON avaliacoes(usuario_id, criado_em DESC)',
+  lib\services\database_service.dart:416:    );
+  lib\services\database_service.dart:417:  }
+  lib\services\database_service.dart:418:
+  lib\services\database_service.dart:655:
+  lib\services\database_service.dart:656:    final lotes = await txn.query(
+> lib\services\database_service.dart:657:      'lotes_migracao',
+  lib\services\database_service.dart:658:      columns: ['id'],
+  lib\services\database_service.dart:659:      where: 'usuario_id = ?',
+  lib\services\database_service.dart:660:      whereArgs: [usuarioId],
+  lib\services\database_service.dart:692:      );
+  lib\services\database_service.dart:693:      await txn.delete('checkins', where: 'usuario_id = ?', whereArgs: [id]);
+> lib\services\database_service.dart:694:      await txn.delete('avaliacoes', where: 'usuario_id = ?', whereArgs: [id]);
+  lib\services\database_service.dart:695:      await txn.delete(
+  lib\services\database_service.dart:696:        'vinculos_terapeuticos',
+  lib\services\database_service.dart:697:        where: 'terapeuta_id = ? OR paciente_id = ?',
+  lib\services\database_service.dart:734:
+  lib\services\database_service.dart:735:      await txn.delete('checkins', where: 'usuario_id = ?', whereArgs: [id]);
+> lib\services\database_service.dart:736:      await txn.delete('avaliacoes', where: 'usuario_id = ?', whereArgs: [id]);
+  lib\services\database_service.dart:737:      await txn.delete(
+  lib\services\database_service.dart:738:        'vinculos_terapeuticos',
+  lib\services\database_service.dart:739:        where: 'terapeuta_id = ? OR paciente_id = ?',
+  lib\services\firebase_registros_service.dart:81:        .collection('usuarios')
+  lib\services\firebase_registros_service.dart:82:        .doc(uid)
+> lib\services\firebase_registros_service.dart:83:        .collection('avaliacoes')
+  lib\services\firebase_registros_service.dart:84:        .doc(operacaoId);
+  lib\services\firebase_registros_service.dart:85:    if (FirebaseAuth.instance.currentUser?.uid != uid) {
+  lib\services\firebase_registros_service.dart:86:      throw StateError('Sessão alterada.');
+  lib\services\firebase_registros_service.dart:126:  }
+  lib\services\firebase_registros_service.dart:127:
+> lib\services\firebase_registros_service.dart:128:  Future<List<Map<String, dynamic>>> minhasAvaliacoes() async {
+  lib\services\firebase_registros_service.dart:129:    final uid = await _pacienteUid();
+  lib\services\firebase_registros_service.dart:130:    final docs = await _db
+  lib\services\firebase_registros_service.dart:131:        .collection('usuarios')
+  lib\services\firebase_registros_service.dart:132:        .doc(uid)
+> lib\services\firebase_registros_service.dart:133:        .collection('avaliacoes')
+  lib\services\firebase_registros_service.dart:134:        .orderBy('criado_em', descending: true)
+  lib\services\firebase_registros_service.dart:135:        .limit(50)
+  lib\services\firebase_registros_service.dart:136:        .get();
+
+

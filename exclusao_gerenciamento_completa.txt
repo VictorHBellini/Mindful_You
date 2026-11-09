@@ -1,0 +1,125 @@
+﻿  // â”€â”€ Deletar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+  Future<void> _deletarUsuario(Map<String, dynamic> usuario) async {
+    final confirmou = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text(
+          'Excluir usuÃ¡rio',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF4F4039),
+          ),
+        ),
+        content: RichText(
+          text: TextSpan(
+            style: const TextStyle(
+                fontSize: 14, color: Color(0xFF7A6C65), height: 1.5),
+            children: [
+              const TextSpan(text: 'Deseja excluir o usuÃ¡rio '),
+              TextSpan(
+                text: usuario['nome'] as String,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const TextSpan(text: '? Esta aÃ§Ã£o nÃ£o pode ser desfeita.'),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar',
+                style: TextStyle(color: Color(0xFF8D6E63))),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFC0392B),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Excluir'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmou != true) return;
+
+    final id = usuario['id'] as int;
+    await DatabaseService.instance.deletarUsuario(id);
+    await FotoPerfilService.removerFotoAntiga(usuario['foto_path'] as String?);
+
+    // BUG CORRIGIDO: nada impedia um admin de excluir a prÃ³pria conta
+    // por esta tela (diferente da exclusÃ£o em ConfiguraÃ§Ãµes, que jÃ¡
+    // encerra a sessÃ£o direito). Sem este ajuste, a linha do usuÃ¡rio
+    // sumia do SQLite mas a sessÃ£o salva no SharedPreferences
+    // continuava "logada" numa conta que nÃ£o existe mais â€” a lista de
+    // check-ins ficava vazia e telas como o Perfil paravam de
+    // encontrar o usuÃ¡rio, sem explicar o motivo.
+    final prefs = await SharedPreferences.getInstance();
+    final excluiuAPropriaConta = prefs.getInt('usuarioId') == id;
+
+    if (excluiuAPropriaConta) {
+      await SessionService.encerrar();
+
+      if (!mounted) return;
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        '/login',
+        (route) => false,
+      );
+      return;
+    }
+
+    _recarregar();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('UsuÃ¡rio excluÃ­do.'),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  // â”€â”€ Build â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+  @override
+  Widget build(BuildContext context) {
+    if (_verificando || !_autorizado) {
+      return const Scaffold(
+        backgroundColor: Color(0xFFF8F5F2),
+        body: Center(
+          child: CircularProgressIndicator(color: Color(0xFF8D6E63)),
+        ),
+      );
+    }
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F5F2),
+      appBar: AppBar(
+        elevation: 0,
+        backgroundColor: const Color(0xFFF8F5F2),
+        foregroundColor: const Color(0xFF40352F),
+        centerTitle: true,
+        title: const Text(
+          'UsuÃ¡rios cadastrados',
+          style: TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF4F4039),
+          ),
+        ),
+        actions: [
+          IconButton(
+            tooltip: 'Atualizar',
+            icon: const Icon(Icons.refresh_rounded),
+            onPressed: _recarregar,
+          ),
+        ],
+      ),
+      body: FutureBuilder<List<Map<String, dynamic>>>(
+        future: _futureUsuarios,
+        builder: (context, snapshot) {

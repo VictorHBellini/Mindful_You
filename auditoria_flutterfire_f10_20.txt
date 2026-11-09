@@ -1,0 +1,62 @@
+﻿
+lib\firebase_options.dart:11:/// import 'firebase_options.dart';
+lib\firebase_options.dart:13:/// await Firebase.initializeApp(
+lib\firebase_options.dart:14:///   options: DefaultFirebaseOptions.currentPlatform,
+lib\firebase_options.dart:17:class DefaultFirebaseOptions {
+lib\firebase_options.dart:33:          'DefaultFirebaseOptions have not been configured for linux - '
+lib\firebase_options.dart:38:          'DefaultFirebaseOptions are not supported for this platform.',
+lib\main.dart:10:import 'firebase_options.dart';
+lib\main.dart:21:  // Execute `flutterfire configure` para gerar firebase_options.dart.
+lib\main.dart:22:  await Firebase.initializeApp(
+lib\main.dart:23:    options: DefaultFirebaseOptions.currentPlatform,
+lib\main.dart:36:      await FirebaseAuth.instance.useAuthEmulator(host, 9099);
+lib\main.dart:42:      FirebaseFirestore.instance.useFirestoreEmulator(host, 8080);
+lib\features\auth\firebase_teste_tela.dart:36:    _assinatura = FirebaseAuth.instance.authStateChanges().listen((usuario) {
+lib\features\auth\firebase_teste_tela.dart:54:      if (!mounted || FirebaseAuth.instance.currentUser?.uid != uid) return;
+lib\features\auth\firebase_teste_tela.dart:60:      if (!mounted || FirebaseAuth.instance.currentUser?.uid != uid) return;
+lib\features\auth\firebase_teste_tela.dart:91:    } on FirebaseAuthException catch (e) {
+lib\features\auth\firebase_teste_tela.dart:127:      await FirebaseAuth.instance.createUserWithEmailAndPassword(
+lib\features\auth\firebase_teste_tela.dart:141:      final uid = FirebaseAuth.instance.currentUser?.uid;
+lib\features\auth\firebase_teste_tela.dart:147:    final uid = FirebaseAuth.instance.currentUser?.uid;
+lib\features\auth\firebase_teste_tela.dart:157:      await FirebaseAuth.instance.signInWithEmailAndPassword(
+lib\features\auth\firebase_teste_tela.dart:173:      await FirebaseAuth.instance.signOut();
+lib\features\auth\firebase_teste_tela.dart:185:      () => FirebaseAuth.instance.sendPasswordResetEmail(email: email),
+lib\features\auth\firebase_teste_tela.dart:193:    final usuario = FirebaseAuth.instance.currentUser;
+lib\features\auth\firebase_teste_tela.dart:205:      final atual = FirebaseAuth.instance.currentUser;
+lib\features\auth\firebase_teste_tela.dart:207:        throw FirebaseAuthException(code: 'user-changed');
+lib\features\auth\firebase_teste_tela.dart:221:        throw FirebaseAuthException(code: 'missing-email');
+lib\features\auth\firebase_teste_tela.dart:228:    } on FirebaseAuthException catch (e) {
+lib\features\auth\firebase_teste_tela.dart:253:    final usuario = FirebaseAuth.instance.currentUser;
+lib\features\auth\firebase_teste_tela.dart:260:      final atual = FirebaseAuth.instance.currentUser;
+lib\features\auth\firebase_teste_tela.dart:262:        throw FirebaseAuthException(code: 'user-changed');
+lib\features\auth\firebase_teste_tela.dart:285:                stream: FirebaseAuth.instance.authStateChanges(),
+lib\features\auth\screens\account_link_preflight_screen.dart:110:      final current = FirebaseAuth.instance.currentUser;
+lib\features\auth\services\account_link_proof_adapters.dart:44:    FirebaseAuth? auth,
+lib\features\auth\services\account_link_proof_adapters.dart:45:  }) : _auth = auth ?? FirebaseAuth.instance;
+lib\features\auth\services\account_link_proof_adapters.dart:48:  final FirebaseAuth _auth;
+lib\features\auth\services\account_link_proof_adapters.dart:80:    } on FirebaseAuthException {
+lib\features\auth\services\firebase_identity_provider.dart:8:  FirebaseIdentityProvider({FirebaseAuth? auth})
+lib\features\auth\services\firebase_identity_provider.dart:9:      : _auth = auth ?? FirebaseAuth.instance;
+lib\features\auth\services\firebase_identity_provider.dart:11:  final FirebaseAuth _auth;
+lib\features\auth\services\firebase_identity_provider.dart:69:    } on FirebaseAuthException catch (error) {
+lib\features\history\firebase_historico_tela.dart:18:    _uidInicial = FirebaseAuth.instance.currentUser?.uid;
+lib\features\history\firebase_historico_tela.dart:29:        FirebaseAuth.instance.currentUser?.uid != _uidInicial) {
+lib\features\history\firebase_historico_tela.dart:45:          if (FirebaseAuth.instance.currentUser?.uid != _uidInicial) {
+lib\features\settings\vincular_firebase_demo_tela.dart:28:    if (erro is FirebaseAuthException) {
+lib\services\firebase_conta_vinculo_service.dart:93:    final auth = FirebaseAuth.instance;
+lib\services\firebase_conta_vinculo_service.dart:137:    final auth = FirebaseAuth.instance;
+lib\services\firebase_perfil_service.dart:10:      FirebaseFirestore.instance.collection('usuarios');
+lib\services\firebase_perfil_service.dart:13:    final usuario = FirebaseAuth.instance.currentUser;
+lib\services\firebase_perfil_service.dart:30:    final usuario = FirebaseAuth.instance.currentUser;
+lib\services\firebase_perfil_service.dart:34:    if (FirebaseAuth.instance.currentUser?.uid != uid) {
+lib\services\firebase_registros_service.dart:10:  final FirebaseFirestore _db = FirebaseFirestore.instance;
+lib\services\firebase_registros_service.dart:13:    final uid = FirebaseAuth.instance.currentUser?.uid;
+lib\services\firebase_registros_service.dart:16:    if (FirebaseAuth.instance.currentUser?.uid != uid) {
+lib\services\firebase_registros_service.dart:47:    if (FirebaseAuth.instance.currentUser?.uid != uid) {
+lib\services\firebase_registros_service.dart:85:    if (FirebaseAuth.instance.currentUser?.uid != uid) {
+lib\services\firebase_registros_service.dart:103:      if (FirebaseAuth.instance.currentUser?.uid != uid) {
+lib\services\firebase_registros_service.dart:108:    if (FirebaseAuth.instance.currentUser?.uid != uid) {
+lib\services\firebase_registros_service.dart:122:    if (FirebaseAuth.instance.currentUser?.uid != uid) {
+lib\services\firebase_registros_service.dart:137:    if (FirebaseAuth.instance.currentUser?.uid != uid) {
+
+

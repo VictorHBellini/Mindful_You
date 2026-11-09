@@ -2,13 +2,18 @@
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const { initializeApp } = require('firebase-admin/app');
 const { getFirestore, FieldValue } = require('firebase-admin/firestore');
+
+const {
+  inspectSessionAuthorization,
+} = require('./session_authorization_lookup');
+
 initializeApp();
 
 // Important: A Firebase login alone cannot attest to an Android SQLite session.
 // Therefore this callable NEVER creates a confirmed link or enables sync.
-exports.solicitarVinculoDemo = onCall({region: 'southamerica-east1', enforceAppCheck: false}, async (request) => {
+exports.solicitarVinculoDemo = onCall({ region: 'southamerica-east1', enforceAppCheck: false }, async (request) => {
   if (!request.auth?.uid) throw new HttpsError('unauthenticated', 'Entre na conta Firebase.');
-  const {installationId} = request.data || {};
+  const { installationId } = request.data || {};
   if (typeof installationId !== 'string' || !/^[a-f0-9-]{36}$/.test(installationId)) {
     throw new HttpsError('invalid-argument', 'Identificador de instalação inválido.');
   }
@@ -22,7 +27,7 @@ exports.solicitarVinculoDemo = onCall({region: 'southamerica-east1', enforceAppC
       if (old.installationId !== installationId) {
         throw new HttpsError('already-exists', 'UID já possui solicitação em outra instalação.');
       }
-      return {estado: 'pendente', uid, reutilizada: true};
+      return { estado: 'pendente', uid, reutilizada: true };
     }
     tx.create(ref, {
       installationId,
@@ -30,7 +35,7 @@ exports.solicitarVinculoDemo = onCall({region: 'southamerica-east1', enforceAppC
       criadoEm: FieldValue.serverTimestamp(),
       finalidade: 'demo_sem_autorizacao_de_sincronizacao'
     });
-    return {estado: 'pendente', uid, reutilizada: false};
+    return { estado: 'pendente', uid, reutilizada: false };
   });
 });
 
@@ -38,16 +43,16 @@ exports.solicitarVinculoDemo = onCall({region: 'southamerica-east1', enforceAppC
 // Emulator-only: authenticated cancellation of an existing demo request.
 // Never changes SQLite, grants a link, or enables synchronization.
 exports.cancelarSolicitacaoVinculoDemo = onCall(
-  {region: 'southamerica-east1', enforceAppCheck: false},
+  { region: 'southamerica-east1', enforceAppCheck: false },
   async (request) => {
     if (process.env.FUNCTIONS_EMULATOR !== 'true') {
       throw new HttpsError('failed-precondition', 'Operação exclusiva do Emulator.');
     }
     const uid = request.auth?.uid;
     if (!uid) throw new HttpsError('unauthenticated', 'Entre na conta Firebase.');
-    const {installationId} = request.data || {};
+    const { installationId } = request.data || {};
     if (typeof installationId !== 'string' ||
-        !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(installationId)) {
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(installationId)) {
       throw new HttpsError('invalid-argument', 'Identificador inválido.');
     }
     const db = getFirestore();
@@ -63,20 +68,65 @@ exports.cancelarSolicitacaoVinculoDemo = onCall(
         throw new HttpsError('permission-denied', 'Instalação diferente.');
       }
       if (data.estado === 'cancelado') {
-        return {estado: 'cancelado', alterado: false};
+        return { estado: 'cancelado', alterado: false };
       }
       if (data.estado !== 'pendente' ||
-          data.finalidade !== 'demo_sem_autorizacao_de_sincronizacao') {
+        data.finalidade !== 'demo_sem_autorizacao_de_sincronizacao') {
         throw new HttpsError('failed-precondition', 'Estado não permite cancelamento.');
       }
-      tx.update(ref, {estado: 'cancelado', canceladoEm: FieldValue.serverTimestamp()});
+      tx.update(ref, { estado: 'cancelado', canceladoEm: FieldValue.serverTimestamp() });
       tx.create(audit, {
         evento: 'cancelamento_solicitacao_demo',
         executadoPorUid: uid,
         ocorridoEm: FieldValue.serverTimestamp(),
         ambiente: 'firebase_emulator'
       });
-      return {estado: 'cancelado', alterado: true};
+      return { estado: 'cancelado', alterado: true };
     });
+  }
+);
+
+
+/**
+ * Consulta preliminar de autorização de sessão híbrida.
+ *
+ * Nesta versão, nenhuma associação SQLite/Firebase
+ * pode ser autorizada pelo servidor.
+ *
+ * Não confia em IDs locais, e-mails ou estados
+ * de vínculo enviados pelo aplicativo.
+ *
+ * Não grava no Firestore e não habilita sincronização.
+ */
+
+exports.verificarAutorizacaoSessao = onCall(
+  {
+    region: 'southamerica-east1',
+    enforceAppCheck: false,
+  },
+  async (request) => {
+    const uid = request.auth?.uid;
+
+    if (!uid) {
+      throw new HttpsError(
+        'unauthenticated',
+        'Autenticação Firebase obrigatória.'
+      );
+    }
+
+    // Consulta interna pelo UID autenticado.
+    // O resultado NÃO autoriza uma sessão nesta fase.
+    await inspectSessionAuthorization({
+      db: getFirestore(),
+      authenticatedUid: uid,
+      now: Date.now(),
+    });
+
+    // Bloqueio intencional até existir um protocolo
+    // confiável de emissão e revogação de autorizações.
+    return {
+      status: 'linkNotAuthorized',
+      authorized: false,
+    };
   }
 );

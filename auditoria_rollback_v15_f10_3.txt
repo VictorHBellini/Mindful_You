@@ -1,0 +1,320 @@
+﻿import 'dart:io';
+
+import 'package:flutter_test/flutter_test.dart';
+import 'package:path/path.dart' as p;
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:mindful_you/services/database_service.dart';
+
+void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  late Directory pasta;
+  late String caminho;
+  late Database banco;
+
+  late int versaoAposFalha;
+  late Set<String> gatilhosAposFalha;
+  late Map<String, Object?> checkinAposFalha;
+  late Map<String, Object?> avaliacaoAposFalha;
+
+  const data = '2026-11-09T12:00:00';
+
+  Future<Set<String>> listarGatilhos(Database db) async {
+    final resultado = await db.rawQuery('''
+      SELECT name FROM sqlite_master
+      WHERE type = 'trigger'
+    ''');
+
+    return resultado.map((linha) => linha['name'] as String).toSet();
+  }
+
+  setUpAll(() async {
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+
+    pasta = await Directory.systemTemp.createTemp(
+      'mindful_migracao_v15_',
+    );
+
+    await databaseFactoryFfi.setDatabasesPath(pasta.path);
+
+    caminho = p.join(pasta.path, 'mindful_you.db');
+
+    // Criar banco legado na versao 14.
+    final antigo = await databaseFactoryFfi.openDatabase(
+      caminho,
+      options: OpenDatabaseOptions(
+        version: 14,
+        onConfigure: (db) async {
+          await db.execute('PRAGMA foreign_keys = ON');
+        },
+        onCreate: (db, version) async {
+          await db.execute('''
+            CREATE TABLE usuarios (
+              id INTEGER PRIMARY KEY,
+              nome TEXT NOT NULL,
+              email TEXT NOT NULL UNIQUE,
+              senha TEXT NOT NULL,
+              salt TEXT NOT NULL DEFAULT '',
+              criado_em TEXT NOT NULL,
+              tipo_usuario TEXT NOT NULL DEFAULT 'paciente'
+            )
+          ''');
+
+          await db.execute('''
+            CREATE TABLE checkins (
+              id INTEGER PRIMARY KEY,
+              usuario_id INTEGER NOT NULL
+                REFERENCES usuarios(id),
+              data_iso TEXT NOT NULL,
+              criado_em TEXT NOT NULL,
+              bem_estar INTEGER NOT NULL
+            )
+          ''');
+
+          await db.execute('''
+            CREATE TABLE avaliacoes (
+              id INTEGER PRIMARY KEY,
+              usuario_id INTEGER NOT NULL
+                REFERENCES usuarios(id),
+              instrumento TEXT NOT NULL,
+              versao TEXT NOT NULL,
+              pontuacao INTEGER NOT NULL,
+              criado_em TEXT NOT NULL
+            )
+          ''');
+
+          await db.execute('''
+            CREATE TABLE identidades_registros (
+              id INTEGER PRIMARY KEY,
+              usuario_id INTEGER NOT NULL
+                REFERENCES usuarios(id),
+              tipo TEXT NOT NULL,
+              registro_local_id INTEGER NOT NULL,
+              global_id TEXT NOT NULL UNIQUE,
+              criado_em TEXT NOT NULL
+            )
+          ''');
+
+          await db.execute('''
+            CREATE TRIGGER v14_checkin_owner
+            BEFORE UPDATE OF usuario_id, id ON checkins
+            BEGIN
+              SELECT RAISE(
+                ABORT,
+                'v14: proprietario protegido'
+              );
+            END
+          ''');
+
+          await db.execute('''
+            CREATE TRIGGER v14_avaliacao_owner
+            BEFORE UPDATE OF usuario_id, id ON avaliacoes
+            BEGIN
+              SELECT RAISE(
+                ABORT,
+                'v14: proprietario protegido'
+              );
+            END
+          ''');
+        },
+      ),
+    );
+
+    await antigo.insert('usuarios', {
+      'id': 1,
+      'nome': 'Paciente Teste',
+      'email': 'migracao-v15@teste.invalid',
+      'senha': 'hash_ficticio',
+      'salt': 'salt_teste',
+      'criado_em': data,
+      'tipo_usuario': 'paciente',
+    });
+
+    await antigo.insert('checkins', {
+      'id': 10,
+      'usuario_id': 1,
+      'data_iso': '2026-11-09',
+      'criado_em': data,
+      'bem_estar': 90,
+    });
+
+    await antigo.insert('checkins', {
+      'id': 11,
+      'usuario_id': 1,
+      'data_iso': '2026-11-09',
+      'criado_em': data,
+      'bem_estar': 70,
+    });
+
+    await antigo.insert('avaliacoes', {
+      'id': 20,
+      'usuario_id': 1,
+      'instrumento': 'GAD7',
+      'versao': '1',
+      'pontuacao': 5,
+      'criado_em': data,
+    });
+
+    await antigo.insert('avaliacoes', {
+      'id': 21,
+      'usuario_id': 1,
+      'instrumento': 'GAD7',
+      'versao': '1',
+      'pontuacao': 8,
+      'criado_em': data,
+    });
+
+    for (final item in [
+      {
+        'id': 100,
+        'tipo': 'checkin',
+        'registro_local_id': 10,
+        'global_id': 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      },
+      {
+        'id': 101,
+        'tipo': 'avaliacao',
+        'registro_local_id': 20,
+        'global_id': 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+      },
+    ]) {
+      await antigo.insert('identidades_registros', {
+        ...item,
+        'usuario_id': 1,
+        'criado_em': data,
+      });
+    }
+
+    // Simula conflito na instalacao do novo gatilho.
+    // A migracao deve reverter os DROP TRIGGER anteriores.
+    await antigo.execute('''
+      CREATE TRIGGER v15_checkin_immutable
+      BEFORE INSERT ON checkins
+      BEGIN
+        SELECT RAISE(ABORT, 'conflito simulado');
+      END
+    ''');
+
+    expect(await antigo.getVersion(), 14);
+    await antigo.close();
+
+    Object? erroMigracao;
+
+    try {
+      final tentativa = await DatabaseService.instance.database;
+      await tentativa.close();
+    } catch (erro) {
+      erroMigracao = erro;
+    }
+
+    expect(
+      erroMigracao,
+      isNotNull,
+      reason: 'A migracao deveria falhar pelo conflito.',
+    );
+
+    // Inspeciona o banco apos o rollback.
+    final verificar = await databaseFactoryFfi.openDatabase(
+      caminho,
+      options: OpenDatabaseOptions(
+        readOnly: true,
+        singleInstance: false,
+      ),
+    );
+
+    try {
+      versaoAposFalha = await verificar.getVersion();
+      gatilhosAposFalha = await listarGatilhos(verificar);
+
+      checkinAposFalha = Map<String, Object?>.from(
+        (await verificar.query(
+          'checkins',
+          where: 'id = ?',
+          whereArgs: [10],
+        ))
+            .single,
+      );
+
+      avaliacaoAposFalha = Map<String, Object?>.from(
+        (await verificar.query(
+          'avaliacoes',
+          where: 'id = ?',
+          whereArgs: [20],
+        ))
+            .single,
+      );
+    } finally {
+      await verificar.close();
+    }
+
+    // Remove somente o conflito artificial.
+    final reparo = await databaseFactoryFfi.openDatabase(
+      caminho,
+      options: OpenDatabaseOptions(singleInstance: false),
+    );
+
+    try {
+      await reparo.execute(
+        'DROP TRIGGER v15_checkin_immutable',
+      );
+    } finally {
+      await reparo.close();
+    }
+
+    // Tenta novamente a migracao real.
+    banco = await DatabaseService.instance.database;
+  });
+
+  tearDownAll(() async {
+    await banco.close();
+
+    if (await pasta.exists()) {
+      await pasta.delete(recursive: true);
+    }
+  });
+
+  test('rollback preserva versao 14', () {
+    expect(versaoAposFalha, 14);
+  });
+
+  test('rollback restaura os gatilhos antigos', () {
+    expect(
+      gatilhosAposFalha,
+      containsAll([
+        'v14_checkin_owner',
+        'v14_avaliacao_owner',
+      ]),
+    );
+
+    expect(
+      gatilhosAposFalha,
+      isNot(contains('v15_avaliacao_immutable')),
+    );
+  });
+
+  test('rollback preserva historicos', () {
+    expect(checkinAposFalha['bem_estar'], 90);
+    expect(avaliacaoAposFalha['pontuacao'], 5);
+  });
+
+  test('migra banco existente de v14 para v15', () async {
+    expect(await banco.getVersion(), 15);
+  });
+
+  test('substitui gatilhos antigos pelos novos', () async {
+    final nomes = await listarGatilhos(banco);
+
+    expect(
+      nomes,
+      containsAll([
+        'v15_checkin_immutable',
+        'v15_avaliacao_immutable',
+      ]),
+    );
+
+    expect(nomes, isNot(contains('v14_checkin_owner')));
+    expect(nomes, isNot(contains('v14_avaliacao_owner')));
+  });
+
+  test('preserva os dois checkins', () async {

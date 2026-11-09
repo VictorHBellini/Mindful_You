@@ -1,0 +1,74 @@
+﻿
+Path                                                                       LineNumber Line                                                                           
+----                                                                       ---------- ----                                                                           
+C:\dev\TCC\lib\firebase_options.dart                                               13 /// await Firebase.initializeApp(                                              
+C:\dev\TCC\lib\main.dart                                                           22   await Firebase.initializeApp(                                                
+C:\dev\TCC\lib\main.dart                                                           36       await FirebaseAuth.instance.useAuthEmulator(host, 9099);                 
+C:\dev\TCC\lib\main.dart                                                           42       FirebaseFirestore.instance.useFirestoreEmulator(host, 8080);             
+C:\dev\TCC\lib\features\auth\firebase_teste_tela.dart                              36     _assinatura = FirebaseAuth.instance.authStateChanges().listen((usuario) {  
+C:\dev\TCC\lib\features\auth\firebase_teste_tela.dart                              54       if (!mounted || FirebaseAuth.instance.currentUser?.uid != uid) return;   
+C:\dev\TCC\lib\features\auth\firebase_teste_tela.dart                              60       if (!mounted || FirebaseAuth.instance.currentUser?.uid != uid) return;   
+C:\dev\TCC\lib\features\auth\firebase_teste_tela.dart                             127       await FirebaseAuth.instance.createUserWithEmailAndPassword(              
+C:\dev\TCC\lib\features\auth\firebase_teste_tela.dart                             141       final uid = FirebaseAuth.instance.currentUser?.uid;                      
+C:\dev\TCC\lib\features\auth\firebase_teste_tela.dart                             147     final uid = FirebaseAuth.instance.currentUser?.uid;                        
+C:\dev\TCC\lib\features\auth\firebase_teste_tela.dart                             157       await FirebaseAuth.instance.signInWithEmailAndPassword(                  
+C:\dev\TCC\lib\features\auth\firebase_teste_tela.dart                             173       await FirebaseAuth.instance.signOut();                                   
+C:\dev\TCC\lib\features\auth\firebase_teste_tela.dart                             185       () => FirebaseAuth.instance.sendPasswordResetEmail(email: email),        
+C:\dev\TCC\lib\features\auth\firebase_teste_tela.dart                             193     final usuario = FirebaseAuth.instance.currentUser;                         
+C:\dev\TCC\lib\features\auth\firebase_teste_tela.dart                             205       final atual = FirebaseAuth.instance.currentUser;                         
+C:\dev\TCC\lib\features\auth\firebase_teste_tela.dart                             253     final usuario = FirebaseAuth.instance.currentUser;                         
+C:\dev\TCC\lib\features\auth\firebase_teste_tela.dart                             260       final atual = FirebaseAuth.instance.currentUser;                         
+C:\dev\TCC\lib\features\auth\firebase_teste_tela.dart                             285                 stream: FirebaseAuth.instance.authStateChanges(),              
+C:\dev\TCC\lib\features\auth\screens\account_link_preflight_screen.dart           110       final current = FirebaseAuth.instance.currentUser;                       
+C:\dev\TCC\lib\features\auth\services\account_link_proof_adapters.dart             45   }) : _auth = auth ?? FirebaseAuth.instance;                                  
+C:\dev\TCC\lib\features\auth\services\firebase_identity_provider.dart               9       : _auth = auth ?? FirebaseAuth.instance;                                 
+C:\dev\TCC\lib\features\auth\services\firebase_identity_provider.dart              34     final credential = await _auth.signInWithEmailAndPassword(                 
+C:\dev\TCC\lib\features\auth\services\firebase_identity_provider.dart              50     final credential = await _auth.createUserWithEmailAndPassword(             
+C:\dev\TCC\lib\features\auth\services\pending_local_link_cancellation.dart         61       final count = await txn.update(                                          
+C:\dev\TCC\lib\features\checkin\domain\historico_calculos.dart                     33     if (data != null) diasComCheckin.add(data);                                
+C:\dev\TCC\lib\features\checkin\screens\questionario_screen.dart                  243             _escalasRespondidas.add(_pagina);                                  
+C:\dev\TCC\lib\features\checkin\screens\resultado_grafico_screen.dart            1366       lista.add({                                                              
+C:\dev\TCC\lib\features\checkin\screens\resultado_grafico_screen.dart            1383       lista.add({                                                              
+C:\dev\TCC\lib\features\checkin\screens\resultado_grafico_screen.dart            1400       lista.add({                                                              
+C:\dev\TCC\lib\features\checkin\screens\resultado_grafico_screen.dart            1426       lista.add({                                                              
+C:\dev\TCC\lib\features\history\firebase_historico_tela.dart                       18     _uidInicial = FirebaseAuth.instance.currentUser?.uid;                      
+C:\dev\TCC\lib\features\history\firebase_historico_tela.dart                       29         FirebaseAuth.instance.currentUser?.uid != _uidInicial) {               
+C:\dev\TCC\lib\features\history\firebase_historico_tela.dart                       45           if (FirebaseAuth.instance.currentUser?.uid != _uidInicial) {         
+C:\dev\TCC\lib\features\profile\services\foto_perfil_service.dart                  54         await arquivo.delete();                                                
+C:\dev\TCC\lib\features\therapist\services\vinculo_service.dart                    48       await db.update(                                                         
+C:\dev\TCC\lib\features\therapist\services\vinculo_service.dart                    91     final alterados = await db.update('vinculos_terapeuticos',                 
+C:\dev\TCC\lib\services\database_service.dart                                     534     await db.update(                                                           
+C:\dev\TCC\lib\services\database_service.dart                                     591     return db.update(                                                          
+C:\dev\TCC\lib\services\database_service.dart                                     608     return db.update(                                                          
+C:\dev\TCC\lib\services\database_service.dart                                     622     return db.update(                                                          
+C:\dev\TCC\lib\services\database_service.dart                                     688       await txn.delete(                                                        
+C:\dev\TCC\lib\services\database_service.dart                                     693       await txn.delete('checkins', where: 'usuario_id = ?', whereArgs: [id]);  
+C:\dev\TCC\lib\services\database_service.dart                                     694       await txn.delete('avaliacoes', where: 'usuario_id = ?', whereArgs: [id]);
+C:\dev\TCC\lib\services\database_service.dart                                     695       await txn.delete(                                                        
+C:\dev\TCC\lib\services\database_service.dart                                     700       return txn.delete('usuarios', where: 'id = ?', whereArgs: [id]);         
+C:\dev\TCC\lib\services\database_service.dart                                     735       await txn.delete('checkins', where: 'usuario_id = ?', whereArgs: [id]);  
+C:\dev\TCC\lib\services\database_service.dart                                     736       await txn.delete('avaliacoes', where: 'usuario_id = ?', whereArgs: [id]);
+C:\dev\TCC\lib\services\database_service.dart                                     737       await txn.delete(                                                        
+C:\dev\TCC\lib\services\database_service.dart                                     742       return txn.delete('usuarios', where: 'id = ?', whereArgs: [id]);         
+C:\dev\TCC\lib\services\database_service.dart                                     841       return txn.delete(                                                       
+C:\dev\TCC\lib\services\firebase_conta_vinculo_service.dart                        93     final auth = FirebaseAuth.instance;                                        
+C:\dev\TCC\lib\services\firebase_conta_vinculo_service.dart                        96       final cred = await auth.signInWithEmailAndPassword(                      
+C:\dev\TCC\lib\services\firebase_conta_vinculo_service.dart                       137     final auth = FirebaseAuth.instance;                                        
+C:\dev\TCC\lib\services\firebase_conta_vinculo_service.dart                       141       final cred = await auth.signInWithEmailAndPassword(                      
+C:\dev\TCC\lib\services\firebase_perfil_service.dart                               10       FirebaseFirestore.instance.collection('usuarios');                       
+C:\dev\TCC\lib\services\firebase_perfil_service.dart                               13     final usuario = FirebaseAuth.instance.currentUser;                         
+C:\dev\TCC\lib\services\firebase_perfil_service.dart                               21     await ref.set({                                                            
+C:\dev\TCC\lib\services\firebase_perfil_service.dart                               30     final usuario = FirebaseAuth.instance.currentUser;                         
+C:\dev\TCC\lib\services\firebase_perfil_service.dart                               34     if (FirebaseAuth.instance.currentUser?.uid != uid) {                       
+C:\dev\TCC\lib\services\firebase_registros_service.dart                            10   final FirebaseFirestore _db = FirebaseFirestore.instance;                    
+C:\dev\TCC\lib\services\firebase_registros_service.dart                            13     final uid = FirebaseAuth.instance.currentUser?.uid;                        
+C:\dev\TCC\lib\services\firebase_registros_service.dart                            16     if (FirebaseAuth.instance.currentUser?.uid != uid) {                       
+C:\dev\TCC\lib\services\firebase_registros_service.dart                            47     if (FirebaseAuth.instance.currentUser?.uid != uid) {                       
+C:\dev\TCC\lib\services\firebase_registros_service.dart                            85     if (FirebaseAuth.instance.currentUser?.uid != uid) {                       
+C:\dev\TCC\lib\services\firebase_registros_service.dart                           103       if (FirebaseAuth.instance.currentUser?.uid != uid) {                     
+C:\dev\TCC\lib\services\firebase_registros_service.dart                           106       if (!existente.exists) tx.set(ref, dados);                               
+C:\dev\TCC\lib\services\firebase_registros_service.dart                           108     if (FirebaseAuth.instance.currentUser?.uid != uid) {                       
+C:\dev\TCC\lib\services\firebase_registros_service.dart                           122     if (FirebaseAuth.instance.currentUser?.uid != uid) {                       
+C:\dev\TCC\lib\services\firebase_registros_service.dart                           137     if (FirebaseAuth.instance.currentUser?.uid != uid) {                       
+
+

@@ -1,0 +1,193 @@
+﻿
+  lib\services\database_service.dart:619:  }) async {
+  lib\services\database_service.dart:620:    final db = await database;
+  lib\services\database_service.dart:621:    final credenciais = await _credenciaisNovas(novaSenha);
+  lib\services\database_service.dart:622:    return db.update(
+  lib\services\database_service.dart:623:      'usuarios',
+  lib\services\database_service.dart:624:      credenciais,
+  lib\services\database_service.dart:625:      where: 'id = ?',
+  lib\services\database_service.dart:626:      whereArgs: [id],
+  lib\services\database_service.dart:627:    );
+  lib\services\database_service.dart:628:  }
+  lib\services\database_service.dart:629:
+  lib\services\database_service.dart:630:  // Validação preventiva. Os gatilhos SQLite continuam sendo a proteção final.
+> lib\services\database_service.dart:631:  Future<void> _validarExclusaoUsuario(
+  lib\services\database_service.dart:632:    Transaction txn,
+  lib\services\database_service.dart:633:    int usuarioId,
+  lib\services\database_service.dart:634:  ) async {
+  lib\services\database_service.dart:635:    if (usuarioId <= 0) {
+  lib\services\database_service.dart:636:      throw ArgumentError.value(
+  lib\services\database_service.dart:637:        usuarioId,
+  lib\services\database_service.dart:638:        'usuarioId',
+  lib\services\database_service.dart:639:        'ID de usuário inválido',
+  lib\services\database_service.dart:640:      );
+  lib\services\database_service.dart:641:    }
+  lib\services\database_service.dart:642:
+  lib\services\database_service.dart:643:    final identidades = await txn.query(
+  lib\services\database_service.dart:644:      'identidades_registros',
+  lib\services\database_service.dart:645:      columns: ['id'],
+  lib\services\database_service.dart:646:      where: 'usuario_id = ?',
+  lib\services\database_service.dart:647:      whereArgs: [usuarioId],
+  lib\services\database_service.dart:648:      limit: 1,
+  lib\services\database_service.dart:649:    );
+  lib\services\database_service.dart:650:    if (identidades.isNotEmpty) {
+  lib\services\database_service.dart:651:      throw StateError(
+  lib\services\database_service.dart:652:        'Exclusão bloqueada: usuário possui históricos identificados.',
+  lib\services\database_service.dart:653:      );
+  lib\services\database_service.dart:654:    }
+  lib\services\database_service.dart:655:
+  lib\services\database_service.dart:656:    final lotes = await txn.query(
+  lib\services\database_service.dart:657:      'lotes_migracao',
+  lib\services\database_service.dart:658:      columns: ['id'],
+  lib\services\database_service.dart:659:      where: 'usuario_id = ?',
+  lib\services\database_service.dart:660:      whereArgs: [usuarioId],
+  lib\services\database_service.dart:661:      limit: 1,
+  lib\services\database_service.dart:662:    );
+  lib\services\database_service.dart:663:    if (lotes.isNotEmpty) {
+  lib\services\database_service.dart:664:      throw StateError(
+  lib\services\database_service.dart:665:        'Exclusão bloqueada: usuário possui lotes de migração.',
+  lib\services\database_service.dart:666:      );
+  lib\services\database_service.dart:667:    }
+  lib\services\database_service.dart:668:  }
+  lib\services\database_service.dart:669:
+> lib\services\database_service.dart:670:  Future<int> deletarUsuario(int id) async {
+  lib\services\database_service.dart:671:    if (id <= 0) {
+  lib\services\database_service.dart:672:      throw ArgumentError.value(id, 'id', 'ID de usuário inválido');
+  lib\services\database_service.dart:673:    }
+  lib\services\database_service.dart:674:
+  lib\services\database_service.dart:675:    final db = await database;
+  lib\services\database_service.dart:676:    return db.transaction((txn) async {
+  lib\services\database_service.dart:677:      final usuarios = await txn.query(
+  lib\services\database_service.dart:678:        'usuarios',
+  lib\services\database_service.dart:679:        columns: ['id'],
+  lib\services\database_service.dart:680:        where: 'id = ?',
+  lib\services\database_service.dart:681:        whereArgs: [id],
+  lib\services\database_service.dart:682:        limit: 1,
+  lib\services\database_service.dart:683:      );
+  lib\services\database_service.dart:684:      if (usuarios.isEmpty) return 0;
+  lib\services\database_service.dart:685:
+> lib\services\database_service.dart:686:      await _validarExclusaoUsuario(txn, id);
+  lib\services\database_service.dart:687:
+  lib\services\database_service.dart:688:      await txn.delete(
+  lib\services\database_service.dart:689:        'vinculos_contas_firebase',
+  lib\services\database_service.dart:690:        where: 'usuario_id = ?',
+  lib\services\database_service.dart:691:        whereArgs: [id],
+  lib\services\database_service.dart:692:      );
+  lib\services\database_service.dart:693:      await txn.delete('checkins', where: 'usuario_id = ?', whereArgs: [id]);
+  lib\services\database_service.dart:694:      await txn.delete('avaliacoes', where: 'usuario_id = ?', whereArgs: [id]);
+  lib\services\database_service.dart:695:      await txn.delete(
+  lib\services\database_service.dart:696:        'vinculos_terapeuticos',
+  lib\services\database_service.dart:697:        where: 'terapeuta_id = ? OR paciente_id = ?',
+  lib\services\database_service.dart:698:        whereArgs: [id, id],
+  lib\services\database_service.dart:699:      );
+  lib\services\database_service.dart:700:      return txn.delete('usuarios', where: 'id = ?', whereArgs: [id]);
+  lib\services\database_service.dart:701:    });
+  lib\services\database_service.dart:702:  }
+  lib\services\database_service.dart:703:
+> lib\services\database_service.dart:704:  Future<int> deletarUsuarioLocalSemVinculo(int id) async {
+  lib\services\database_service.dart:705:    if (id <= 0) {
+  lib\services\database_service.dart:706:      throw ArgumentError.value(id, 'id', 'ID de usuário inválido');
+  lib\services\database_service.dart:707:    }
+  lib\services\database_service.dart:708:
+  lib\services\database_service.dart:709:    final db = await database;
+  lib\services\database_service.dart:710:    return db.transaction((txn) async {
+  lib\services\database_service.dart:711:      final vinculos = await txn.query(
+  lib\services\database_service.dart:712:        'vinculos_contas_firebase',
+  lib\services\database_service.dart:713:        columns: ['usuario_id'],
+  lib\services\database_service.dart:714:        where: 'usuario_id = ?',
+  lib\services\database_service.dart:715:        whereArgs: [id],
+  lib\services\database_service.dart:716:        limit: 1,
+  lib\services\database_service.dart:717:      );
+  lib\services\database_service.dart:718:      if (vinculos.isNotEmpty) {
+  lib\services\database_service.dart:719:        throw StateError(
+  lib\services\database_service.dart:720:          'Exclusão bloqueada: existe um registro de vínculo Firebase.',
+  lib\services\database_service.dart:721:        );
+  lib\services\database_service.dart:722:      }
+  lib\services\database_service.dart:723:
+  lib\services\database_service.dart:724:      final usuarios = await txn.query(
+  lib\services\database_service.dart:725:        'usuarios',
+  lib\services\database_service.dart:726:        columns: ['id'],
+  lib\services\database_service.dart:727:        where: 'id = ?',
+  lib\services\database_service.dart:728:        whereArgs: [id],
+  lib\services\database_service.dart:729:        limit: 1,
+  lib\services\database_service.dart:730:      );
+  lib\services\database_service.dart:731:      if (usuarios.isEmpty) return 0;
+  lib\services\database_service.dart:732:
+> lib\services\database_service.dart:733:      await _validarExclusaoUsuario(txn, id);
+  lib\services\database_service.dart:734:
+  lib\services\database_service.dart:735:      await txn.delete('checkins', where: 'usuario_id = ?', whereArgs: [id]);
+  lib\services\database_service.dart:736:      await txn.delete('avaliacoes', where: 'usuario_id = ?', whereArgs: [id]);
+  lib\services\database_service.dart:737:      await txn.delete(
+  lib\services\database_service.dart:738:        'vinculos_terapeuticos',
+  lib\services\database_service.dart:739:        where: 'terapeuta_id = ? OR paciente_id = ?',
+  lib\services\database_service.dart:740:        whereArgs: [id, id],
+  lib\services\database_service.dart:741:      );
+  lib\services\database_service.dart:742:      return txn.delete('usuarios', where: 'id = ?', whereArgs: [id]);
+  lib\services\database_service.dart:743:    });
+  lib\services\database_service.dart:744:  }
+  lib\services\database_service.dart:745:
+  lib\services\database_service.dart:746:  Future<int> inserirCheckin({
+  lib\services\database_service.dart:747:    required int usuarioId,
+  lib\services\database_service.dart:748:    required String dataIso,
+  lib\services\database_service.dart:749:    required String dataFormatada,
+  lib\services\database_service.dart:750:    required String sentimento,
+  lib\services\database_service.dart:751:    required String emoji,
+  lib\services\database_service.dart:752:    required double cansaco,
+  lib\services\database_service.dart:753:    required double ansiedade,
+  lib\services\database_service.dart:754:    required double sono,
+  lib\services\database_service.dart:755:    double? produtividade,
+  lib\services\database_service.dart:756:    String? atividadeSignificativa,
+  lib\services\database_service.dart:757:    required int bemEstar,
+  lib\services\database_service.dart:758:    required String principalPonto,
+  lib\services\database_service.dart:759:    required int corValor,
+  lib\services\database_service.dart:760:    String humorFrequencia = '',
+  lib\services\database_service.dart:761:    String interesseFrequencia = '',
+  lib\services\database_service.dart:762:    String exaustaoBurnout = '',
+  lib\services\database_service.dart:763:    String distanciamentoBurnout = '',
+  lib\services\database_service.dart:764:    String? operacaoId,
+  lib\services\database_service.dart:765:  }) async {
+  lib\services\database_service.dart:766:    final db = await database;
+  lib\services\database_service.dart:767:    if (operacaoId != null && operacaoId.isEmpty) {
+  lib\services\database_service.dart:768:      throw ArgumentError('Identificador de operação vazio');
+  lib\services\database_service.dart:769:    }
+  lib\services\database_service.dart:770:    final dados = <String, Object?>{
+  lib\services\database_service.dart:771:      'usuario_id': usuarioId,
+  lib\services\database_service.dart:772:      'data_iso': dataIso,
+  lib\services\database_service.dart:773:      'data_formatada': dataFormatada,
+  lib\services\database_service.dart:774:      'sentimento': sentimento,
+  lib\services\database_service.dart:775:      'emoji': emoji,
+  lib\services\database_service.dart:776:      'cansaco': cansaco,
+  lib\services\database_service.dart:777:      'ansiedade': ansiedade,
+  lib\services\database_service.dart:778:      'sono': sono,
+  lib\services\database_service.dart:779:      'produtividade': produtividade,
+  lib\services\database_service.dart:780:      'atividade_significativa': atividadeSignificativa,
+  lib\services\database_service.dart:781:      'bem_estar': bemEstar,
+  lib\services\database_service.dart:782:      'principal_ponto': principalPonto,
+  lib\services\database_service.dart:783:      'cor_valor': corValor,
+  lib\services\database_service.dart:784:      'humor_frequencia': humorFrequencia,
+  lib\services\database_service.dart:785:      'interesse_frequencia': interesseFrequencia,
+  lib\services\database_service.dart:786:      'exaustao_burnout': exaustaoBurnout,
+  lib\services\database_service.dart:787:      'distanciamento_burnout': distanciamentoBurnout,
+  lib\services\database_service.dart:788:      'criado_em': DateTime.now().toIso8601String(),
+  lib\services\database_service.dart:789:      'operacao_id': operacaoId,
+  lib\services\database_service.dart:790:    };
+  lib\services\database_service.dart:791:    if (operacaoId == null) return db.insert('checkins', dados);
+  lib\services\database_service.dart:792:    return db.transaction((txn) async {
+  lib\services\database_service.dart:793:      final existentes = await txn.query('checkins',
+  lib\services\database_service.dart:794:          columns: ['id'],
+  lib\services\database_service.dart:795:          where: 'usuario_id = ? AND operacao_id = ?',
+  lib\services\database_service.dart:796:          whereArgs: [usuarioId, operacaoId],
+  lib\services\database_service.dart:797:          limit: 1);
+  lib\services\database_service.dart:798:      if (existentes.isNotEmpty) return existentes.first['id'] as int;
+  lib\services\database_service.dart:799:      return txn.insert('checkins', dados);
+  lib\services\database_service.dart:800:    });
+  lib\services\database_service.dart:801:  }
+  lib\services\database_service.dart:802:
+  lib\services\database_service.dart:803:  Future<List<Map<String, dynamic>>> listarCheckins(int usuarioId) async {
+  lib\services\database_service.dart:804:    final db = await database;
+  lib\services\database_service.dart:805:    return db.query(
+  lib\services\database_service.dart:806:      'checkins',
+  lib\services\database_service.dart:807:      where: 'usuario_id = ?',
+  lib\services\database_service.dart:808:      whereArgs: [usuarioId],
+
+

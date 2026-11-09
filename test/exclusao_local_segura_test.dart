@@ -16,7 +16,9 @@ void main() {
   late DatabaseService servico;
 
   setUp(() async {
-    diretorio = await Directory.systemTemp.createTemp('mindful_exclusao_');
+    diretorio = await Directory.systemTemp.createTemp(
+      'mindful_exclusao_',
+    );
 
     banco = await databaseFactoryFfi.openDatabase(
       '${diretorio.path}/teste.db',
@@ -45,22 +47,26 @@ void main() {
           await db.execute('''
             CREATE TABLE checkins (
               id INTEGER PRIMARY KEY,
-              usuario_id INTEGER NOT NULL REFERENCES usuarios(id)
+              usuario_id INTEGER NOT NULL
+                REFERENCES usuarios(id)
             )
           ''');
 
           await db.execute('''
             CREATE TABLE avaliacoes (
               id INTEGER PRIMARY KEY,
-              usuario_id INTEGER NOT NULL REFERENCES usuarios(id)
+              usuario_id INTEGER NOT NULL
+                REFERENCES usuarios(id)
             )
           ''');
 
           await db.execute('''
             CREATE TABLE vinculos_terapeuticos (
               id INTEGER PRIMARY KEY,
-              terapeuta_id INTEGER NOT NULL REFERENCES usuarios(id),
-              paciente_id INTEGER NOT NULL REFERENCES usuarios(id)
+              terapeuta_id INTEGER NOT NULL
+                REFERENCES usuarios(id),
+              paciente_id INTEGER NOT NULL
+                REFERENCES usuarios(id)
             )
           ''');
 
@@ -69,6 +75,30 @@ void main() {
               id INTEGER PRIMARY KEY,
               usuario_id INTEGER NOT NULL,
               evento TEXT NOT NULL,
+              criado_em TEXT NOT NULL
+            )
+          ''');
+
+          // Tabelas necessárias para a validação
+          // preventiva de exclusão SQLite v15.
+          await db.execute('''
+            CREATE TABLE identidades_registros (
+              id INTEGER PRIMARY KEY,
+              usuario_id INTEGER NOT NULL
+                REFERENCES usuarios(id),
+              tipo TEXT NOT NULL,
+              registro_local_id INTEGER NOT NULL,
+              global_id TEXT NOT NULL UNIQUE,
+              criado_em TEXT NOT NULL
+            )
+          ''');
+
+          await db.execute('''
+            CREATE TABLE lotes_migracao (
+              id INTEGER PRIMARY KEY,
+              usuario_id INTEGER NOT NULL
+                REFERENCES usuarios(id),
+              estado TEXT NOT NULL,
               criado_em TEXT NOT NULL
             )
           ''');
@@ -81,11 +111,25 @@ void main() {
     await banco.insert('usuarios', {'id': 1});
     await banco.insert('usuarios', {'id': 2});
 
-    await banco.insert('checkins', {'id': 11, 'usuario_id': 1});
-    await banco.insert('checkins', {'id': 22, 'usuario_id': 2});
+    await banco.insert('checkins', {
+      'id': 11,
+      'usuario_id': 1,
+    });
 
-    await banco.insert('avaliacoes', {'id': 11, 'usuario_id': 1});
-    await banco.insert('avaliacoes', {'id': 22, 'usuario_id': 2});
+    await banco.insert('checkins', {
+      'id': 22,
+      'usuario_id': 2,
+    });
+
+    await banco.insert('avaliacoes', {
+      'id': 11,
+      'usuario_id': 1,
+    });
+
+    await banco.insert('avaliacoes', {
+      'id': 22,
+      'usuario_id': 2,
+    });
 
     await banco.insert('vinculos_terapeuticos', {
       'id': 1,
@@ -103,7 +147,10 @@ void main() {
 
   tearDown(() async {
     await banco.close();
-    await diretorio.delete(recursive: true);
+
+    if (await diretorio.exists()) {
+      await diretorio.delete(recursive: true);
+    }
   });
 
   Future<void> adicionarVinculo(String estado) async {
@@ -114,23 +161,61 @@ void main() {
     });
   }
 
+  Future<void> adicionarIdentidade() async {
+    await banco.insert('identidades_registros', {
+      'id': 1,
+      'usuario_id': 1,
+      'tipo': 'checkin',
+      'registro_local_id': 11,
+      'global_id': 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      'criado_em': '2026-11-09T12:00:00',
+    });
+  }
+
+  Future<void> adicionarIdentidadeAvaliacao() async {
+    await banco.insert('identidades_registros', {
+      'id': 1,
+      'usuario_id': 1,
+      'tipo': 'avaliacao',
+      'registro_local_id': 11,
+      'global_id': 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+      'criado_em': '2026-11-09T12:00:00',
+    });
+  }
+
+  Future<void> adicionarLote() async {
+    await banco.insert('lotes_migracao', {
+      'id': 1,
+      'usuario_id': 1,
+      'estado': 'pendente',
+      'criado_em': '2026-11-09T12:00:00',
+    });
+  }
+
   Future<void> verificarDadosPreservados() async {
     expect(
       await banco.query('usuarios', where: 'id = 1'),
       isNotEmpty,
     );
+
     expect(
       await banco.query('checkins', where: 'usuario_id = 1'),
       isNotEmpty,
     );
+
     expect(
       await banco.query('avaliacoes', where: 'usuario_id = 1'),
       isNotEmpty,
     );
+
     expect(
-      await banco.query('vinculos_terapeuticos', where: 'terapeuta_id = 1'),
+      await banco.query(
+        'vinculos_terapeuticos',
+        where: 'terapeuta_id = 1',
+      ),
       isNotEmpty,
     );
+
     expect(
       await banco.query('auditoria_cancelamento_vinculo_local'),
       hasLength(1),
@@ -138,7 +223,11 @@ void main() {
   }
 
   group('Exclusao local segura', () {
-    for (final estado in ['pendente', 'confirmado', 'revogado']) {
+    for (final estado in [
+      'pendente',
+      'confirmado',
+      'revogado',
+    ]) {
       test('bloqueia exclusao com vinculo $estado', () async {
         await adicionarVinculo(estado);
 
@@ -161,19 +250,39 @@ void main() {
 
       expect(excluidos, 1);
 
-      expect(await banco.query('usuarios', where: 'id = 1'), isEmpty);
-      expect(await banco.query('checkins', where: 'usuario_id = 1'), isEmpty);
-      expect(await banco.query('avaliacoes', where: 'usuario_id = 1'), isEmpty);
       expect(
-        await banco.query('vinculos_terapeuticos', where: 'terapeuta_id = 1'),
+        await banco.query('usuarios', where: 'id = 1'),
         isEmpty,
       );
 
-      expect(await banco.query('usuarios', where: 'id = 2'), hasLength(1));
+      expect(
+        await banco.query('checkins', where: 'usuario_id = 1'),
+        isEmpty,
+      );
+
+      expect(
+        await banco.query('avaliacoes', where: 'usuario_id = 1'),
+        isEmpty,
+      );
+
+      expect(
+        await banco.query(
+          'vinculos_terapeuticos',
+          where: 'terapeuta_id = 1',
+        ),
+        isEmpty,
+      );
+
+      expect(
+        await banco.query('usuarios', where: 'id = 2'),
+        hasLength(1),
+      );
+
       expect(
         await banco.query('checkins', where: 'usuario_id = 2'),
         hasLength(1),
       );
+
       expect(
         await banco.query('avaliacoes', where: 'usuario_id = 2'),
         hasLength(1),
@@ -186,7 +295,11 @@ void main() {
     });
 
     test('usuario inexistente retorna zero', () async {
-      expect(await servico.deletarUsuarioLocalSemVinculo(999), 0);
+      expect(
+        await servico.deletarUsuarioLocalSemVinculo(999),
+        0,
+      );
+
       await verificarDadosPreservados();
     });
 
@@ -195,6 +308,7 @@ void main() {
         servico.deletarUsuarioLocalSemVinculo(0),
         throwsArgumentError,
       );
+
       await verificarDadosPreservados();
     });
 
@@ -214,6 +328,115 @@ void main() {
       );
 
       await verificarDadosPreservados();
+    });
+
+    test('bloqueia exclusao com identidade de migracao', () async {
+      await adicionarIdentidade();
+
+      await expectLater(
+        servico.deletarUsuarioLocalSemVinculo(1),
+        throwsStateError,
+      );
+
+      await verificarDadosPreservados();
+
+      expect(
+        await banco.query('identidades_registros'),
+        hasLength(1),
+      );
+    });
+
+    test('bloqueia exclusao com lote de migracao', () async {
+      await adicionarLote();
+
+      await expectLater(
+        servico.deletarUsuarioLocalSemVinculo(1),
+        throwsStateError,
+      );
+
+      await verificarDadosPreservados();
+
+      expect(
+        await banco.query('lotes_migracao'),
+        hasLength(1),
+      );
+    });
+
+    test('bloqueia exclusao com identidade e lote', () async {
+      await adicionarIdentidade();
+      await adicionarLote();
+
+      await expectLater(
+        servico.deletarUsuarioLocalSemVinculo(1),
+        throwsStateError,
+      );
+
+      await verificarDadosPreservados();
+
+      expect(
+        await banco.query('identidades_registros'),
+        hasLength(1),
+      );
+
+      expect(
+        await banco.query('lotes_migracao'),
+        hasLength(1),
+      );
+    });
+
+    // Parte 9.8.3F.9.2:
+    // Proteção de usuário com avaliação identificada.
+    test('bloqueia exclusao de usuario com avaliacao identificada', () async {
+      await adicionarIdentidadeAvaliacao();
+
+      await expectLater(
+        servico.deletarUsuarioLocalSemVinculo(1),
+        throwsStateError,
+      );
+
+      await verificarDadosPreservados();
+
+      expect(
+        await banco.query(
+          'identidades_registros',
+          where: 'usuario_id = ? AND tipo = ?',
+          whereArgs: [1, 'avaliacao'],
+        ),
+        hasLength(1),
+      );
+
+      expect(
+        await banco.query(
+          'avaliacoes',
+          where: 'id = ? AND usuario_id = ?',
+          whereArgs: [11, 1],
+        ),
+        hasLength(1),
+      );
+
+      // Confirma que o outro usuário não foi afetado.
+      expect(
+        await banco.query(
+          'usuarios',
+          where: 'id = ?',
+          whereArgs: [2],
+        ),
+        hasLength(1),
+      );
+
+      expect(
+        await banco.query(
+          'avaliacoes',
+          where: 'usuario_id = ?',
+          whereArgs: [2],
+        ),
+        hasLength(1),
+      );
+
+      expect(
+        await banco.rawQuery('PRAGMA foreign_key_check'),
+        isEmpty,
+      );
     });
   });
 }

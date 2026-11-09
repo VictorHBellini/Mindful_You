@@ -1,0 +1,13 @@
+﻿
+test\exclusao_local_coordinator_test.dart:64:      expect(resultado, ResultadoExclusaoLocal.sessaoInvalida);
+test\exclusao_local_coordinator_test.dart:83:      expect(resultado, ResultadoExclusaoLocal.sessaoAlterada);
+test\exclusao_local_coordinator_test.dart:100:      expect(resultado, ResultadoExclusaoLocal.sessaoAlterada);
+test\exclusao_local_coordinator_test.dart:117:      expect(resultado, ResultadoExclusaoLocal.senhaIncorreta);
+test\exclusao_local_coordinator_test.dart:132:      expect(resultado, ResultadoExclusaoLocal.senhaIncorreta);
+test\exclusao_local_coordinator_test.dart:148:      expect(resultado, ResultadoExclusaoLocal.sessaoAlterada);
+test\exclusao_local_coordinator_test.dart:165:        ResultadoExclusaoLocal.vinculoOuOperacaoBloqueada,
+test\exclusao_local_coordinator_test.dart:181:      expect(resultado, ResultadoExclusaoLocal.contaNaoEncontrada);
+test\exclusao_local_coordinator_test.dart:196:      expect(resultado, ResultadoExclusaoLocal.excluido);
+test\historico_cache_sessao_test.dart:34:    await SessionService.encerrar();
+
+

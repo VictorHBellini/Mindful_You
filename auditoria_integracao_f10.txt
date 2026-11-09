@@ -1,0 +1,50 @@
+﻿
+lib\features\assessment\services\avaliacao_service.dart:37:    final db = await DatabaseService.instance.database;
+lib\features\assessment\services\avaliacao_service.dart:75:    final db = await DatabaseService.instance.database;
+lib\features\auth\gerenciar_usuarios_tela.dart:58:      _futureUsuarios = DatabaseService.instance.listarTodos();
+lib\features\auth\gerenciar_usuarios_tela.dart:157:      _futureUsuarios = DatabaseService.instance.listarTodos();
+lib\features\auth\gerenciar_usuarios_tela.dart:236:                await DatabaseService.instance.atualizarUsuario(
+lib\features\auth\gerenciar_usuarios_tela.dart:243:                  await DatabaseService.instance.atualizarSenha(
+lib\features\auth\gerenciar_usuarios_tela.dart:250:                  await DatabaseService.instance.atualizarFoto(
+lib\features\auth\gerenciar_usuarios_tela.dart:543:  Future<void> _deletarUsuario(Map<String, dynamic> usuario) async {
+lib\features\auth\gerenciar_usuarios_tela.dart:592:    await DatabaseService.instance.deletarUsuario(id);
+lib\features\auth\gerenciar_usuarios_tela.dart:719:                onExcluir: () => _deletarUsuario(usuarios[index]),
+lib\features\auth\screens\account_link_preflight_screen.dart:102:      final db = await DatabaseService.instance.database;
+lib\features\auth\screens\cadastro_screen.dart:54:      final usuarioId = await DatabaseService.instance.criarUsuario(
+lib\features\auth\screens\login_screen.dart:42:    final usuario = await DatabaseService.instance.buscarPorEmail(email);
+lib\features\auth\screens\login_screen.dart:54:    final senhaValida = await DatabaseService.instance.senhaCorreta(
+lib\features\auth\services\account_link_proof_adapters.dart:12:  }) : _database = database ?? DatabaseService.instance;
+lib\features\auth\services\account_link_proof_adapters.dart:93:  }) : _database = database ?? DatabaseService.instance;
+lib\features\auth\services\pending_local_link_cancellation.dart:32:    final db = await DatabaseService.instance.database;
+lib\features\auth\services\session_service.dart:31:    final db = await DatabaseService.instance.database;
+lib\features\checkin\data\checkin_repository.dart:96:  final linhas = await DatabaseService.instance.listarCheckins(usuarioId);
+lib\features\checkin\data\checkin_repository.dart:105:  await DatabaseService.instance.inserirCheckin(
+lib\features\checkin\data\checkin_repository.dart:128:  await DatabaseService.instance.limparCheckins(usuarioId);
+lib\features\profile\perfil_tela.dart:81:      final usuario = await DatabaseService.instance.buscarPorEmail(email);
+lib\features\profile\perfil_tela.dart:135:    await DatabaseService.instance.atualizarUsuario(
+lib\features\profile\perfil_tela.dart:174:      await DatabaseService.instance.atualizarFoto(
+lib\features\profile\perfil_tela.dart:1105:                                            : await DatabaseService.instance
+lib\features\profile\perfil_tela.dart:1118:                                            await DatabaseService.instance
+lib\features\profile\perfil_tela.dart:1133:                                        await DatabaseService.instance
+lib\features\profile\perfil_tela.dart:1275:                        await DatabaseService.instance.atualizarFoto(
+lib\features\settings\configuracoes_tela.dart:150:      final db = await DatabaseService.instance.database;
+lib\features\settings\services\exclusao_local_adapters.dart:16:      : _database = database ?? DatabaseService.instance;
+lib\features\settings\services\exclusao_local_adapters.dart:31:      : _database = database ?? DatabaseService.instance;
+lib\features\settings\services\exclusao_local_adapters.dart:37:    return _database.deletarUsuarioLocalSemVinculo(usuarioId);
+lib\features\therapist\painel_terapeuta_tela.dart:46:      final db = await DatabaseService.instance.database;
+lib\features\therapist\services\vinculo_service.dart:16:    final db = await DatabaseService.instance.database;
+lib\features\therapist\services\vinculo_service.dart:27:    final db = await DatabaseService.instance.database;
+lib\features\therapist\services\vinculo_service.dart:69:    final db = await DatabaseService.instance.database;
+lib\features\therapist\services\vinculo_service.dart:78:    final db = await DatabaseService.instance.database;
+lib\features\therapist\services\vinculo_service.dart:90:    final db = await DatabaseService.instance.database;
+lib\features\therapist\services\vinculo_service.dart:107:    final db = await DatabaseService.instance.database;
+lib\features\therapist\services\vinculo_service.dart:129:    final db = await DatabaseService.instance.database;
+lib\features\therapist\services\vinculo_service.dart:172:    final db = await DatabaseService.instance.database;
+lib\services\database_service.dart:670:  Future<int> deletarUsuario(int id) async {
+lib\services\database_service.dart:704:  Future<int> deletarUsuarioLocalSemVinculo(int id) async {
+lib\services\database_service.dart:813:  Future<int> limparCheckins(int usuarioId) async {
+lib\services\firebase_conta_vinculo_service.dart:40:    final db = await DatabaseService.instance.database;
+lib\services\firebase_conta_vinculo_service.dart:152:      final dbPre = await DatabaseService.instance.database;
+lib\services\firebase_conta_vinculo_service.dart:211:      final db = await DatabaseService.instance.database;
+
+

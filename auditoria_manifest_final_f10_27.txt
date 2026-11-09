@@ -1,0 +1,13 @@
+﻿
+build\app\intermediates\merged_manifests\release\processReleaseManifest\AndroidManifest.xml:3:    package="com.mindfulyou.app"
+build\app\intermediates\merged_manifests\release\processReleaseManifest\AndroidManifest.xml:8:        android:minSdkVersion="24"
+build\app\intermediates\merged_manifests\release\processReleaseManifest\AndroidManifest.xml:9:        android:targetSdkVersion="36" />
+build\app\intermediates\merged_manifests\release\processReleaseManifest\AndroidManifest.xml:25:    <uses-permission android:name="android.permission.INTERNET" />
+build\app\intermediates\merged_manifests\release\processReleaseManifest\AndroidManifest.xml:26:    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+build\app\intermediates\merged_manifests\release\processReleaseManifest\AndroidManifest.xml:27:    <uses-permission android:name="com.google.android.providers.gsf.permission.READ_GSERVICES" />
+build\app\intermediates\merged_manifests\release\processReleaseManifest\AndroidManifest.xml:28:    <uses-permission android:name="android.permission.WAKE_LOCK" /> <!-- Required by older versions of Google Play services to create IID tokens -->
+build\app\intermediates\merged_manifests\release\processReleaseManifest\AndroidManifest.xml:29:    <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
+build\app\intermediates\merged_manifests\release\processReleaseManifest\AndroidManifest.xml:35:    <uses-permission android:name="com.mindfulyou.app.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+build\app\intermediates\merged_manifests\release\processReleaseManifest\AndroidManifest.xml:39:        android:allowBackup="false"
+
+

@@ -1,0 +1,16 @@
+﻿
+test\migracao_sqlite_v15_test.dart:277:  test('rollback preserva versao 14', () {
+test\migracao_sqlite_v15_test.dart:281:  test('rollback restaura os gatilhos antigos', () {
+test\migracao_sqlite_v15_test.dart:296:  test('rollback preserva historicos', () {
+test\migracao_sqlite_v15_test.dart:301:  test('migra banco existente de v14 para v15', () async {
+test\migracao_sqlite_v15_test.dart:305:  test('substitui gatilhos antigos pelos novos', () async {
+test\migracao_sqlite_v15_test.dart:320:  test('preserva os dois checkins', () async {
+test\migracao_sqlite_v15_test.dart:330:  test('preserva as duas avaliacoes', () async {
+test\migracao_sqlite_v15_test.dart:340:  test('preserva identidades globais', () async {
+test\migracao_sqlite_v15_test.dart:348:  test('bloqueia alteracao de checkin identificado', () async {
+test\migracao_sqlite_v15_test.dart:360:  test('bloqueia alteracao de avaliacao identificada', () async {
+test\migracao_sqlite_v15_test.dart:372:  test('permite editar checkin sem identidade', () async {
+test\migracao_sqlite_v15_test.dart:383:  test('permite editar avaliacao sem identidade', () async {
+test\migracao_sqlite_v15_test.dart:394:  test('mantem integridade referencial', () async {
+
+

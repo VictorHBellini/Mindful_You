@@ -1,0 +1,7 @@
+﻿
+  android\app\src\debug\AndroidManifest.xml:1:<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  android\app\src\debug\AndroidManifest.xml:2:    <application
+> android\app\src\debug\AndroidManifest.xml:3:        android:usesCleartextTraffic="true" />
+  android\app\src\debug\AndroidManifest.xml:4:</manifest>
+
+

@@ -1,0 +1,136 @@
+﻿
+  lib\features\settings\configuracoes_tela.dart:157:        limit: 1,
+  lib\features\settings\configuracoes_tela.dart:158:      );
+  lib\features\settings\configuracoes_tela.dart:159:
+  lib\features\settings\configuracoes_tela.dart:160:      if (!mounted || usuario.length != 1) return;
+  lib\features\settings\configuracoes_tela.dart:161:
+> lib\features\settings\configuracoes_tela.dart:162:      final coordinator = ExclusaoLocalCoordinator(
+  lib\features\settings\configuracoes_tela.dart:163:        sessao: SessaoLocalAdapter(),
+  lib\features\settings\configuracoes_tela.dart:164:        senha: SenhaLocalAdapter(),
+  lib\features\settings\configuracoes_tela.dart:165:        repositorio: RepositorioExclusaoLocalAdapter(),
+  lib\features\settings\configuracoes_tela.dart:166:      );
+  lib\features\settings\configuracoes_tela.dart:167:
+  lib\features\settings\configuracoes_tela.dart:168:      final resultado = await coordinator.executar(
+  lib\features\settings\configuracoes_tela.dart:169:        senhaDigitada: senha,
+  lib\features\settings\configuracoes_tela.dart:170:        usuarioEsperadoId: sessao.id,
+  lib\features\settings\configuracoes_tela.dart:171:      );
+  lib\features\settings\configuracoes_tela.dart:172:
+  lib\features\settings\configuracoes_tela.dart:173:      if (!mounted) return;
+  lib\features\settings\configuracoes_tela.dart:174:
+  lib\features\settings\configuracoes_tela.dart:175:      switch (resultado) {
+> lib\features\settings\configuracoes_tela.dart:176:        case ResultadoExclusaoLocal.excluido:
+  lib\features\settings\configuracoes_tela.dart:177:          contaExcluida = true;
+  lib\features\settings\configuracoes_tela.dart:178:          break;
+  lib\features\settings\configuracoes_tela.dart:179:
+> lib\features\settings\configuracoes_tela.dart:180:        case ResultadoExclusaoLocal.senhaIncorreta:
+  lib\features\settings\configuracoes_tela.dart:181:          ScaffoldMessenger.of(context).showSnackBar(
+  lib\features\settings\configuracoes_tela.dart:182:            const SnackBar(
+  lib\features\settings\configuracoes_tela.dart:183:              content: Text('Senha incorreta. Nenhum dado foi excluído.'),
+  lib\features\settings\configuracoes_tela.dart:184:            ),
+  lib\features\settings\configuracoes_tela.dart:185:          );
+  lib\features\settings\configuracoes_tela.dart:186:          return;
+  lib\features\settings\configuracoes_tela.dart:187:
+> lib\features\settings\configuracoes_tela.dart:188:        case ResultadoExclusaoLocal.sessaoInvalida:
+> lib\features\settings\configuracoes_tela.dart:189:        case ResultadoExclusaoLocal.sessaoAlterada:
+  lib\features\settings\configuracoes_tela.dart:190:          ScaffoldMessenger.of(context).showSnackBar(
+  lib\features\settings\configuracoes_tela.dart:191:            const SnackBar(
+  lib\features\settings\configuracoes_tela.dart:192:              content: Text(
+  lib\features\settings\configuracoes_tela.dart:193:                'A sessão mudou ou expirou. Nenhum dado foi excluído.',
+  lib\features\settings\configuracoes_tela.dart:194:              ),
+  lib\features\settings\configuracoes_tela.dart:195:            ),
+  lib\features\settings\configuracoes_tela.dart:196:          );
+  lib\features\settings\configuracoes_tela.dart:197:          return;
+  lib\features\settings\configuracoes_tela.dart:198:
+> lib\features\settings\configuracoes_tela.dart:199:        case ResultadoExclusaoLocal.contaNaoEncontrada:
+  lib\features\settings\configuracoes_tela.dart:200:          ScaffoldMessenger.of(context).showSnackBar(
+  lib\features\settings\configuracoes_tela.dart:201:            const SnackBar(
+  lib\features\settings\configuracoes_tela.dart:202:              content: Text('A conta local não foi encontrada.'),
+  lib\features\settings\configuracoes_tela.dart:203:            ),
+  lib\features\settings\configuracoes_tela.dart:204:          );
+  lib\features\settings\configuracoes_tela.dart:205:          return;
+  lib\features\settings\configuracoes_tela.dart:206:
+> lib\features\settings\configuracoes_tela.dart:207:        case ResultadoExclusaoLocal.vinculoOuOperacaoBloqueada:
+  lib\features\settings\configuracoes_tela.dart:208:          ScaffoldMessenger.of(context).showSnackBar(
+  lib\features\settings\configuracoes_tela.dart:209:            const SnackBar(
+  lib\features\settings\configuracoes_tela.dart:210:              content: Text(
+  lib\features\settings\configuracoes_tela.dart:211:                'Exclusão bloqueada: existe um vínculo Firebase registrado.',
+  lib\features\settings\configuracoes_tela.dart:212:              ),
+  lib\features\settings\configuracoes_tela.dart:213:            ),
+  lib\features\settings\configuracoes_tela.dart:214:          );
+  lib\features\settings\configuracoes_tela.dart:215:          return;
+  lib\features\settings\configuracoes_tela.dart:216:      }
+  lib\features\settings\configuracoes_tela.dart:217:
+  lib\features\settings\configuracoes_tela.dart:218:      // Uma falha na limpeza da foto não deve manter uma sessão de conta excluída.
+  lib\features\settings\configuracoes_tela.dart:219:      try {
+  lib\features\settings\services\exclusao_local_coordinator.dart:8:
+  lib\features\settings\services\exclusao_local_coordinator.dart:9:abstract class ExclusaoLocalRepositorio {
+  lib\features\settings\services\exclusao_local_coordinator.dart:10:  Future<int> excluirSemVinculo(int usuarioId);
+  lib\features\settings\services\exclusao_local_coordinator.dart:11:}
+  lib\features\settings\services\exclusao_local_coordinator.dart:12:
+> lib\features\settings\services\exclusao_local_coordinator.dart:13:enum ResultadoExclusaoLocal {
+  lib\features\settings\services\exclusao_local_coordinator.dart:14:  excluido,
+  lib\features\settings\services\exclusao_local_coordinator.dart:15:  sessaoInvalida,
+  lib\features\settings\services\exclusao_local_coordinator.dart:16:  sessaoAlterada,
+  lib\features\settings\services\exclusao_local_coordinator.dart:17:  senhaIncorreta,
+  lib\features\settings\services\exclusao_local_coordinator.dart:18:  contaNaoEncontrada,
+  lib\features\settings\services\exclusao_local_coordinator.dart:19:  vinculoOuOperacaoBloqueada,
+  lib\features\settings\services\exclusao_local_coordinator.dart:20:}
+  lib\features\settings\services\exclusao_local_coordinator.dart:21:
+> lib\features\settings\services\exclusao_local_coordinator.dart:22:class ExclusaoLocalCoordinator {
+> lib\features\settings\services\exclusao_local_coordinator.dart:23:  const ExclusaoLocalCoordinator({
+  lib\features\settings\services\exclusao_local_coordinator.dart:24:    required this.sessao,
+  lib\features\settings\services\exclusao_local_coordinator.dart:25:    required this.senha,
+  lib\features\settings\services\exclusao_local_coordinator.dart:26:    required this.repositorio,
+  lib\features\settings\services\exclusao_local_coordinator.dart:27:  });
+  lib\features\settings\services\exclusao_local_coordinator.dart:28:
+  lib\features\settings\services\exclusao_local_coordinator.dart:29:  final ExclusaoLocalSessao sessao;
+  lib\features\settings\services\exclusao_local_coordinator.dart:30:  final ExclusaoLocalSenha senha;
+  lib\features\settings\services\exclusao_local_coordinator.dart:31:  final ExclusaoLocalRepositorio repositorio;
+  lib\features\settings\services\exclusao_local_coordinator.dart:32:
+> lib\features\settings\services\exclusao_local_coordinator.dart:33:  Future<ResultadoExclusaoLocal> executar({
+  lib\features\settings\services\exclusao_local_coordinator.dart:34:    required String senhaDigitada,
+  lib\features\settings\services\exclusao_local_coordinator.dart:35:    int? usuarioEsperadoId,
+  lib\features\settings\services\exclusao_local_coordinator.dart:36:  }) async {
+  lib\features\settings\services\exclusao_local_coordinator.dart:37:    final idInicial = await sessao.usuarioAtualId();
+  lib\features\settings\services\exclusao_local_coordinator.dart:38:
+  lib\features\settings\services\exclusao_local_coordinator.dart:39:    if (idInicial == null || idInicial <= 0) {
+> lib\features\settings\services\exclusao_local_coordinator.dart:40:      return ResultadoExclusaoLocal.sessaoInvalida;
+  lib\features\settings\services\exclusao_local_coordinator.dart:41:    }
+  lib\features\settings\services\exclusao_local_coordinator.dart:42:
+  lib\features\settings\services\exclusao_local_coordinator.dart:43:    if (usuarioEsperadoId != null && idInicial != usuarioEsperadoId) {
+> lib\features\settings\services\exclusao_local_coordinator.dart:44:      return ResultadoExclusaoLocal.sessaoAlterada;
+  lib\features\settings\services\exclusao_local_coordinator.dart:45:    }
+  lib\features\settings\services\exclusao_local_coordinator.dart:46:
+  lib\features\settings\services\exclusao_local_coordinator.dart:47:    if (senhaDigitada.isEmpty ||
+  lib\features\settings\services\exclusao_local_coordinator.dart:48:        !await senha.verificar(idInicial, senhaDigitada)) {
+> lib\features\settings\services\exclusao_local_coordinator.dart:49:      return ResultadoExclusaoLocal.senhaIncorreta;
+  lib\features\settings\services\exclusao_local_coordinator.dart:50:    }
+  lib\features\settings\services\exclusao_local_coordinator.dart:51:
+  lib\features\settings\services\exclusao_local_coordinator.dart:52:    final idAtual = await sessao.usuarioAtualId();
+  lib\features\settings\services\exclusao_local_coordinator.dart:53:
+  lib\features\settings\services\exclusao_local_coordinator.dart:54:    if (idAtual != idInicial) {
+> lib\features\settings\services\exclusao_local_coordinator.dart:55:      return ResultadoExclusaoLocal.sessaoAlterada;
+  lib\features\settings\services\exclusao_local_coordinator.dart:56:    }
+  lib\features\settings\services\exclusao_local_coordinator.dart:57:
+  lib\features\settings\services\exclusao_local_coordinator.dart:58:    // Terceira validação antes da exclusão.
+  lib\features\settings\services\exclusao_local_coordinator.dart:59:    final idFinal = await sessao.usuarioAtualId();
+  lib\features\settings\services\exclusao_local_coordinator.dart:60:
+  lib\features\settings\services\exclusao_local_coordinator.dart:61:    if (idFinal != idInicial) {
+> lib\features\settings\services\exclusao_local_coordinator.dart:62:      return ResultadoExclusaoLocal.sessaoAlterada;
+  lib\features\settings\services\exclusao_local_coordinator.dart:63:    }
+  lib\features\settings\services\exclusao_local_coordinator.dart:64:
+  lib\features\settings\services\exclusao_local_coordinator.dart:65:    try {
+  lib\features\settings\services\exclusao_local_coordinator.dart:66:      final excluidos = await repositorio.excluirSemVinculo(idInicial);
+  lib\features\settings\services\exclusao_local_coordinator.dart:67:
+  lib\features\settings\services\exclusao_local_coordinator.dart:68:      if (excluidos == 1) {
+> lib\features\settings\services\exclusao_local_coordinator.dart:69:        return ResultadoExclusaoLocal.excluido;
+  lib\features\settings\services\exclusao_local_coordinator.dart:70:      }
+  lib\features\settings\services\exclusao_local_coordinator.dart:71:
+> lib\features\settings\services\exclusao_local_coordinator.dart:72:      return ResultadoExclusaoLocal.contaNaoEncontrada;
+  lib\features\settings\services\exclusao_local_coordinator.dart:73:    } on StateError {
+> lib\features\settings\services\exclusao_local_coordinator.dart:74:      return ResultadoExclusaoLocal.vinculoOuOperacaoBloqueada;
+  lib\features\settings\services\exclusao_local_coordinator.dart:75:    }
+  lib\features\settings\services\exclusao_local_coordinator.dart:76:  }
+  lib\features\settings\services\exclusao_local_coordinator.dart:77:}
+
+

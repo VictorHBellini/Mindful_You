@@ -1,0 +1,19 @@
+﻿import 'package:shared_preferences/shared_preferences.dart';
+
+/// AdministraÃ§Ã£o sensÃ­vel desativada no protÃ³tipo Android.
+/// Um segredo ou uma lista de e-mails embarcados nÃ£o constitui autorizaÃ§Ã£o.
+/// Reativar somente com autorizaÃ§Ã£o verificada por um backend confiÃ¡vel.
+class AdminService {
+  AdminService._();
+
+  static bool ehAdmin(String email) => false;
+
+  static bool senhaAdminValida(String senha) => false;
+
+  static Future<void> salvarStatusAdmin(String email) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('isAdmin');
+  }
+
+  static Future<bool> statusAdminSalvo() async => false;
+}

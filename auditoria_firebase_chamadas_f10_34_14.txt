@@ -1,0 +1,205 @@
+﻿========== lib\features\assessment\avaliacoes_tela.dart ==========
+  11: 
+  12:   @override
+  13:   State<AvaliacoesTela> createState() => _AvaliacoesTelaState();
+  14: }
+  15: 
+  16: class _AvaliacoesTelaState extends State<AvaliacoesTela> {
+  17:   late Future<List<Map<String, dynamic>>> _avaliacoes;
+  18: 
+  19:   @override
+  20:   void initState() {
+  21:     super.initState();
+  22:     _atualizar();
+  23:   }
+  24: 
+  25:   Future<void> _abrir(String instrumento) async {
+  26:     final salvo = await Navigator.of(context).push<bool>(
+  27:       MaterialPageRoute(
+  28:           builder: (_) => QuestionarioRastreioTela(instrumento: instrumento)),
+  29:     );
+  30:     if (!mounted) return;
+  31:     if (salvo == true) setState(_atualizar);
+  32:   }
+  33: 
+  34:   void _atualizar() {
+  35:     _avaliacoes = kIsWeb
+  36:         ? FirebaseRegistrosService.instance.minhasAvaliacoes()
+  37:         : AvaliacaoService.instance.listarMinhasAvaliacoes();
+  38:   }
+  39: 
+  40:   String _dataFormatada(Object? valor) {
+  41:     final data = DateTime.tryParse(valor?.toString() ?? '');
+  42:     if (data == null) return 'Data indisponÃ­vel';
+  43:     final local = data.toLocal();
+  44:     String dois(int n) => n.toString().padLeft(2, '0');
+  45:     return '${dois(local.day)}/${dois(local.month)}/${local.year} '
+  46:         'Ã s ${dois(local.hour)}:${dois(local.minute)}';
+  47:   }
+  48: 
+  49:   String _tituloInstrumento(Object? valor) {
+  50:     switch (valor?.toString()) {
+  51:       case 'GAD7':
+  52:         return 'Ansiedade â€¢ 7 itens';
+  53:       case 'PHQ9':
+  54:         return 'Humor â€¢ 9 itens';
+  55:       default:
+  56:         return 'AvaliaÃ§Ã£o demonstrativa';
+  57:     }
+  58:   }
+  59: 
+  60:   @override
+  61:   Widget build(BuildContext context) {
+========== lib\features\assessment\questionario_rastreio_tela.dart ==========
+  76:       await showDialog<void>(
+  77:         context: context,
+  78:         barrierDismissible: false,
+  79:         builder: (dialogContext) => AlertDialog(
+  80:           title: const Text('VocÃª merece apoio'),
+  81:           content: const Text(
+  82:             'Sua resposta indica que pode ser importante conversar com alguÃ©m de confianÃ§a '
+  83:             'ou com um profissional de saÃºde agora. Este aplicativo nÃ£o monitora emergÃªncias '
+  84:             'nem envia alertas em tempo real. Se houver perigo imediato, procure um serviÃ§o '
+  85:             'de emergÃªncia local. No Brasil, o CVV oferece apoio emocional pelo telefone 188.',
+  86:           ),
+  87:           actions: [
+  88:             FilledButton(
+  89:               onPressed: () => Navigator.of(dialogContext).pop(),
+  90:               child: const Text('Entendi'),
+  91:             ),
+  92:           ],
+  93:         ),
+  94:       );
+  95:       if (!mounted) return;
+  96:     }
+  97:     setState(() => _salvando = true);
+  98:     try {
+  99:       final total = AvaliacaoService.pontuar(widget.instrumento, respostas);
+ 100:       if (kIsWeb) {
+ 101:         await FirebaseRegistrosService.instance.registrarAvaliacao(
+ 102:           instrumento: widget.instrumento,
+ 103:           versao: 'demonstracao-dominios-v1',
+ 104:           respostas: respostas,
+ 105:           operacaoId: _operacaoId,
+ 106:         );
+ 107:       } else {
+ 108:         await AvaliacaoService.instance.registrar(
+ 109:           instrumento: widget.instrumento,
+ 110:           versao: 'demonstracao-dominios-v1',
+ 111:           respostas: respostas,
+ 112:           operacaoId: _operacaoId,
+ 113:         );
+ 114:       }
+ 115:       if (!mounted) return;
+ 116:       setState(() => _finalizado = true);
+ 117:       await showDialog<void>(
+ 118:         context: context,
+ 119:         builder: (dialogContext) => AlertDialog(
+ 120:           title: const Text('Respostas registradas'),
+ 121:           content: Text(
+ 122:             'PontuaÃ§Ã£o demonstrativa: $total. A soma das respostas nÃ£o Ã© um diagnÃ³stico '
+ 123:             'e nÃ£o deve ser interpretada como escore clÃ­nico validado. '
+ 124:             'Converse com um profissional para avaliar seus sintomas e contexto.',
+ 125:           ),
+ 126:           actions: [
+========== lib\features\checkin\screens\resultado_grafico_screen.dart ==========
+ 168:         'Ansiedade percebida',
+ 169:         'Dificuldade percebida com o sono',
+ 170:         'Atividade significativa',
+ 171:       ],
+ 172:       'respostas': [
+ 173:         _percentual(cansaco),
+ 174:         _percentual(ansiedade),
+ 175:         _percentual(sono),
+ 176:         _atividadeExibida(atividade),
+ 177:       ],
+ 178:       'principalPonto': principal,
+ 179:       'humorFrequencia': humorFrequencia,
+ 180:       'interesseFrequencia': interesseFrequencia,
+ 181:       'exaustaoBurnout': exaustaoBurnout,
+ 182:       'distanciamentoBurnout': distanciamentoBurnout,
+ 183:     };
+ 184: 
+ 185:     try {
+ 186:       if (kIsWeb) {
+ 187:         // API de demonstraÃ§Ã£o legada: nÃ£o enviar valores ausentes como zero.
+ 188:         if (produtividade == null) {
+ 189:           // A API web legada exige produtividade numÃ©rica.
+ 190:           // NÃ£o inventar esse valor a partir da atividade significativa.
+ 191:           return;
+ 192:         }
+ 193:         await FirebaseRegistrosService.instance.registrarCheckin(
+ 194:           bemEstar: bemEstar.round(),
+ 195:           ansiedade: ansiedade,
+ 196:           cansaco: cansaco,
+ 197:           sono: sono,
+ 198:           produtividade: produtividade,
+ 199:           sentimento: sentimento,
+ 200:           operacaoId: dados['operacaoId'] as String?,
+ 201:         );
+ 202:       } else {
+ 203:         await adicionarHistorico(entrada);
+ 204:       }
+ 205:     } catch (_) {
+ 206:       if (!mounted) return;
+ 207:       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+ 208:         content: Text(
+ 209:             'NÃ£o foi possÃ­vel salvar o check-in. Verifique a conexÃ£o e tente novamente pelo formulÃ¡rio.'),
+ 210:       ));
+ 211:     }
+ 212:   }
+ 213: 
+ 214:   // ============================================================
+ 215:   // CARREGAR NOME
+ 216:   // ============================================================
+ 217: 
+ 218:   Future<void> carregarNome() async {
+========== lib\features\history\firebase_historico_tela.dart ==========
+   1: import 'package:flutter/material.dart';
+   2: import 'package:firebase_auth/firebase_auth.dart';
+   3: import 'package:mindful_you/services/firebase_registros_service.dart';
+   4: 
+   5: /// HistÃ³rico Web F3.2: somente dados agregados da conta Firebase atual.
+   6: class FirebaseHistoricoTela extends StatefulWidget {
+   7:   const FirebaseHistoricoTela({super.key});
+   8:   @override
+   9:   State<FirebaseHistoricoTela> createState() => _FirebaseHistoricoTelaState();
+  10: }
+  11: 
+  12: class _FirebaseHistoricoTelaState extends State<FirebaseHistoricoTela> {
+  13:   late final String? _uidInicial;
+  14:   late Future<List<Map<String, dynamic>>> _checkins;
+  15:   @override
+  16:   void initState() {
+  17:     super.initState();
+  18:     _uidInicial = FirebaseAuth.instance.currentUser?.uid;
+  19:     _atualizar();
+  20:   }
+  21: 
+  22:   void _atualizar() {
+  23:     _checkins = FirebaseRegistrosService.instance.meusCheckins();
+  24:   }
+  25: 
+  26:   @override
+  27:   Widget build(BuildContext context) {
+  28:     if (_uidInicial == null ||
+  29:         FirebaseAuth.instance.currentUser?.uid != _uidInicial) {
+  30:       return const Scaffold(
+  31:           body: Center(child: Text('SessÃ£o alterada. Volte ao login.')));
+  32:     }
+  33:     return Scaffold(
+  34:       appBar: AppBar(title: const Text('HistÃ³rico Firestore â€¢ F3.2'), actions: [
+  35:         IconButton(
+  36:             icon: const Icon(Icons.refresh),
+  37:             onPressed: () => setState(_atualizar)),
+  38:       ]),
+  39:       body: FutureBuilder<List<Map<String, dynamic>>>(
+  40:         future: _checkins,
+  41:         builder: (context, snapshot) {
+  42:           if (snapshot.connectionState != ConnectionState.done) {
+  43:             return const Center(child: CircularProgressIndicator());
+  44:           }
+  45:           if (FirebaseAuth.instance.currentUser?.uid != _uidInicial) {
+  46:             return const Center(child: Text('SessÃ£o alterada.'));
+  47:           }
+  48:           if (snapshot.hasError) {
