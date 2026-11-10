@@ -21,6 +21,7 @@ class _CadastroTelaState extends State<CadastroTela> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool aceitarTermos = false;
+  bool _confirmouMaioridade = false;
   String _tipoUsuario = 'paciente';
   bool _enviando = false;
 
@@ -36,6 +37,19 @@ class _CadastroTelaState extends State<CadastroTela> {
   Future<void> _criarConta() async {
     final formularioValido = _formKey.currentState?.validate() ?? false;
     if (!formularioValido) return;
+
+    // Restrição etária do Mindful You 1.0: autodeclaração de maioridade.
+    // Não substitui uma verificação independente de idade.
+    if (!_confirmouMaioridade) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'O Mindful You 1.0 é destinado exclusivamente a pessoas com 18 anos ou mais.',
+          ),
+        ),
+      );
+      return;
+    }
 
     if (!aceitarTermos) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -429,6 +443,33 @@ class _CadastroTelaState extends State<CadastroTela> {
                         style: TextStyle(fontSize: 12, color: secondaryColor),
                       ),
                       const SizedBox(height: 20),
+
+                      // Declaração de maioridade (separada dos termos).
+                      CheckboxListTile(
+                        value: _confirmouMaioridade,
+                        activeColor: accentColor,
+                        checkColor:
+                            isDark ? const Color(0xFF281E20) : Colors.white,
+                        contentPadding: EdgeInsets.zero,
+                        controlAffinity: ListTileControlAffinity.leading,
+                        title: Text(
+                          'Declaro que tenho 18 anos ou mais.',
+                          style: TextStyle(fontSize: 13, color: titleColor),
+                        ),
+                        subtitle: Text(
+                          'O Mindful You 1.0 não está disponível para menores de 18 anos.',
+                          style: TextStyle(fontSize: 12, color: secondaryColor),
+                        ),
+                        onChanged: _enviando
+                            ? null
+                            : (value) {
+                                setState(() {
+                                  _confirmouMaioridade = value ?? false;
+                                });
+                              },
+                      ),
+
+                      const SizedBox(height: 12),
 
                       // Termos de uso
                       CheckboxListTile(

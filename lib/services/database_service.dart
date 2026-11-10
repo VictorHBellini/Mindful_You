@@ -685,11 +685,22 @@ class DatabaseService {
 
       await _validarExclusaoUsuario(txn, id);
 
-      await txn.delete(
+      // Nunca descartar um vínculo Firebase local como substituto de
+      // uma exclusão remota comprovada. Inclusive vínculos revogados
+      // permanecem bloqueados até existir um fluxo de conciliação.
+      final vinculos = await txn.query(
         'vinculos_contas_firebase',
+        columns: ['usuario_id'],
         where: 'usuario_id = ?',
         whereArgs: [id],
+        limit: 1,
       );
+      if (vinculos.isNotEmpty) {
+        throw StateError(
+          'Exclusão bloqueada: existe um registro de vínculo Firebase.',
+        );
+      }
+
       await txn.delete('checkins', where: 'usuario_id = ?', whereArgs: [id]);
       await txn.delete('avaliacoes', where: 'usuario_id = ?', whereArgs: [id]);
       await txn.delete(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:mindful_you/features/auth/screens/account_link_preflight_screen.dart';
 import 'package:mindful_you/features/auth/firebase_teste_tela.dart';
@@ -205,13 +206,7 @@ class _ConfiguracaoTelaState extends State<ConfiguracaoTela> {
           return;
 
         case ResultadoExclusaoLocal.vinculoOuOperacaoBloqueada:
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Exclusão bloqueada: existe um vínculo Firebase registrado.',
-              ),
-            ),
-          );
+          await _mostrarCanalPrivacidade();
           return;
       }
 
@@ -259,6 +254,44 @@ class _ConfiguracaoTelaState extends State<ConfiguracaoTela> {
         setState(() => _exclusaoEmAndamento = false);
       }
     }
+  }
+
+  static const _emailPrivacidade = 'victorhfbellini.dev@gmail.com';
+
+  Future<void> _mostrarCanalPrivacidade() async {
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Solicitação de privacidade'),
+        content: const Text(
+            'A exclusão automática pode ser impedida por vínculos Firebase, '
+            'históricos identificados ou registros de migração. '
+            'Nenhuma exclusão desses registros foi confirmada.\n\n'
+            'Para solicitar a análise de exclusão ou acesso aos dados, '
+            'escreva para $_emailPrivacidade. Informe apenas o necessário '
+            'para localizar a conta; não envie sua senha nem registros emocionais.'),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              await Clipboard.setData(
+                const ClipboardData(text: _emailPrivacidade),
+              );
+              if (dialogContext.mounted) Navigator.pop(dialogContext);
+              if (!mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('E-mail de privacidade copiado.')),
+              );
+            },
+            child: const Text('Copiar e-mail'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Fechar'),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _sectionCard({
@@ -548,6 +581,12 @@ class _ConfiguracaoTelaState extends State<ConfiguracaoTela> {
                           color: Colors.red,
                         ),
                       ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextButton.icon(
+                      onPressed: _mostrarCanalPrivacidade,
+                      icon: const Icon(Icons.mail_outline_rounded),
+                      label: const Text('Solicitar análise de exclusão'),
                     ),
                   ],
                 ),
