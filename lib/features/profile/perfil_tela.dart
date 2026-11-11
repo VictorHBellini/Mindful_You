@@ -1,4 +1,6 @@
 import 'package:mindful_you/features/auth/services/session_service.dart';
+import 'package:mindful_you/features/auth/services/session_operation_coordinator.dart';
+import 'package:mindful_you/features/settings/services/alteracao_senha_service.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -130,25 +132,36 @@ class _PerfilTelaState extends State<PerfilTela>
     required String nome,
     required String email,
   }) async {
-    if (_usuarioId == null) return;
+    await SessionOperationCoordinator.executar(() async {
+      final sessao = await SessionService.validar();
+      if (sessao == null || _usuarioId == null || sessao.id != _usuarioId) {
+        throw StateError('Sessão inválida ou alterada. Entre novamente.');
+      }
 
-    await DatabaseService.instance.atualizarUsuario(
-      id: _usuarioId!,
-      nome: nome,
-      email: email,
-    );
+      final nomeNormalizado = nome.trim();
+      final emailNormalizado = email.trim().toLowerCase();
+      final alterados = await DatabaseService.instance.atualizarUsuario(
+        id: sessao.id,
+        nome: nomeNormalizado,
+        email: emailNormalizado,
+      );
+      if (alterados != 1) {
+        throw StateError('Não foi possível atualizar os dados do perfil.');
+      }
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('nomeUsuario', nome);
-    await prefs.setString('emailUsuario', email);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('nomeUsuario', nomeNormalizado);
+      await prefs.setString('emailUsuario', emailNormalizado);
 
-    if (!mounted) return;
-    setState(() {
-      nomeUsuario = nome;
-      emailUsuario = email;
+      if (!mounted) return;
+      setState(() {
+        nomeUsuario = nomeNormalizado;
+        emailUsuario = emailNormalizado;
+      });
     });
   }
 
+  // ================================================================
   // ================================================================
   // SELECIONAR FOTO
   // ================================================================
@@ -1070,7 +1083,6 @@ class _PerfilTelaState extends State<PerfilTela>
                                           novaSenhaController.text;
                                       final confirmarSenha =
                                           confirmarSenhaController.text;
-
                                       final quiseTrocarSenha =
                                           senhaAtual.isNotEmpty ||
                                               novaSenha.isNotEmpty ||
@@ -1094,70 +1106,88 @@ class _PerfilTelaState extends State<PerfilTela>
                                               'A nova senha e a confirmação não coincidem.');
                                           return;
                                         }
-
-                                        setModal(() {
-                                          erroSenha = null;
-                                          salvando = true;
-                                        });
-
-                                        final usuarioAtual = _usuarioId == null
-                                            ? null
-                                            : await DatabaseService.instance
-                                                .buscarPorEmail(emailUsuario);
-
-                                        if (usuarioAtual == null) {
-                                          setModal(() {
-                                            salvando = false;
-                                            erroSenha =
-                                                'Não foi possível confirmar seu usuário. Tente novamente.';
-                                          });
-                                          return;
-                                        }
-
-                                        final senhaAtualCorreta =
-                                            await DatabaseService.instance
-                                                .senhaCorreta(
-                                          usuario: usuarioAtual,
-                                          senhaDigitada: senhaAtual,
-                                        );
-
-                                        if (!senhaAtualCorreta) {
-                                          setModal(() {
-                                            salvando = false;
-                                            erroSenha =
-                                                'Senha atual incorreta.';
-                                          });
-                                          return;
-                                        }
-
-                                        await DatabaseService.instance
-                                            .atualizarSenha(
-                                          id: _usuarioId!,
-                                          novaSenha: novaSenha,
-                                        );
-                                      } else {
-                                        setModal(() => salvando = true);
                                       }
 
-                                      await salvarDados(
-                                        nome: nomeController.text.trim(),
-                                        email: emailController.text.trim(),
-                                      );
+                                      setModal(() {
+                                        erroSenha = null;
+                                        salvando = true;
+                                      });
 
-                                      if (!context.mounted) return;
-                                      Navigator.pop(context);
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            quiseTrocarSenha
-                                                ? "Perfil e senha atualizados com sucesso!"
-                                                : "Perfil atualizado com sucesso!",
+                                      var senhaAlterada = false;
+                                      try {
+                                        // O serviço coordena a operação de senha
+                                        // e confirma a identidade no SQLite.
+                                        if (quiseTrocarSenha) {
+                                          final resultado =
+                                              await AlteracaoSenhaService()
+                                                  .executar(
+                                            senhaAtual: senhaAtual,
+                                            novaSenha: novaSenha,
+                                          );
+                                          if (!context.mounted) return;
+                                          if (resultado !=
+                                              ResultadoAlteracaoSenha.sucesso) {
+                                            final mensagem =
+                                                switch (resultado) {
+                                              ResultadoAlteracaoSenha
+                                                    .sessaoInvalida =>
+                                                'Sessão inválida. Entre novamente.',
+                                              ResultadoAlteracaoSenha
+                                                    .sessaoAlterada =>
+                                                'A sessão mudou. Entre novamente.',
+                                              ResultadoAlteracaoSenha
+                                                    .senhaAtualIncorreta =>
+                                                'Senha atual incorreta.',
+                                              ResultadoAlteracaoSenha
+                                                    .novaSenhaInvalida =>
+                                                'A nova senha deve ter pelo menos 8 caracteres.',
+                                              ResultadoAlteracaoSenha
+                                                    .senhaIgualAtual =>
+                                                'A nova senha deve ser diferente da atual.',
+                                              ResultadoAlteracaoSenha
+                                                    .conflitoCredenciais =>
+                                                'A senha foi alterada em outra operação. Tente novamente.',
+                                              ResultadoAlteracaoSenha.sucesso =>
+                                                '',
+                                            };
+                                            setModal(
+                                                () => erroSenha = mensagem);
+                                            return;
+                                          }
+                                          senhaAlterada = true;
+                                        }
+
+                                        // A atualização do perfil participa da
+                                        // mesma fila de operações de sessão.
+                                        await salvarDados(
+                                          nome: nomeController.text.trim(),
+                                          email: emailController.text.trim(),
+                                        );
+                                        if (!context.mounted) return;
+                                        Navigator.pop(context);
+                                        if (!mounted) return;
+                                        ScaffoldMessenger.of(this.context)
+                                            .showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              senhaAlterada
+                                                  ? 'Perfil e senha atualizados com sucesso!'
+                                                  : 'Perfil atualizado com sucesso!',
+                                            ),
+                                            backgroundColor:
+                                                const Color(0xFF8D6E63),
                                           ),
-                                          backgroundColor:
-                                              const Color(0xFF8D6E63),
-                                        ),
-                                      );
+                                        );
+                                      } catch (_) {
+                                        if (!context.mounted) return;
+                                        setModal(() => erroSenha = senhaAlterada
+                                            ? 'A senha foi alterada, mas não foi possível salvar os dados do perfil. Confira os dados e tente novamente.'
+                                            : 'Não foi possível salvar o perfil. Verifique sua sessão, o e-mail informado e tente novamente.');
+                                      } finally {
+                                        if (context.mounted) {
+                                          setModal(() => salvando = false);
+                                        }
+                                      }
                                     },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: escuro
