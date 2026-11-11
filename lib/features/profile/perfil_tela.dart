@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mindful_you/services/database_service.dart';
 import 'package:mindful_you/features/profile/services/foto_perfil_service.dart';
 import 'package:mindful_you/widgets/avatar_perfil.dart';
+import 'package:mindful_you/widgets/avatar_perfil_notifier.dart';
 import 'package:mindful_you/core/widgets/menu_lateral_widget.dart';
 
 class PerfilTela extends StatefulWidget {
@@ -264,6 +265,7 @@ class _PerfilTelaState extends State<PerfilTela>
           // SQLite é a fonte de verdade; a foto já foi persistida.
         }
         if (mounted) setState(() => _fotoPath = novaFoto);
+        AvatarPerfilNotifier.notificarAlteracao();
         if (fotoAntiga != novaFoto) {
           await FotoPerfilService.removerFotoAntiga(fotoAntiga);
         }
@@ -308,6 +310,7 @@ class _PerfilTelaState extends State<PerfilTela>
           // SQLite é a fonte de verdade; a remoção já foi persistida.
         }
         if (mounted) setState(() => _fotoPath = null);
+        AvatarPerfilNotifier.notificarAlteracao();
         await FotoPerfilService.removerFotoAntiga(fotoAntiga);
       });
     } catch (_) {

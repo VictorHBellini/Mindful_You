@@ -3,27 +3,16 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Avatar compartilhado que exibe a foto de perfil do usuário logado.
-///
-/// BUG CORRIGIDO: `inicial_tela.dart`, `historico_tela.dart` e
-/// `grafico_tela.dart` mostravam uma imagem fixa (`assets/img/3.jpg` ou
-/// `assets/img/perfil.png`) no avatar do topo, então ele nunca refletia
-/// a foto que o usuário realmente escolheu em `perfil_tela.dart` — só
-/// `menu_lateral_tela.dart` mostrava a foto certa. Agora todas essas
-/// telas usam este widget único, que lê a mesma chave (`fotoPerfil`)
-/// salva pelo perfil e cai no mesmo avatar padrão quando não há foto
-/// (ou o arquivo não existe mais).
+import 'package:mindful_you/features/auth/services/session_service.dart';
+import 'package:mindful_you/services/database_service.dart';
+import 'package:mindful_you/widgets/avatar_perfil_notifier.dart';
+
+/// Avatar compartilhado do usuario autenticado.
 class AvatarPerfil extends StatefulWidget {
   const AvatarPerfil({super.key, this.radius = 28});
 
   final double radius;
 
-  /// Caminho do asset usado quando o usuário não tem foto salva (ou o
-  /// arquivo não existe mais). Fonte única desse caminho — outras telas
-  /// que precisem do mesmo fallback (ex: `perfil_tela.dart`, que edita a
-  /// foto e por isso não usa este widget diretamente) devem referenciar
-  /// esta constante em vez de repetir a string, para não reintroduzir a
-  /// divergência descrita acima.
   static const String assetPadrao = 'assets/img/3.png';
 
   @override
@@ -32,27 +21,80 @@ class AvatarPerfil extends StatefulWidget {
 
 class _AvatarPerfilState extends State<AvatarPerfil> {
   String? _fotoPath;
+  int _revisaoLeitura = 0;
 
   @override
   void initState() {
     super.initState();
+    AvatarPerfilNotifier.revisao.addListener(_carregarFoto);
     _carregarFoto();
   }
 
   Future<void> _carregarFoto() async {
-    final prefs = await SharedPreferences.getInstance();
-    if (!mounted) return;
-    setState(() {
-      _fotoPath = prefs.getString('fotoPerfil');
-    });
+    final revisao = ++_revisaoLeitura;
+
+    // Nao mantem a foto anterior enquanto a sessao e consultada.
+    if (mounted && _fotoPath != null) {
+      setState(() => _fotoPath = null);
+    }
+
+    try {
+      final sessao = await SessionService.validar();
+      if (!mounted || revisao != _revisaoLeitura) return;
+
+      if (sessao == null) {
+        setState(() => _fotoPath = null);
+        return;
+      }
+
+      // SQLite e a fonte de verdade para a foto do usuario.
+      final db = await DatabaseService.instance.database;
+      final registros = await db.query(
+        'usuarios',
+        columns: ['foto_path'],
+        where: 'id = ?',
+        whereArgs: [sessao.id],
+        limit: 1,
+      );
+
+      if (!mounted || revisao != _revisaoLeitura) return;
+
+      // Confirma que a identidade nao mudou durante a consulta.
+      final prefs = await SharedPreferences.getInstance();
+
+      if (!mounted || revisao != _revisaoLeitura) return;
+
+      if (prefs.getInt('usuarioId') != sessao.id) {
+        setState(() => _fotoPath = null);
+        return;
+      }
+
+      final caminho = registros.length == 1
+          ? registros.single['foto_path'] as String?
+          : null;
+
+      setState(() => _fotoPath = caminho);
+    } catch (_) {
+      if (!mounted || revisao != _revisaoLeitura) return;
+      setState(() => _fotoPath = null);
+    }
   }
 
   ImageProvider _imagemPerfil() {
     final caminho = _fotoPath;
+
     if (caminho != null && caminho.isNotEmpty && File(caminho).existsSync()) {
       return FileImage(File(caminho));
     }
+
     return const AssetImage(AvatarPerfil.assetPadrao);
+  }
+
+  @override
+  void dispose() {
+    AvatarPerfilNotifier.revisao.removeListener(_carregarFoto);
+    _revisaoLeitura++;
+    super.dispose();
   }
 
   @override

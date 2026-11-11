@@ -2,6 +2,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mindful_you/services/database_service.dart';
 import 'package:mindful_you/features/history/historico_global.dart';
 import 'package:mindful_you/features/auth/services/session_operation_coordinator.dart';
+import 'package:mindful_you/widgets/avatar_perfil_notifier.dart';
 
 /// Identidade local validada no SQLite.
 ///
@@ -129,6 +130,9 @@ class SessionService {
 
       // Publica a identidade por ultimo.
       await prefs.setInt('usuarioId', usuarioId);
+
+      // Atualiza os avatares apos iniciar a nova sessao.
+      AvatarPerfilNotifier.notificarAlteracao();
     });
   }
 
@@ -155,6 +159,9 @@ class SessionService {
           await prefs.remove(chave);
         }
       }
+
+      // Invalida os avatares da sessao encerrada.
+      AvatarPerfilNotifier.notificarAlteracao();
     });
   }
 }
