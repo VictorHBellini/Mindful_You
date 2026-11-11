@@ -75,53 +75,86 @@ class _PerfilTelaState extends State<PerfilTela>
   // ================================================================
 
   Future<void> carregarDados() async {
-    final prefs = await SharedPreferences.getInstance();
-    final email = prefs.getString('emailUsuario') ?? '';
+    await SessionOperationCoordinator.executar(() async {
+      final sessaoInicial = await SessionService.validar();
 
-    // Busca o usuário completo no SQLite
-    if (email.isNotEmpty) {
-      final usuario = await DatabaseService.instance.buscarPorEmail(email);
-      if (usuario != null && mounted) {
-        final criado = usuario['criado_em'] as String? ?? '';
-        String criadoFormatado = '';
-        if (criado.isNotEmpty) {
-          try {
-            final dt = DateTime.parse(criado);
-            const meses = [
-              'janeiro',
-              'fevereiro',
-              'março',
-              'abril',
-              'maio',
-              'junho',
-              'julho',
-              'agosto',
-              'setembro',
-              'outubro',
-              'novembro',
-              'dezembro',
-            ];
-            criadoFormatado =
-                'Membro desde ${meses[dt.month - 1]} de ${dt.year}';
-          } catch (_) {}
-        }
-
+      if (sessaoInicial == null) {
+        if (!mounted) return;
         setState(() {
-          _usuarioId = usuario['id'] as int?;
-          nomeUsuario = usuario['nome'] as String? ?? 'Usuário';
-          emailUsuario = usuario['email'] as String? ?? email;
-          _fotoPath = usuario['foto_path'] as String?;
-          criadoEm = criadoFormatado;
+          _usuarioId = null;
+          nomeUsuario = 'Usuário';
+          emailUsuario = '';
+          _fotoPath = null;
+          criadoEm = '';
         });
+        return;
+      }
 
-        // Mantém SharedPreferences sincronizado
-        await prefs.setString('nomeUsuario', nomeUsuario);
-        await prefs.setString('emailUsuario', emailUsuario);
-        if (_fotoPath != null) {
-          await prefs.setString('fotoPerfil', _fotoPath!);
+      final db = await DatabaseService.instance.database;
+      final registros = await db.query(
+        'usuarios',
+        where: 'id = ?',
+        whereArgs: [sessaoInicial.id],
+        limit: 1,
+      );
+
+      if (registros.length != 1) return;
+      final usuario = registros.single;
+
+      final sessaoFinal = await SessionService.validar();
+      if (sessaoFinal == null ||
+          sessaoFinal.id != sessaoInicial.id ||
+          !mounted) {
+        return;
+      }
+
+      final nome = usuario['nome'] as String? ?? 'Usuário';
+      final email = usuario['email'] as String? ?? '';
+      final foto = usuario['foto_path'] as String?;
+      final criado = usuario['criado_em'] as String? ?? '';
+      String criadoFormatado = '';
+
+      if (criado.isNotEmpty) {
+        try {
+          final dt = DateTime.parse(criado);
+          const meses = [
+            'janeiro',
+            'fevereiro',
+            'março',
+            'abril',
+            'maio',
+            'junho',
+            'julho',
+            'agosto',
+            'setembro',
+            'outubro',
+            'novembro',
+            'dezembro',
+          ];
+          criadoFormatado = 'Membro desde ${meses[dt.month - 1]} de ${dt.year}';
+        } catch (_) {
+          // Uma data inválida não deve impedir o carregamento do perfil.
         }
       }
-    }
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('nomeUsuario', nome);
+      await prefs.setString('emailUsuario', email);
+      if (foto != null && foto.isNotEmpty) {
+        await prefs.setString('fotoPerfil', foto);
+      } else {
+        await prefs.remove('fotoPerfil');
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _usuarioId = sessaoInicial.id;
+        nomeUsuario = nome;
+        emailUsuario = email;
+        _fotoPath = foto;
+        criadoEm = criadoFormatado;
+      });
+    });
   }
 
   // ================================================================
@@ -167,37 +200,130 @@ class _PerfilTelaState extends State<PerfilTela>
   // ================================================================
 
   Future<void> _selecionarFoto(ImageSource source) async {
-    final picker = ImagePicker();
-    final picked = await picker.pickImage(
-      source: source,
-      imageQuality: 80,
-      maxWidth: 600,
-    );
-    if (picked == null) return;
-
-    // MELHORIA: copia o arquivo escolhido para um diretório permanente
-    // do app (em vez de salvar o caminho temporário do image_picker
-    // direto), e apaga a foto antiga do disco — ver
-    // `foto_perfil_service.dart` para o motivo.
-    final path = await FotoPerfilService.salvarFotoPermanente(picked.path);
-    final fotoAntiga = _fotoPath;
-
-    // Persiste no SQLite
-    if (_usuarioId != null) {
-      await DatabaseService.instance.atualizarFoto(
-        id: _usuarioId!,
-        fotoPath: path,
-      );
+    // Não bloqueia a fila de sessões enquanto a câmera/galeria está aberta.
+    final sessaoInicial = await SessionService.validar();
+    if (sessaoInicial == null || _usuarioId != sessaoInicial.id || !mounted) {
+      _avisarFalhaFoto();
+      return;
     }
 
-    // Persiste no SharedPreferences para uso em outras telas
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('fotoPerfil', path);
+    try {
+      final picked = await ImagePicker().pickImage(
+        source: source,
+        imageQuality: 80,
+        maxWidth: 600,
+      );
+      if (picked == null || !mounted) return;
 
-    await FotoPerfilService.removerFotoAntiga(fotoAntiga);
+      await SessionOperationCoordinator.executar(() async {
+        final sessaoAtual = await SessionService.validar();
+        if (!mounted ||
+            sessaoAtual == null ||
+            sessaoAtual.id != sessaoInicial.id ||
+            _usuarioId != sessaoInicial.id) {
+          throw StateError('A sessão mudou durante a seleção da foto.');
+        }
 
+        final db = await DatabaseService.instance.database;
+        final registros = await db.query(
+          'usuarios',
+          columns: ['foto_path'],
+          where: 'id = ?',
+          whereArgs: [sessaoInicial.id],
+          limit: 1,
+        );
+        if (registros.length != 1) {
+          throw StateError('Conta não encontrada.');
+        }
+        final fotoAntiga = registros.single['foto_path'] as String?;
+        final novaFoto =
+            await FotoPerfilService.salvarFotoPermanente(picked.path);
+
+        var gravada = false;
+        try {
+          final alterados = await DatabaseService.instance.atualizarFoto(
+            id: sessaoInicial.id,
+            fotoPath: novaFoto,
+          );
+          if (alterados != 1) {
+            throw StateError('Não foi possível atualizar a foto.');
+          }
+          gravada = true;
+        } finally {
+          if (!gravada) {
+            await FotoPerfilService.removerFotoAntiga(novaFoto);
+          }
+        }
+
+        // A atualização no banco já ocorreu. Falhas nas preferências ou
+        // na limpeza secundária não devem desfazer a foto persistida.
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('fotoPerfil', novaFoto);
+        } catch (_) {
+          // SQLite é a fonte de verdade; a foto já foi persistida.
+        }
+        if (mounted) setState(() => _fotoPath = novaFoto);
+        if (fotoAntiga != novaFoto) {
+          await FotoPerfilService.removerFotoAntiga(fotoAntiga);
+        }
+      });
+    } catch (_) {
+      _avisarFalhaFoto();
+    }
+  }
+
+  Future<void> _removerFoto() async {
+    try {
+      await SessionOperationCoordinator.executar(() async {
+        final sessao = await SessionService.validar();
+        if (!mounted || sessao == null || _usuarioId != sessao.id) {
+          throw StateError('Sessão inválida ou alterada.');
+        }
+
+        final db = await DatabaseService.instance.database;
+        final registros = await db.query(
+          'usuarios',
+          columns: ['foto_path'],
+          where: 'id = ?',
+          whereArgs: [sessao.id],
+          limit: 1,
+        );
+        if (registros.length != 1) {
+          throw StateError('Conta não encontrada.');
+        }
+        final fotoAntiga = registros.single['foto_path'] as String?;
+        final alterados = await DatabaseService.instance.atualizarFoto(
+          id: sessao.id,
+          fotoPath: null,
+        );
+        if (alterados != 1) {
+          throw StateError('Não foi possível remover a foto.');
+        }
+
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.remove('fotoPerfil');
+        } catch (_) {
+          // SQLite é a fonte de verdade; a remoção já foi persistida.
+        }
+        if (mounted) setState(() => _fotoPath = null);
+        await FotoPerfilService.removerFotoAntiga(fotoAntiga);
+      });
+    } catch (_) {
+      _avisarFalhaFoto();
+    }
+  }
+
+  void _avisarFalhaFoto() {
     if (!mounted) return;
-    setState(() => _fotoPath = path);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Não foi possível atualizar a foto. Confira sua sessão e tente novamente.',
+        ),
+      ),
+    );
   }
 
   // ================================================================
@@ -1300,18 +1426,7 @@ class _PerfilTelaState extends State<PerfilTela>
                     ),
                     onTap: () async {
                       Navigator.pop(context);
-                      final fotoAntiga = _fotoPath;
-                      if (_usuarioId != null) {
-                        await DatabaseService.instance.atualizarFoto(
-                          id: _usuarioId!,
-                          fotoPath: null,
-                        );
-                      }
-                      final prefs = await SharedPreferences.getInstance();
-                      await prefs.remove('fotoPerfil');
-                      await FotoPerfilService.removerFotoAntiga(fotoAntiga);
-                      if (!mounted) return;
-                      setState(() => _fotoPath = null);
+                      await _removerFoto();
                     },
                   ),
               ],
