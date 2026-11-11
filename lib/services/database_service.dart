@@ -627,6 +627,75 @@ class DatabaseService {
     );
   }
 
+  /// Confere a senha contra as credenciais fornecidas sem alterar o banco.
+  /// Nao realiza a migracao automatica dos hashes antigos.
+  Future<bool> verificarSenhaSemMigrar({
+    required Map<String, dynamic> usuario,
+    required String senhaDigitada,
+  }) async {
+    final hashArmazenado = usuario['senha'];
+    final saltArmazenado = usuario['salt'];
+
+    if (hashArmazenado is! String ||
+        hashArmazenado.isEmpty ||
+        (saltArmazenado != null && saltArmazenado is! String)) {
+      return false;
+    }
+
+    final salt = (saltArmazenado as String?) ?? '';
+
+    if (salt.startsWith('pbkdf2_sha256:')) {
+      final partes = salt.split(':');
+      if (partes.length != 3) return false;
+
+      final iteracoes = int.tryParse(partes[1]);
+      final saltHex = partes[2];
+      if (iteracoes == null ||
+          iteracoes < 10000 ||
+          iteracoes > 1000000 ||
+          saltHex.length != 32 ||
+          !RegExp(r'^[0-9a-fA-F]{32}$').hasMatch(saltHex)) {
+        return false;
+      }
+
+      final hash = await compute(CryptoUtils.pbkdf2Derivar, {
+        'senha': senhaDigitada,
+        'saltHex': saltHex,
+        'iteracoes': iteracoes,
+      });
+      return CryptoUtils.hashesIguais(hashArmazenado, hash);
+    }
+
+    final hashLegado = salt.isEmpty
+        ? CryptoUtils.sha256Hex(senhaDigitada)
+        : CryptoUtils.sha256Hex('$salt:$senhaDigitada');
+    return CryptoUtils.hashesIguais(hashArmazenado, hashLegado);
+  }
+
+  /// Atualiza a senha somente se as credenciais anteriores ainda forem
+  /// as mesmas. O chamador deve validar a senha atual e a sessao antes.
+  /// Retorna 1 em caso de sucesso e 0 em caso de conflito ou conta ausente.
+  Future<int> atualizarSenhaSeInalterada({
+    required int id,
+    required String novaSenha,
+    required String hashAnterior,
+    required String saltAnterior,
+  }) async {
+    if (id <= 0 || novaSenha.length < 8 || hashAnterior.isEmpty) {
+      throw ArgumentError('Dados invalidos para alterar senha.');
+    }
+
+    final credenciais = await _credenciaisNovas(novaSenha);
+    final db = await database;
+
+    return db.update(
+      'usuarios',
+      credenciais,
+      where: 'id = ? AND senha = ? AND salt = ?',
+      whereArgs: [id, hashAnterior, saltAnterior],
+    );
+  }
+
   // Validação preventiva. Os gatilhos SQLite continuam sendo a proteção final.
   Future<void> _validarExclusaoUsuario(
     Transaction txn,

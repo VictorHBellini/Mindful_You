@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mindful_you/features/history/historico_global.dart';
-import 'package:mindful_you/services/admin_service.dart';
+import 'package:mindful_you/features/auth/services/session_service.dart';
 import 'package:mindful_you/services/database_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 
 class CadastroTela extends StatefulWidget {
@@ -35,6 +34,8 @@ class _CadastroTelaState extends State<CadastroTela> {
   }
 
   Future<void> _criarConta() async {
+    if (_enviando) return;
+
     final formularioValido = _formKey.currentState?.validate() ?? false;
     if (!formularioValido) return;
 
@@ -72,21 +73,14 @@ class _CadastroTelaState extends State<CadastroTela> {
         tipoUsuario: _tipoUsuario,
       );
 
-      // Mantém SharedPreferences para exibição em outras telas
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('nomeUsuario', nome);
-      await prefs.setString('emailUsuario', email);
-      await prefs.setInt('usuarioId', usuarioId);
-      await prefs.setString('tipoUsuario', _tipoUsuario);
-
-      // Conta nova ainda não tem foto — remove qualquer valor deixado
-      // por uma conta anterior usada neste aparelho.
-      await prefs.remove('fotoPerfil');
-
-      // Mesma checagem feita no login, para liberar "Gerenciar
-      // Usuários" no menu lateral quando o e-mail cadastrado for um
-      // dos administradores (ver AdminService).
-      await AdminService.salvarStatusAdmin(email);
+      // Publica a identidade local pelo coordenador compartilhado com o login.
+      // O cadastro SQLite foi concluído antes desta etapa.
+      await SessionService.iniciar(
+        usuarioId: usuarioId,
+        nome: nome,
+        email: email,
+        tipoUsuario: _tipoUsuario,
+      );
 
       // Garante que a lista em memória comece vazia para esta conta
       // nova, sem herdar o histórico de quem usou o app antes no
@@ -99,8 +93,8 @@ class _CadastroTelaState extends State<CadastroTela> {
           _tipoUsuario == 'terapeuta' ? '/painel-terapeuta' : '/inicial',
           (route) => false);
     } on DatabaseException catch (e) {
-      setState(() => _enviando = false);
       if (!mounted) return;
+      setState(() => _enviando = false);
       final msg = e.isUniqueConstraintError()
           ? 'Este e-mail já está cadastrado.'
           : 'Erro ao criar conta. Tente novamente.';
@@ -112,8 +106,8 @@ class _CadastroTelaState extends State<CadastroTela> {
         ),
       );
     } catch (_) {
-      setState(() => _enviando = false);
       if (!mounted) return;
+      setState(() => _enviando = false);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Erro inesperado. Tente novamente.'),
@@ -486,11 +480,13 @@ class _CadastroTelaState extends State<CadastroTela> {
                             color: titleColor,
                           ),
                         ),
-                        onChanged: (value) {
-                          setState(() {
-                            aceitarTermos = value ?? false;
-                          });
-                        },
+                        onChanged: _enviando
+                            ? null
+                            : (value) {
+                                setState(() {
+                                  aceitarTermos = value ?? false;
+                                });
+                              },
                       ),
 
                       const SizedBox(height: 30),

@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:mindful_you/features/history/historico_global.dart';
-import 'package:mindful_you/services/admin_service.dart';
 import 'package:mindful_you/services/database_service.dart';
 import 'package:mindful_you/features/auth/screens/recuperar_senha_screen.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:mindful_you/features/auth/services/session_service.dart';
 
 class LoginTela extends StatefulWidget {
   const LoginTela({super.key});
@@ -30,7 +29,7 @@ class _LoginTelaState extends State<LoginTela> {
   }
 
   Future<void> _entrar() async {
-    if (!(_formKey.currentState?.validate() ?? false)) return;
+    if (_carregando || !(_formKey.currentState?.validate() ?? false)) return;
     setState(() {
       _carregando = true;
       _erroCred = null;
@@ -66,34 +65,20 @@ class _LoginTelaState extends State<LoginTela> {
       return;
     }
 
-    // Atualiza SharedPreferences com dados do usuário logado
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('nomeUsuario', usuario['nome'] as String);
-    await prefs.setString('emailUsuario', usuario['email'] as String);
-    await prefs.setInt('usuarioId', usuario['id'] as int);
+    // A senha foi validada no SQLite antes de iniciar a sessão.
+    // O coordenador limpa os dados da conta anterior e publica
+    // a nova identidade por último.
     final tipoUsuario = usuario['tipo_usuario']?.toString() == 'terapeuta'
         ? 'terapeuta'
         : 'paciente';
-    await prefs.setString('tipoUsuario', tipoUsuario);
 
-    // BUG CORRIGIDO: a foto de perfil era lida de uma chave global
-    // ('fotoPerfil') que não era atualizada no login — então, se a
-    // conta anterior usada no aparelho tivesse foto salva, ela
-    // continuava aparecendo para quem loga em seguida, mesmo sem ter
-    // escolhido nenhuma foto. Agora sincronizamos com o que está
-    // salvo no SQLite para este usuário (ou removemos a chave, se ele
-    // não tiver foto).
-    final fotoPath = usuario['foto_path'] as String?;
-    if (fotoPath != null && fotoPath.isNotEmpty) {
-      await prefs.setString('fotoPerfil', fotoPath);
-    } else {
-      await prefs.remove('fotoPerfil');
-    }
-
-    // Marca localmente se este login pertence a um administrador
-    // (lista de e-mails em AdminService), para liberar o item
-    // "Gerenciar Usuários" no menu lateral.
-    await AdminService.salvarStatusAdmin(usuario['email'] as String);
+    await SessionService.iniciar(
+      usuarioId: usuario['id'] as int,
+      nome: usuario['nome'] as String,
+      email: usuario['email'] as String,
+      tipoUsuario: tipoUsuario,
+      fotoPath: usuario['foto_path'] as String?,
+    );
 
     // Carrega o histórico de check-ins deste usuário para a lista em
     // memória, para não misturar com o de outra conta usada antes no
