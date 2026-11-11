@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mindful_you/features/history/historico_global.dart';
-import 'package:mindful_you/services/admin_service.dart';
+import 'package:mindful_you/features/auth/services/session_service.dart';
 import 'package:mindful_you/services/database_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 
 class CadastroTela extends StatefulWidget {
@@ -21,6 +20,7 @@ class _CadastroTelaState extends State<CadastroTela> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool aceitarTermos = false;
+  bool _confirmouMaioridade = false;
   String _tipoUsuario = 'paciente';
   bool _enviando = false;
 
@@ -34,8 +34,23 @@ class _CadastroTelaState extends State<CadastroTela> {
   }
 
   Future<void> _criarConta() async {
+    if (_enviando) return;
+
     final formularioValido = _formKey.currentState?.validate() ?? false;
     if (!formularioValido) return;
+
+    // Restrição etária do Mindful You 1.0: autodeclaração de maioridade.
+    // Não substitui uma verificação independente de idade.
+    if (!_confirmouMaioridade) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'O Mindful You 1.0 é destinado exclusivamente a pessoas com 18 anos ou mais.',
+          ),
+        ),
+      );
+      return;
+    }
 
     if (!aceitarTermos) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -58,21 +73,14 @@ class _CadastroTelaState extends State<CadastroTela> {
         tipoUsuario: _tipoUsuario,
       );
 
-      // Mantém SharedPreferences para exibição em outras telas
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('nomeUsuario', nome);
-      await prefs.setString('emailUsuario', email);
-      await prefs.setInt('usuarioId', usuarioId);
-      await prefs.setString('tipoUsuario', _tipoUsuario);
-
-      // Conta nova ainda não tem foto — remove qualquer valor deixado
-      // por uma conta anterior usada neste aparelho.
-      await prefs.remove('fotoPerfil');
-
-      // Mesma checagem feita no login, para liberar "Gerenciar
-      // Usuários" no menu lateral quando o e-mail cadastrado for um
-      // dos administradores (ver AdminService).
-      await AdminService.salvarStatusAdmin(email);
+      // Publica a identidade local pelo coordenador compartilhado com o login.
+      // O cadastro SQLite foi concluído antes desta etapa.
+      await SessionService.iniciar(
+        usuarioId: usuarioId,
+        nome: nome,
+        email: email,
+        tipoUsuario: _tipoUsuario,
+      );
 
       // Garante que a lista em memória comece vazia para esta conta
       // nova, sem herdar o histórico de quem usou o app antes no
@@ -85,8 +93,8 @@ class _CadastroTelaState extends State<CadastroTela> {
           _tipoUsuario == 'terapeuta' ? '/painel-terapeuta' : '/inicial',
           (route) => false);
     } on DatabaseException catch (e) {
-      setState(() => _enviando = false);
       if (!mounted) return;
+      setState(() => _enviando = false);
       final msg = e.isUniqueConstraintError()
           ? 'Este e-mail já está cadastrado.'
           : 'Erro ao criar conta. Tente novamente.';
@@ -98,8 +106,8 @@ class _CadastroTelaState extends State<CadastroTela> {
         ),
       );
     } catch (_) {
-      setState(() => _enviando = false);
       if (!mounted) return;
+      setState(() => _enviando = false);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Erro inesperado. Tente novamente.'),
@@ -430,6 +438,33 @@ class _CadastroTelaState extends State<CadastroTela> {
                       ),
                       const SizedBox(height: 20),
 
+                      // Declaração de maioridade (separada dos termos).
+                      CheckboxListTile(
+                        value: _confirmouMaioridade,
+                        activeColor: accentColor,
+                        checkColor:
+                            isDark ? const Color(0xFF281E20) : Colors.white,
+                        contentPadding: EdgeInsets.zero,
+                        controlAffinity: ListTileControlAffinity.leading,
+                        title: Text(
+                          'Declaro que tenho 18 anos ou mais.',
+                          style: TextStyle(fontSize: 13, color: titleColor),
+                        ),
+                        subtitle: Text(
+                          'O Mindful You 1.0 não está disponível para menores de 18 anos.',
+                          style: TextStyle(fontSize: 12, color: secondaryColor),
+                        ),
+                        onChanged: _enviando
+                            ? null
+                            : (value) {
+                                setState(() {
+                                  _confirmouMaioridade = value ?? false;
+                                });
+                              },
+                      ),
+
+                      const SizedBox(height: 12),
+
                       // Termos de uso
                       CheckboxListTile(
                         value: aceitarTermos,
@@ -445,11 +480,13 @@ class _CadastroTelaState extends State<CadastroTela> {
                             color: titleColor,
                           ),
                         ),
-                        onChanged: (value) {
-                          setState(() {
-                            aceitarTermos = value ?? false;
-                          });
-                        },
+                        onChanged: _enviando
+                            ? null
+                            : (value) {
+                                setState(() {
+                                  aceitarTermos = value ?? false;
+                                });
+                              },
                       ),
 
                       const SizedBox(height: 30),

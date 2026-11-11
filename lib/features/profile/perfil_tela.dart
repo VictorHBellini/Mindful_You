@@ -1,4 +1,6 @@
 import 'package:mindful_you/features/auth/services/session_service.dart';
+import 'package:mindful_you/features/auth/services/session_operation_coordinator.dart';
+import 'package:mindful_you/features/settings/services/alteracao_senha_service.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -6,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mindful_you/services/database_service.dart';
 import 'package:mindful_you/features/profile/services/foto_perfil_service.dart';
 import 'package:mindful_you/widgets/avatar_perfil.dart';
+import 'package:mindful_you/widgets/avatar_perfil_notifier.dart';
 import 'package:mindful_you/core/widgets/menu_lateral_widget.dart';
 
 class PerfilTela extends StatefulWidget {
@@ -73,53 +76,86 @@ class _PerfilTelaState extends State<PerfilTela>
   // ================================================================
 
   Future<void> carregarDados() async {
-    final prefs = await SharedPreferences.getInstance();
-    final email = prefs.getString('emailUsuario') ?? '';
+    await SessionOperationCoordinator.executar(() async {
+      final sessaoInicial = await SessionService.validar();
 
-    // Busca o usuário completo no SQLite
-    if (email.isNotEmpty) {
-      final usuario = await DatabaseService.instance.buscarPorEmail(email);
-      if (usuario != null && mounted) {
-        final criado = usuario['criado_em'] as String? ?? '';
-        String criadoFormatado = '';
-        if (criado.isNotEmpty) {
-          try {
-            final dt = DateTime.parse(criado);
-            const meses = [
-              'janeiro',
-              'fevereiro',
-              'março',
-              'abril',
-              'maio',
-              'junho',
-              'julho',
-              'agosto',
-              'setembro',
-              'outubro',
-              'novembro',
-              'dezembro',
-            ];
-            criadoFormatado =
-                'Membro desde ${meses[dt.month - 1]} de ${dt.year}';
-          } catch (_) {}
-        }
-
+      if (sessaoInicial == null) {
+        if (!mounted) return;
         setState(() {
-          _usuarioId = usuario['id'] as int?;
-          nomeUsuario = usuario['nome'] as String? ?? 'Usuário';
-          emailUsuario = usuario['email'] as String? ?? email;
-          _fotoPath = usuario['foto_path'] as String?;
-          criadoEm = criadoFormatado;
+          _usuarioId = null;
+          nomeUsuario = 'Usuário';
+          emailUsuario = '';
+          _fotoPath = null;
+          criadoEm = '';
         });
+        return;
+      }
 
-        // Mantém SharedPreferences sincronizado
-        await prefs.setString('nomeUsuario', nomeUsuario);
-        await prefs.setString('emailUsuario', emailUsuario);
-        if (_fotoPath != null) {
-          await prefs.setString('fotoPerfil', _fotoPath!);
+      final db = await DatabaseService.instance.database;
+      final registros = await db.query(
+        'usuarios',
+        where: 'id = ?',
+        whereArgs: [sessaoInicial.id],
+        limit: 1,
+      );
+
+      if (registros.length != 1) return;
+      final usuario = registros.single;
+
+      final sessaoFinal = await SessionService.validar();
+      if (sessaoFinal == null ||
+          sessaoFinal.id != sessaoInicial.id ||
+          !mounted) {
+        return;
+      }
+
+      final nome = usuario['nome'] as String? ?? 'Usuário';
+      final email = usuario['email'] as String? ?? '';
+      final foto = usuario['foto_path'] as String?;
+      final criado = usuario['criado_em'] as String? ?? '';
+      String criadoFormatado = '';
+
+      if (criado.isNotEmpty) {
+        try {
+          final dt = DateTime.parse(criado);
+          const meses = [
+            'janeiro',
+            'fevereiro',
+            'março',
+            'abril',
+            'maio',
+            'junho',
+            'julho',
+            'agosto',
+            'setembro',
+            'outubro',
+            'novembro',
+            'dezembro',
+          ];
+          criadoFormatado = 'Membro desde ${meses[dt.month - 1]} de ${dt.year}';
+        } catch (_) {
+          // Uma data inválida não deve impedir o carregamento do perfil.
         }
       }
-    }
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('nomeUsuario', nome);
+      await prefs.setString('emailUsuario', email);
+      if (foto != null && foto.isNotEmpty) {
+        await prefs.setString('fotoPerfil', foto);
+      } else {
+        await prefs.remove('fotoPerfil');
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _usuarioId = sessaoInicial.id;
+        nomeUsuario = nome;
+        emailUsuario = email;
+        _fotoPath = foto;
+        criadoEm = criadoFormatado;
+      });
+    });
   }
 
   // ================================================================
@@ -130,61 +166,167 @@ class _PerfilTelaState extends State<PerfilTela>
     required String nome,
     required String email,
   }) async {
-    if (_usuarioId == null) return;
+    await SessionOperationCoordinator.executar(() async {
+      final sessao = await SessionService.validar();
+      if (sessao == null || _usuarioId == null || sessao.id != _usuarioId) {
+        throw StateError('Sessão inválida ou alterada. Entre novamente.');
+      }
 
-    await DatabaseService.instance.atualizarUsuario(
-      id: _usuarioId!,
-      nome: nome,
-      email: email,
-    );
+      final nomeNormalizado = nome.trim();
+      final emailNormalizado = email.trim().toLowerCase();
+      final alterados = await DatabaseService.instance.atualizarUsuario(
+        id: sessao.id,
+        nome: nomeNormalizado,
+        email: emailNormalizado,
+      );
+      if (alterados != 1) {
+        throw StateError('Não foi possível atualizar os dados do perfil.');
+      }
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('nomeUsuario', nome);
-    await prefs.setString('emailUsuario', email);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('nomeUsuario', nomeNormalizado);
+      await prefs.setString('emailUsuario', emailNormalizado);
 
-    if (!mounted) return;
-    setState(() {
-      nomeUsuario = nome;
-      emailUsuario = email;
+      if (!mounted) return;
+      setState(() {
+        nomeUsuario = nomeNormalizado;
+        emailUsuario = emailNormalizado;
+      });
     });
   }
 
+  // ================================================================
   // ================================================================
   // SELECIONAR FOTO
   // ================================================================
 
   Future<void> _selecionarFoto(ImageSource source) async {
-    final picker = ImagePicker();
-    final picked = await picker.pickImage(
-      source: source,
-      imageQuality: 80,
-      maxWidth: 600,
-    );
-    if (picked == null) return;
-
-    // MELHORIA: copia o arquivo escolhido para um diretório permanente
-    // do app (em vez de salvar o caminho temporário do image_picker
-    // direto), e apaga a foto antiga do disco — ver
-    // `foto_perfil_service.dart` para o motivo.
-    final path = await FotoPerfilService.salvarFotoPermanente(picked.path);
-    final fotoAntiga = _fotoPath;
-
-    // Persiste no SQLite
-    if (_usuarioId != null) {
-      await DatabaseService.instance.atualizarFoto(
-        id: _usuarioId!,
-        fotoPath: path,
-      );
+    // Não bloqueia a fila de sessões enquanto a câmera/galeria está aberta.
+    final sessaoInicial = await SessionService.validar();
+    if (sessaoInicial == null || _usuarioId != sessaoInicial.id || !mounted) {
+      _avisarFalhaFoto();
+      return;
     }
 
-    // Persiste no SharedPreferences para uso em outras telas
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('fotoPerfil', path);
+    try {
+      final picked = await ImagePicker().pickImage(
+        source: source,
+        imageQuality: 80,
+        maxWidth: 600,
+      );
+      if (picked == null || !mounted) return;
 
-    await FotoPerfilService.removerFotoAntiga(fotoAntiga);
+      await SessionOperationCoordinator.executar(() async {
+        final sessaoAtual = await SessionService.validar();
+        if (!mounted ||
+            sessaoAtual == null ||
+            sessaoAtual.id != sessaoInicial.id ||
+            _usuarioId != sessaoInicial.id) {
+          throw StateError('A sessão mudou durante a seleção da foto.');
+        }
 
+        final db = await DatabaseService.instance.database;
+        final registros = await db.query(
+          'usuarios',
+          columns: ['foto_path'],
+          where: 'id = ?',
+          whereArgs: [sessaoInicial.id],
+          limit: 1,
+        );
+        if (registros.length != 1) {
+          throw StateError('Conta não encontrada.');
+        }
+        final fotoAntiga = registros.single['foto_path'] as String?;
+        final novaFoto =
+            await FotoPerfilService.salvarFotoPermanente(picked.path);
+
+        var gravada = false;
+        try {
+          final alterados = await DatabaseService.instance.atualizarFoto(
+            id: sessaoInicial.id,
+            fotoPath: novaFoto,
+          );
+          if (alterados != 1) {
+            throw StateError('Não foi possível atualizar a foto.');
+          }
+          gravada = true;
+        } finally {
+          if (!gravada) {
+            await FotoPerfilService.removerFotoAntiga(novaFoto);
+          }
+        }
+
+        // A atualização no banco já ocorreu. Falhas nas preferências ou
+        // na limpeza secundária não devem desfazer a foto persistida.
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('fotoPerfil', novaFoto);
+        } catch (_) {
+          // SQLite é a fonte de verdade; a foto já foi persistida.
+        }
+        if (mounted) setState(() => _fotoPath = novaFoto);
+        AvatarPerfilNotifier.notificarAlteracao();
+        if (fotoAntiga != novaFoto) {
+          await FotoPerfilService.removerFotoAntiga(fotoAntiga);
+        }
+      });
+    } catch (_) {
+      _avisarFalhaFoto();
+    }
+  }
+
+  Future<void> _removerFoto() async {
+    try {
+      await SessionOperationCoordinator.executar(() async {
+        final sessao = await SessionService.validar();
+        if (!mounted || sessao == null || _usuarioId != sessao.id) {
+          throw StateError('Sessão inválida ou alterada.');
+        }
+
+        final db = await DatabaseService.instance.database;
+        final registros = await db.query(
+          'usuarios',
+          columns: ['foto_path'],
+          where: 'id = ?',
+          whereArgs: [sessao.id],
+          limit: 1,
+        );
+        if (registros.length != 1) {
+          throw StateError('Conta não encontrada.');
+        }
+        final fotoAntiga = registros.single['foto_path'] as String?;
+        final alterados = await DatabaseService.instance.atualizarFoto(
+          id: sessao.id,
+          fotoPath: null,
+        );
+        if (alterados != 1) {
+          throw StateError('Não foi possível remover a foto.');
+        }
+
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.remove('fotoPerfil');
+        } catch (_) {
+          // SQLite é a fonte de verdade; a remoção já foi persistida.
+        }
+        if (mounted) setState(() => _fotoPath = null);
+        AvatarPerfilNotifier.notificarAlteracao();
+        await FotoPerfilService.removerFotoAntiga(fotoAntiga);
+      });
+    } catch (_) {
+      _avisarFalhaFoto();
+    }
+  }
+
+  void _avisarFalhaFoto() {
     if (!mounted) return;
-    setState(() => _fotoPath = path);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Não foi possível atualizar a foto. Confira sua sessão e tente novamente.',
+        ),
+      ),
+    );
   }
 
   // ================================================================
@@ -1070,7 +1212,6 @@ class _PerfilTelaState extends State<PerfilTela>
                                           novaSenhaController.text;
                                       final confirmarSenha =
                                           confirmarSenhaController.text;
-
                                       final quiseTrocarSenha =
                                           senhaAtual.isNotEmpty ||
                                               novaSenha.isNotEmpty ||
@@ -1094,70 +1235,88 @@ class _PerfilTelaState extends State<PerfilTela>
                                               'A nova senha e a confirmação não coincidem.');
                                           return;
                                         }
-
-                                        setModal(() {
-                                          erroSenha = null;
-                                          salvando = true;
-                                        });
-
-                                        final usuarioAtual = _usuarioId == null
-                                            ? null
-                                            : await DatabaseService.instance
-                                                .buscarPorEmail(emailUsuario);
-
-                                        if (usuarioAtual == null) {
-                                          setModal(() {
-                                            salvando = false;
-                                            erroSenha =
-                                                'Não foi possível confirmar seu usuário. Tente novamente.';
-                                          });
-                                          return;
-                                        }
-
-                                        final senhaAtualCorreta =
-                                            await DatabaseService.instance
-                                                .senhaCorreta(
-                                          usuario: usuarioAtual,
-                                          senhaDigitada: senhaAtual,
-                                        );
-
-                                        if (!senhaAtualCorreta) {
-                                          setModal(() {
-                                            salvando = false;
-                                            erroSenha =
-                                                'Senha atual incorreta.';
-                                          });
-                                          return;
-                                        }
-
-                                        await DatabaseService.instance
-                                            .atualizarSenha(
-                                          id: _usuarioId!,
-                                          novaSenha: novaSenha,
-                                        );
-                                      } else {
-                                        setModal(() => salvando = true);
                                       }
 
-                                      await salvarDados(
-                                        nome: nomeController.text.trim(),
-                                        email: emailController.text.trim(),
-                                      );
+                                      setModal(() {
+                                        erroSenha = null;
+                                        salvando = true;
+                                      });
 
-                                      if (!context.mounted) return;
-                                      Navigator.pop(context);
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            quiseTrocarSenha
-                                                ? "Perfil e senha atualizados com sucesso!"
-                                                : "Perfil atualizado com sucesso!",
+                                      var senhaAlterada = false;
+                                      try {
+                                        // O serviço coordena a operação de senha
+                                        // e confirma a identidade no SQLite.
+                                        if (quiseTrocarSenha) {
+                                          final resultado =
+                                              await AlteracaoSenhaService()
+                                                  .executar(
+                                            senhaAtual: senhaAtual,
+                                            novaSenha: novaSenha,
+                                          );
+                                          if (!context.mounted) return;
+                                          if (resultado !=
+                                              ResultadoAlteracaoSenha.sucesso) {
+                                            final mensagem =
+                                                switch (resultado) {
+                                              ResultadoAlteracaoSenha
+                                                    .sessaoInvalida =>
+                                                'Sessão inválida. Entre novamente.',
+                                              ResultadoAlteracaoSenha
+                                                    .sessaoAlterada =>
+                                                'A sessão mudou. Entre novamente.',
+                                              ResultadoAlteracaoSenha
+                                                    .senhaAtualIncorreta =>
+                                                'Senha atual incorreta.',
+                                              ResultadoAlteracaoSenha
+                                                    .novaSenhaInvalida =>
+                                                'A nova senha deve ter pelo menos 8 caracteres.',
+                                              ResultadoAlteracaoSenha
+                                                    .senhaIgualAtual =>
+                                                'A nova senha deve ser diferente da atual.',
+                                              ResultadoAlteracaoSenha
+                                                    .conflitoCredenciais =>
+                                                'A senha foi alterada em outra operação. Tente novamente.',
+                                              ResultadoAlteracaoSenha.sucesso =>
+                                                '',
+                                            };
+                                            setModal(
+                                                () => erroSenha = mensagem);
+                                            return;
+                                          }
+                                          senhaAlterada = true;
+                                        }
+
+                                        // A atualização do perfil participa da
+                                        // mesma fila de operações de sessão.
+                                        await salvarDados(
+                                          nome: nomeController.text.trim(),
+                                          email: emailController.text.trim(),
+                                        );
+                                        if (!context.mounted) return;
+                                        Navigator.pop(context);
+                                        if (!mounted) return;
+                                        ScaffoldMessenger.of(this.context)
+                                            .showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              senhaAlterada
+                                                  ? 'Perfil e senha atualizados com sucesso!'
+                                                  : 'Perfil atualizado com sucesso!',
+                                            ),
+                                            backgroundColor:
+                                                const Color(0xFF8D6E63),
                                           ),
-                                          backgroundColor:
-                                              const Color(0xFF8D6E63),
-                                        ),
-                                      );
+                                        );
+                                      } catch (_) {
+                                        if (!context.mounted) return;
+                                        setModal(() => erroSenha = senhaAlterada
+                                            ? 'A senha foi alterada, mas não foi possível salvar os dados do perfil. Confira os dados e tente novamente.'
+                                            : 'Não foi possível salvar o perfil. Verifique sua sessão, o e-mail informado e tente novamente.');
+                                      } finally {
+                                        if (context.mounted) {
+                                          setModal(() => salvando = false);
+                                        }
+                                      }
                                     },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: escuro
@@ -1270,18 +1429,7 @@ class _PerfilTelaState extends State<PerfilTela>
                     ),
                     onTap: () async {
                       Navigator.pop(context);
-                      final fotoAntiga = _fotoPath;
-                      if (_usuarioId != null) {
-                        await DatabaseService.instance.atualizarFoto(
-                          id: _usuarioId!,
-                          fotoPath: null,
-                        );
-                      }
-                      final prefs = await SharedPreferences.getInstance();
-                      await prefs.remove('fotoPerfil');
-                      await FotoPerfilService.removerFotoAntiga(fotoAntiga);
-                      if (!mounted) return;
-                      setState(() => _fotoPath = null);
+                      await _removerFoto();
                     },
                   ),
               ],
